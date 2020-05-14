@@ -39,14 +39,15 @@ export class AppLayout extends React.Component<{}, IState> {
     }
 
     componentDidMount = () => {
+        /*
+            TODO:-
+                1. Check python3 exists
+                2. Check localStorage for dependency installation
+                3. Check main.py exists
+        */
+
         this.updateWindowDimensions();
         window.addEventListener('resize', this.updateWindowDimensions);
-
-        // window.addEventListener('keydown', (e) => {
-        //     if (e.which === 123) {
-        //         require('remote').getCurrentWindow().toggleDevTools();
-        //     } 
-        // })
     }
 
     componentWillUnmount = () => {

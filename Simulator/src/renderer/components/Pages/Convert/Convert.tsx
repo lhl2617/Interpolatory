@@ -1,12 +1,18 @@
 import * as React from 'react';
-import { Input, Form, message } from 'antd';
+import { Input, Form, Select, Radio, message, Button, Popover } from 'antd';
 import { remote } from 'electron';
 import * as cp from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
-import { binName } from '../../../consts';
+
+import {
+    InfoCircleOutlined
+} from '@ant-design/icons';
+
+import { binName, supportedVideoFormats, supportedTargetFPS } from '../../../consts';
 
 const { Search } = Input;
+const { Option } = Select;
 /*
 {'plugin': 'ffmpeg', 'nframes': 8736, 'ffmpeg_version': '4.1 built with gcc 8.2.1 (GCC) 20181017', 'codec': 'h264', 'pix_fmt': 'yuv420p(progressive)', 'fps': 60.0, 'source_size': (1920, 1080), 'size': (1920, 1080), 'duration': 145.6}
 */
@@ -18,7 +24,7 @@ type VideoMetadata = {
     duration: number
 };
 
-const pleaseInput = `Please input source video path.`;
+const pleaseInput = `Please input video path.`;
 
 type IState = {
     inputVideoPath: string;
@@ -26,9 +32,9 @@ type IState = {
     inputValidator: { status: "success" | "error"; help: string }
     outputVideoPath: string;
     outputValidator: { status: "success" | "error"; help: string }
+    interpolationMode: string;
+    supportedInterpolationModes: string[];
     targetFPS: number;
-    startTime: number;
-    endTime: number;
 }
 
 export class Convert extends React.Component<{}, IState> {
@@ -40,28 +46,79 @@ export class Convert extends React.Component<{}, IState> {
             inputValidator: { status: `error`, help: pleaseInput },
             outputVideoPath: ``,
             outputValidator: { status: `error`, help: pleaseInput },
+            interpolationMode: ``,
+            supportedInterpolationModes: [],
             targetFPS: 60,
-            startTime: 0,
-            endTime: 60,
         };
     }
+
+    componentDidMount = () => {
+        this.getInterpolationModes();
+    };
+
+    getInterpolationModes = async () => {
+        // load into python
+        const args = [binName, `-if`];
+        const proc = cp.spawn(`python3`, args)
+
+        let stdoutData: string[];
+        proc.stdout.on('data', (data) => {
+            // console.log(`Gotten stdout: ${data}`);
+            stdoutData = JSON.parse(data);
+            this.setState({
+                supportedInterpolationModes: stdoutData,
+                interpolationMode: stdoutData[0],
+            })
+        })
+
+        proc.stderr.on('data', (data) => {
+            message.error(data.toString())
+        })
+
+        proc.on('close', (code) => {
+            if (code !== 0) {
+                message.error('Fatal error, please restart the simulator')
+                console.error(`Can't get interpolation modes... exited with ${code}`)
+            }
+        })
+    };
 
     setOutputFilePath = async (filePath: string) => {
         this.setState({
             outputVideoPath: filePath,
         });
 
-        const { inputVideoPath } = this.state;
-        const srcExt = path.extname(inputVideoPath);
 
+        // filePath length
+        if (filePath.length === 0) {
+            this.setState({
+                outputValidator: { status: "error", help: pleaseInput }
+            })
+            return;
+        }
 
+        // check directory exists
+        const dirname = path.dirname(filePath);
+        if (!fs.existsSync(dirname)) {
+            this.setState({
+                outputValidator: { status: "error", help: "Directory does not exist." }
+            });
+            return;
+        }
 
         // match extensions
-        if (srcExt !== path.extname(filePath)) {
+        const { inputVideoPath } = this.state;
+        const srcExt = path.extname(inputVideoPath).substr(1);
+        if (srcExt !== path.extname(filePath).substr(1)) {
             this.setState({
-                outputValidator: { status: "error", help: "File extensions do not match" }
-            })
+                outputValidator: { status: "error", help: "File extension do not match with input." }
+            });
+            return;
         }
+
+        this.setState({
+            outputValidator: { status: "success", help: '' }
+        })
 
     }
 
@@ -70,64 +127,85 @@ export class Convert extends React.Component<{}, IState> {
 
         this.setState({
             inputVideoPath: filePath,
+            inputVideoMetadata: undefined
         })
+
+        // filePath length
+        if (filePath.length === 0) {
+            this.setState({
+                inputValidator: { status: "error", help: pleaseInput }
+            })
+            return;
+        }
 
         // check exists first
         const fileExists = fs.existsSync(filePath);
-        if (fileExists) {
-            // load into python
-            const args = [binName, `-m`, filePath];
-            const proc = cp.spawn(`python3`, args)
-
-            let stdoutData: VideoMetadata;
-            proc.stdout.on('data', (data) => {
-                // console.log(`Gotten stdout: ${data}`);
-                stdoutData = JSON.parse(data);
-                this.setState({
-                    inputVideoMetadata: stdoutData,
-                })
-            })
-
-            proc.stderr.on('data', (data) => {
-                // message.error(data.toString())
-            })
-
-            proc.on('close', (code) => {
-                if (code === 0) {
-                    // in here we need to set also the outputVideoPath
-                    const fileName = path.basename(filePath);
-                    const fileExt = path.extname(fileName);
-                    const fileDir = path.dirname(filePath);
-
-                    const outputPath = `${fileDir}${path.sep}${fileName}_output.${fileExt}`
-
-                    this.setOutputFilePath(outputPath);
-
-                    this.setState({
-                        inputValidator: { status: "success", help: "" }
-                    })
-                }
-                else {
-                    this.setState({
-                        inputValidator: { status: "error", help: filePath.length === 0 ? pleaseInput : 'Format is not supported.' }
-                    })
-                }
-            })
-        }
-        else {
+        if (!fileExists) {
             this.setState({
-                inputValidator: { status: "error", help: filePath.length === 0 ? pleaseInput : 'File does not exist.' }
+                inputValidator: { status: "error", help: 'File does not exist.' }
             })
+            return;
         }
+
+        // extension is supported
+        const ext = path.extname(filePath).substr(1);
+        // console.log(ext);
+        if (supportedVideoFormats.indexOf(ext) === -1) {
+            this.setState({
+                inputValidator: { status: "error", help: 'Format is not supported.' }
+            })
+            return;
+        }
+
+        // load into python
+        const args = [binName, `-m`, filePath];
+        const proc = cp.spawn(`python3`, args)
+
+        let stdoutData: VideoMetadata;
+        proc.stdout.on('data', (data) => {
+            // console.log(`Gotten stdout: ${data}`);
+            stdoutData = JSON.parse(data);
+            this.setState({
+                inputVideoMetadata: stdoutData,
+            })
+        })
+
+        proc.stderr.on('data', (data) => {
+            // message.error(data.toString())
+        })
+
+        proc.on('close', (code) => {
+            if (code === 0) {
+                // in here we need to set also the outputVideoPath
+                const fileName = path.basename(filePath);
+                const fileExt = path.extname(fileName).substr(1);
+                const fileDir = path.dirname(filePath);
+
+                const fileNameWithoutExt = fileName.slice(0, -(fileExt.length + 1));
+
+                const outputPath = `${fileDir}${path.sep}${fileNameWithoutExt}_output.${fileExt}`
+
+                this.setOutputFilePath(outputPath);
+
+                this.setState({
+                    inputValidator: { status: "success", help: "" }
+                })
+            }
+            else {
+                this.setState({
+                    inputValidator: { status: "error", help: 'Format is not supported.' }
+                })
+            }
+        })
     }
 
     parseMetadata = (metadata: VideoMetadata | undefined) => {
         if (!metadata) {
-            return <div>N/A</div>
+            return <div style={{ marginBottom: 24 }}>N/A</div>
         }
         const { nframes, codec, fps, source_size, duration } = metadata;
         return (
-            <div>
+            <div style={{ marginBottom: 24 }}>
                 <div>{`Codec: ${codec}`}</div>
                 <div>{`Number of frames: ${nframes}`}</div>
                 <div>{`FPS: ${fps}`}</div>
@@ -137,8 +215,24 @@ export class Convert extends React.Component<{}, IState> {
         );
     }
 
+    handleTargetFPSChange = async (fps: number) => {
+        this.setState({
+            targetFPS: fps,
+        })
+    }
+
+    handleInterpolationModeChange = async (mode: string) => {
+        this.setState({
+            interpolationMode: mode,
+        });
+    }
+
+    startConvert = () => {
+        console.log('start boi');
+    }
+
     render() {
-        const { inputVideoPath, inputVideoMetadata, outputVideoPath, targetFPS, startTime, endTime, inputValidator, outputValidator } = this.state;
+        const { inputVideoPath, inputVideoMetadata, outputVideoPath, targetFPS, interpolationMode, supportedInterpolationModes, inputValidator, outputValidator } = this.state;
 
         const disabled = inputValidator.status === "error";
 
@@ -156,7 +250,7 @@ export class Convert extends React.Component<{}, IState> {
                             onChange={(e) => this.setInputFilePath(e.target.value)}
                             onSearch={() => {
                                 const filePath = remote.dialog.showOpenDialogSync(
-                                    { properties: ['openFile'], filters: [{ name: 'Videos', extensions: ['mov', 'avi', 'mpg', 'mpeg', 'mp4', 'mkv', 'wmv'] }] }
+                                    { properties: ['openFile'], filters: [{ name: 'Videos', extensions: supportedVideoFormats }] }
                                 );
 
                                 if (filePath && filePath.length) {
@@ -168,31 +262,64 @@ export class Convert extends React.Component<{}, IState> {
 
                     <h3>Source Video Metadata</h3>
                     {this.parseMetadata(inputVideoMetadata)}
+
+                    <Form.Item
+                        label={<h3>Destination Video Path</h3>}
+                        validateStatus={disabled ? "success" : outputValidator.status}
+                        help={disabled ? "" : outputValidator.help}
+                    >
+                        <Search
+                            disabled={disabled}
+                            enterButton="Browse"
+                            value={outputVideoPath}
+                            onChange={(e) => this.setOutputFilePath(e.target.value)}
+                            onSearch={() => {
+                                const srcExtension = path.extname(inputVideoPath).substr(1)
+
+                                const filePath = remote.dialog.showOpenDialogSync(
+                                    { properties: ['openFile'], filters: [{ name: 'Video', extensions: [srcExtension] }] }
+                                )
+
+                                if (filePath && filePath.length) {
+                                    this.setOutputFilePath(filePath[0]);
+                                }
+                            }}
+                        />
+                    </Form.Item>
+
+                    <Form.Item
+                        label={<Popover content={<div>More frame rates can be set via CLI.</div>} trigger="hover"><h3>Target FPS <InfoCircleOutlined /></h3></Popover>}
+                    >
+                        <Radio.Group value={targetFPS} onChange={(e) => this.handleTargetFPSChange(e.target.value)}
+                            disabled={disabled}>
+                            {
+                                (supportedTargetFPS.map((fps) => {
+                                    return (<Radio.Button key={fps} value={fps}>{fps}</Radio.Button>)
+                                }))
+                            }
+                        </Radio.Group>
+                    </Form.Item>
+
+
+                    <Form.Item
+                        label={<h3>Interpolation Mode</h3>}
+                    >
+                        <Select value={interpolationMode} onChange={this.handleInterpolationModeChange}
+                            disabled={disabled}>
+                            {
+                                (supportedInterpolationModes.map((m) => {
+                                    return (<Option key={m} value={m}>{m}</Option>)
+                                }))
+                            }
+                        </Select>
+                    </Form.Item>
+
                 </Form>
 
+                <div style={{ margin: 'auto', textAlign: 'center', marginTop: 48 }}>
+                    <Button onClick={this.startConvert} size="large" disabled={disabled} type="primary">Start Conversion</Button>
 
-                <Form.Item
-                    label={<h3>Destination Video Path</h3>}
-                    validateStatus={outputValidator.status}
-                    help={outputValidator.help}
-                >
-                    <Search
-                        enterButton="Browse"
-                        value={outputVideoPath}
-                        onChange={(e) => this.setOutputFilePath(e.target.value)}
-                        onSearch={() => {
-                            const srcExtension = path.extname(inputVideoPath)
-
-                            const filePath = remote.dialog.showOpenDialogSync(
-                                { properties: ['openFile'], filters: [{ name: 'Videos', extensions: ['mov', 'avi', 'mpg', 'mpeg', 'mp4', 'mkv', 'wmv'] }] }
-                            )
-
-                            if (filePath && filePath.length) {
-                                this.setOutputFilePath(filePath[0]);
-                            }
-                        }}
-                    />
-                </Form.Item>
+                </div>
 
             </div>
         )

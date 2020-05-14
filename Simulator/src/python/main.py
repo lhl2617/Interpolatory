@@ -7,13 +7,21 @@ args = sys.argv[1:]
 
 mode_flag = args[0]
 
+interpolators = ['nearest', 'oversample', 'linear']
+
 if mode_flag == '-h':
     print('======')
     print('Manual')
     print('======')
+
     print('')
     print('- python3 main.py -h')
     print('Get this help.')
+
+    print('')
+    print('- python3 main.py -if')
+    print('Get supported interpolation-modes')
+    
     
     print('')
     print('- python3 main.py -m <video-path>')
@@ -31,8 +39,6 @@ if mode_flag == '-h':
     print('- python3 main.py -t <interpolation-mode> -f <frame1> <frame2> -o <output-file-path>')
     print('Using <interpolation mode, get the interpolated midpoint frame between <frame1> and <frame2>, saving the output to <output-file-path>')
 
-    print('')
-    print('TODO:- interpolation-mode listing')
 
 elif mode_flag == '-m':
     video_path = args[1]
@@ -40,6 +46,9 @@ elif mode_flag == '-m':
     content = video_file.read()
     video = imageio.get_reader(BytesIO(content), 'ffmpeg', loop=True)
     print(json.dumps(video.get_meta_data()))
+
+elif mode_flag == '-if':
+    print(json.dumps(interpolators))
 
 else:
     print(f'Unknown mode-flag `{mode_flag}`, run `python3 main.py -h` for a usage guide')

@@ -53,3 +53,7 @@ h3 {
 .ant-form-vertical .ant-form-item-label {
     padding: 0 !important;
 }
+
+.ant-form-item {
+    margin-bottom: 12px !important;
+}
