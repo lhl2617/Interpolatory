@@ -8,7 +8,7 @@ const baseConfig = require('./webpack.base.config');
 module.exports = merge.smart(baseConfig, {
     target: 'electron-renderer',
     entry: {
-        app: ['@babel/polyfill','./src/renderer/app.tsx']
+        app: ['@babel/polyfill', './src/renderer/app.tsx']
     },
     module: {
         rules: [
@@ -57,7 +57,27 @@ module.exports = merge.smart(baseConfig, {
                 enforce: 'pre',
                 test: /\.js$/,
                 loader: 'source-map-loader'
-            }
+            },
+            {
+                test: /\.(woff(2)?|ttf|eot|svg)(\?v=\d+\.\d+\.\d+)?$/,
+                use: [
+                    {
+                        loader: 'file-loader',
+                        options: {
+                            name: '[name].[ext]',
+                            outputPath: 'fonts/'
+                        }
+                    }
+                ]
+            },
+            {
+                test: /\.(png|jpe?g|gif)$/i,
+                use: [
+                    {
+                        loader: 'file-loader',
+                    },
+                ],
+            },
         ]
     },
     plugins: [

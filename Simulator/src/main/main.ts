@@ -10,7 +10,7 @@ const installExtensions = async () => {
     const extensions = ['REACT_DEVELOPER_TOOLS', 'REDUX_DEVTOOLS'];
 
     return Promise.all(
-        extensions.map(name => installer.default(installer[name], forceDownload))
+        extensions.map((name) => installer.default(installer[name], forceDownload))
     ).catch(console.log); // eslint-disable-line no-console
 };
 
@@ -19,7 +19,13 @@ const createWindow = async () => {
         await installExtensions();
     }
 
-    win = new BrowserWindow({ width: 800, height: 600 });
+    win = new BrowserWindow({
+        webPreferences: {
+            nodeIntegration: true,
+        },
+        width: 800,
+        height: 600,
+    });
 
     if (process.env.NODE_ENV !== 'production') {
         process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = '1'; // eslint-disable-line require-atomic-updates
@@ -29,7 +35,7 @@ const createWindow = async () => {
             url.format({
                 pathname: path.join(__dirname, 'index.html'),
                 protocol: 'file:',
-                slashes: true
+                slashes: true,
             })
         );
     }

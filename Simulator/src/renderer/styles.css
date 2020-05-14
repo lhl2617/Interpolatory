@@ -1,0 +1,11 @@
+@import '~antd/dist/antd.css';
+* {
+    font-family: Proxima;
+}
+
+@font-face {
+    font-family: Proxima;
+    src: local('Proxima Nova Regular'), url('../../assets/fonts/ProximaNovaRegular.eot'),
+        url('../../assets/fonts/ProximaNovaRegular.ttf') format('truetype');
+    /*for CSS3*/
+}
