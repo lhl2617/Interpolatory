@@ -1,0 +1,1 @@
+export const binName = `C:\\Users\\lhlee\\Documents\\Interpolatory\\Simulator\\src\\python\\main.py`;

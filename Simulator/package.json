@@ -27,8 +27,8 @@
     ]
   },
   "build": {
-    "productName": "ProductName",
-    "appId": "org.your.productname",
+    "productName": "Interpolatory Simulator",
+    "appId": "interpolatory.simulator",
     "mac": {
       "category": "your.app.category.type"
     },
@@ -49,7 +49,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com:Robinfr/electron-react-typescript.git"
+    "url": "https://github.com/lhl2617/Interpolatory"
   },
   "author": {
     "name": "Your name",

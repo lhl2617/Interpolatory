@@ -25,7 +25,10 @@ const createWindow = async () => {
         },
         width: 800,
         height: 600,
+        frame: false
     });
+    win.setIcon(path.join(__dirname, '../../assets/img/logo-white.png'));
+
 
     if (process.env.NODE_ENV !== 'production') {
         process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = '1'; // eslint-disable-line require-atomic-updates

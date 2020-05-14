@@ -70,14 +70,6 @@ module.exports = merge.smart(baseConfig, {
                     }
                 ]
             },
-            {
-                test: /\.(png|jpe?g|gif)$/i,
-                use: [
-                    {
-                        loader: 'file-loader',
-                    },
-                ],
-            },
         ]
     },
     plugins: [
