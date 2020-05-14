@@ -1,0 +1,48 @@
+1. Cloning repo
+    => it's huge because I had junk videos
+2. Running code
+    => For those who tried, any problems?
+    => Setting up env. (vscode server)
+3. Splitting work
+    => ME <type interface> MCI, ML
+        
+    => ME: define a MV type interface for MCI
+        => Olly, Naim
+        => type elem = {
+            movement: <float, float>, (x,y)
+            metric: float
+        }
+        => type MV = Array<elem>, raster scan per block
+        
+        MV countFlow(frame1, frame2):
+            # blah
+
+    => decide which block method?
+        => do we try most, or the best we found?
+        => start from trivial (Full Search)
+        
+    => MCI?
+        => Charles, Bruce and Navid
+        => not completely decoupled for MV type interface
+        => median/mean method (unidirectional)
+        => post processing is stretch goal
+        => need to investigate bidirectional
+
+        24 -> 60 (2.5)
+        frame MCI(frame1, frame2, mv, ratio?):
+            # blah
+
+    => ML
+        => if MEMC doesn't need extra hands, LH just go explore
+
+
+    => Source videos: 
+        => Find 60 or 120 fps (better) and downsample to 24, 25, 50
+        => Target 60 and compare PSNR & SSIM to ground truth
+        => I have links to videos, will look into this 
+
+
+4. Timeline
+    => Wednesday: give a rough timeline and expectations for Kieron, telling him what we need
+    => We have two weeks until a leaflet deliverable - I will write a catch up email to our new supervisor today
+5. Others
