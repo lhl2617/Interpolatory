@@ -5,6 +5,10 @@ import time
 import sys
 import cProfile    
 
+'''
+block_size = size of block used in source and target frame
+target_region = number of pixels padding the block to be searched
+'''
 def get_motion_vectors(block_size, target_region, source_frame, target_frame):
     output = np.empty_like(source_frame, dtype='float32')
     lowest_sad_const = block_size * block_size * (255 + 255 + 255) + 1    # maximum sad score for a block
@@ -19,11 +23,10 @@ def get_motion_vectors(block_size, target_region, source_frame, target_frame):
             lowest_sad = lowest_sad_const
             lowest_distance = lowest_distance_const
             target_index = (0, 0)
-            for t_row in range(max(0, s_row - math.floor(target_region/2)), min(target_frame.shape[0] - block_size, s_row + math.floor(target_region/2))):
-                for t_col in range(max(0, s_col - math.floor(target_region/2)), min(target_frame.shape[1] - block_size, s_col + math.floor(target_region/2))):
+            for t_row in range(max(0, s_row - target_region), min(target_frame.shape[0] - block_size, s_row + target_region)):
+                for t_col in range(max(0, s_col - target_region), min(target_frame.shape[1] - block_size, s_col + target_region)):
                     target_block = target_frame[t_row:t_row+block_size, t_col:t_col+block_size, :]
                     sad = np.sum(np.abs(np.subtract(source_block, target_block)))
-                    # sad = 0
                     distance = (s_row - t_row) *  (s_row - t_row) + (s_col - t_col) * (s_col - t_col)
                     if sad < lowest_sad or (sad == lowest_sad and distance < lowest_distance):
                         lowest_distance = distance
