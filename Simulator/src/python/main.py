@@ -39,10 +39,6 @@ if mode_flag == '-h':
     print('Using <interpolation mode, get the interpolated midpoint frame between <frame1> and <frame2>, saving the output to <output-file-path>')
     
     print('')
-    print('- python3 main.py -deps')
-    print('Get a list of project dependencies')
-    
-    print('')
     print('- python3 main.py -ver')
     print('Get version')
 

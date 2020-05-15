@@ -1,13 +1,14 @@
 import * as React from 'react';
 import * as cp from 'child_process';
 import * as path from 'path';
-import { message, Button, Popconfirm } from 'antd';
+import { message, Button, Popconfirm, Modal, Form, Input } from 'antd';
 import * as commandExists from 'command-exists';
-import { getPython3, getInterpolatory } from '../../../util';
-import { LocalStorageKey, getLocalStorage, setLocalStorage } from '../../../store';
+import { remote } from 'electron';
+import { getPython3, getInterpolatory, reloadApp } from '../../../util';
+import { LocalStorageKey, getLocalStorage, setLocalStorage, deleteLocalStorage } from '../../../store';
 
+const { Search } = Input;
 message.config({ top: 64, maxCount: 3 })
-
 const logo = require('../../../../../assets/img/logo.png').default;
 
 type VerState = { status: "loading" | "done" | "error", ver: string }
@@ -20,10 +21,14 @@ type IState = {
     // pyDeps: Record<string, string>;
     binVer: BinVer;
     dependencyLastInstalledTime: string;
+    changePathsModalVisible: boolean;
+    newPyPath: string;
+    newBinPath: string;
 }
 
 const python3 = getPython3();
 const binName = getInterpolatory();
+
 
 export class Home extends React.Component<{}, IState> {
 
@@ -34,7 +39,10 @@ export class Home extends React.Component<{}, IState> {
         this.state = {
             pyVer: { status: "loading", ver: "" },
             binVer: { status: "loading", ver: "" },
-            dependencyLastInstalledTime: `Loading...`
+            dependencyLastInstalledTime: `Loading...`,
+            changePathsModalVisible: false,
+            newPyPath: python3,
+            newBinPath: binName
         };
         this.mounted = false;
     }
@@ -66,6 +74,7 @@ export class Home extends React.Component<{}, IState> {
         const proc = cp.spawn(python3, [`-V`]);
 
         proc.stdout.on('data', (data) => {
+            console.log(data.toString());
             if (this.mounted) this.setState({ pyVer: { status: "done", ver: data.toString() } });
         });
 
@@ -75,7 +84,8 @@ export class Home extends React.Component<{}, IState> {
                 if (this.mounted) this.setState(
                     {
                         pyVer: { status: "error", ver: this.state.pyVer.ver },
-                        binVer: { status: "error", ver: `Python 3 error` }
+                        binVer: { status: "error", ver: `Python 3 error` },
+                        dependencyLastInstalledTime: `N/A`
                     }
                 );
             }
@@ -97,8 +107,8 @@ export class Home extends React.Component<{}, IState> {
 
         proc.on('close', (code) => {
             if (code !== 0) {
-                // TODO:- show modal and exit
-                if (this.mounted) this.setState({ binVer: { status: "error", ver: this.state.binVer.ver } });
+                if (this.mounted) message.error(`Could not start Interpolatory backend process, is your Interpolatory Path correct?`)
+                if (this.mounted) this.setState({ binVer: { status: "error", ver: this.state.binVer.ver }, dependencyLastInstalledTime: `N/A` });
             }
             else {
                 // success, now get deps
@@ -115,7 +125,7 @@ export class Home extends React.Component<{}, IState> {
             if (this.mounted) this.setState({ dependencyLastInstalledTime: dateString.toString() });
             return;
         }
-        
+
         if (this.mounted) this.setState({ dependencyLastInstalledTime: `N/A` });
     }
 
@@ -143,6 +153,7 @@ export class Home extends React.Component<{}, IState> {
             }
         })
     }
+
 
     // getDeps = async () => {
     //     // read requirements.txt
@@ -268,12 +279,34 @@ export class Home extends React.Component<{}, IState> {
     //     return <span>Loading...</span>
     // }
 
-    changePaths = () => {
-        return true;
+    showChangePathsModal = () => {
+        this.setState({ changePathsModalVisible: true })
+    }
+
+    hideChangePathsModal = () => {
+        this.setState({ changePathsModalVisible: false })
+    }
+
+    changePaths = (newPyPath: string, newBinName: string) => {
+        let shouldReload = false;
+        if (newPyPath !== python3) {
+            shouldReload = true;
+            setLocalStorage(LocalStorageKey.PythonPath, newPyPath);
+        }
+        if (newBinName !== binName) {
+            shouldReload = true;
+            setLocalStorage(LocalStorageKey.InterpolatoryPath, newBinName);
+        }
+        if (shouldReload) {
+            // dependencies are different now
+            deleteLocalStorage(LocalStorageKey.DependencyLastInstallTime);
+            reloadApp();
+        }
+
     }
 
     render() {
-        const { pyVer, binVer, dependencyLastInstalledTime } = this.state;
+        const { pyVer, binVer, dependencyLastInstalledTime, changePathsModalVisible, newBinPath, newPyPath } = this.state;
         return (
             <div style={{ textAlign: 'center', margin: 'auto' }}>
                 <div>
@@ -288,7 +321,7 @@ export class Home extends React.Component<{}, IState> {
                     <p style={{ marginBottom: 0 }}>Python Version: {this.renderVer(pyVer)}</p>
                     <p style={{ marginBottom: 0 }}>Interpolatory Path: {binName}</p>
                     <p style={{ marginBottom: 0 }}>Interpolatory Backend Version: {this.renderVer(binVer)}</p>
-                    <Button style={{ marginBottom: 18 }}>Change Python 3 / Interpolatory Backend Path</Button>
+                    <Button style={{ marginBottom: 18 }} onClick={this.showChangePathsModal}>Change Python 3 / Interpolatory Backend Path</Button>
 
                     <h3>Python Dependencies Info</h3>
                     <div>Last installed: {dependencyLastInstalledTime}</div>
@@ -297,10 +330,64 @@ export class Home extends React.Component<{}, IState> {
                         onConfirm={this.reinstallDependencies}
                         okText='Yes'
                         cancelText='No'
-                        >
+                        disabled={binVer.status !== "done"}
+                    >
                         <Button danger disabled={binVer.status !== "done"}>Reinstall Dependencies</Button>
                     </Popconfirm>
                 </div>
+                <Modal
+                    style={{ left: 150 }}
+                    title='Change Python 3 / Interpolatory Backend Path'
+                    visible={changePathsModalVisible}
+                    onOk={() => { this.changePaths(newPyPath, newBinPath); this.hideChangePathsModal(); }}
+                    onCancel={() => { this.setState({ newBinPath: binName, newPyPath: python3 }); this.hideChangePathsModal(); }}
+                >
+
+                    <Form layout="vertical" >
+                        <Form.Item
+                            label={<h3>Python 3 Path</h3>}>
+                            <Search
+                                enterButton="Browse"
+                                value={newPyPath}
+                                onChange={(e) => { this.setState({ newPyPath: e.target.value }) }}
+                                onSearch={() => {
+                                    const filePath = remote.dialog.showOpenDialogSync(
+                                        { 
+                                            title: `Select Python 3 Path`,
+                                            defaultPath: path.dirname(newPyPath),
+                                            properties: ['openFile'] 
+                                        }
+                                    );
+
+                                    if (filePath && filePath.length) {
+                                        this.setState({ newPyPath: filePath[0] })
+                                    }
+                                }} />
+                        </Form.Item>
+
+                        <Form.Item
+                            label={<h3>Interpolatory Path</h3>}>
+                            <Search
+                                enterButton="Browse"
+                                value={newBinPath}
+                                onChange={(e) => { this.setState({ newBinPath: e.target.value }) }}
+                                onSearch={() => {
+                                    const filePath = remote.dialog.showOpenDialogSync(
+                                        {
+                                            title: `Select Interpolatory Path`,
+                                            defaultPath: path.dirname(newBinPath),
+                                            properties: ['openFile']
+                                        }
+                                    );
+
+                                    if (filePath && filePath.length) {
+                                        this.setState({ newBinPath: filePath[0] })
+                                    }
+                                }} />
+                        </Form.Item>
+                    </Form>
+                </Modal>
+
             </div>
 
         )

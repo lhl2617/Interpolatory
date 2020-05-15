@@ -21,3 +21,7 @@ export const setLocalStorage = (key: LocalStorageKey, value: string) => {
     }
     return true;
 }
+
+export const deleteLocalStorage = (key: LocalStorageKey) => {
+    window.localStorage.removeItem(key);
+}

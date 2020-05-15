@@ -5,6 +5,11 @@ project.lock.json
 *.pyc
 nupkg/
 
+# react electron etc.
+node_modules/
+dist/
+release/
+
 # Visual Studio Code
 .vscode
 

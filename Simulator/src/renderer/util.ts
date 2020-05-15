@@ -45,3 +45,8 @@ export const maxApp = () => {
         w.unmaximize();
     }
 }
+
+export const reloadApp = () => {
+    const w = remote.getCurrentWindow();
+    w.reload();
+}

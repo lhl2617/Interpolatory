@@ -253,7 +253,12 @@ export class Convert extends React.Component<{}, IState> {
                             onChange={(e) => this.setInputFilePath(e.target.value)}
                             onSearch={() => {
                                 const filePath = remote.dialog.showOpenDialogSync(
-                                    { properties: ['openFile'], filters: [{ name: 'Videos', extensions: supportedVideoFormats }] }
+                                    { 
+                                        title: `Select Source Video`,
+                                        defaultPath: path.dirname(inputVideoPath),
+                                        properties: ['openFile'], 
+                                        filters: [{ name: 'Videos', extensions: supportedVideoFormats }] 
+                                    }
                                 );
 
                                 if (filePath && filePath.length) {
