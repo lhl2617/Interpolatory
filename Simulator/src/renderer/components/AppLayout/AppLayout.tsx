@@ -133,7 +133,7 @@ export class AppLayout extends React.Component<{}, IState> {
                             </Menu.Item>
                         </Menu>
                     </Sider>
-                    <Layout style={{ padding: 24, height: height - 50, minWidth: 500 }}>
+                    <Layout style={{ padding: '0 24px 24px 24px', height: height - 50 }}>
                         <Content
                             className="site-layout-background content"
                             style={{

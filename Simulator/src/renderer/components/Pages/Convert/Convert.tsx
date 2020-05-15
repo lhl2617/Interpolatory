@@ -9,13 +9,14 @@ import {
     InfoCircleOutlined
 } from '@ant-design/icons';
 
-import { binName, supportedVideoFormats, supportedTargetFPS } from '../../../globals';
-import { getPython3 } from '../../../util';
+import { supportedVideoFormats, supportedTargetFPS } from '../../../globals';
+import { getPython3, getInterpolatory } from '../../../util';
 
 const { Search } = Input;
 const { Option } = Select;
 
 const python3 = getPython3();
+const binName = getInterpolatory();
 /*
 {'plugin': 'ffmpeg', 'nframes': 8736, 'ffmpeg_version': '4.1 built with gcc 8.2.1 (GCC) 20181017', 'codec': 'h264', 'pix_fmt': 'yuv420p(progressive)', 'fps': 60.0, 'source_size': (1920, 1080), 'size': (1920, 1080), 'duration': 145.6}
 */

@@ -1,9 +1,10 @@
 import * as React from 'react';
 import * as cp from 'child_process';
-import { message, Button } from 'antd';
-import { getPython3 } from '../../../util';
-import { binName } from '../../../globals';
-import { LocalStorageKey, getLocalStorage } from '../../../store';
+import * as path from 'path';
+import { message, Button, Popconfirm } from 'antd';
+import * as commandExists from 'command-exists';
+import { getPython3, getInterpolatory } from '../../../util';
+import { LocalStorageKey, getLocalStorage, setLocalStorage } from '../../../store';
 
 message.config({ top: 64, maxCount: 3 })
 
@@ -12,50 +13,68 @@ const logo = require('../../../../../assets/img/logo.png').default;
 type VerState = { status: "loading" | "done" | "error", ver: string }
 
 type PyVer = VerState;
-type PyDep = VerState;
 type BinVer = VerState;
 
 type IState = {
     pyVer: PyVer;
-    pyPath: string;
-    pyDeps: Record<string, string>;
+    // pyDeps: Record<string, string>;
     binVer: BinVer;
-    depError: boolean;
+    dependencyLastInstalledTime: string;
 }
 
 const python3 = getPython3();
+const binName = getInterpolatory();
 
 export class Home extends React.Component<{}, IState> {
+
+    mounted = false;
+
     constructor(props: any) {
         super(props);
         this.state = {
             pyVer: { status: "loading", ver: "" },
-            pyPath: `Loading...`,
-            pyDeps: {},
             binVer: { status: "loading", ver: "" },
-            depError: false,
+            dependencyLastInstalledTime: `Loading...`
         };
+        this.mounted = false;
     }
+
 
     componentDidMount = () => {
-        this.getPyVer()
+        this.mounted = true;
+        this.getPyVer();
     }
 
+    componentWillUnmount = () => {
+        this.mounted = false;
+    }
+
+
     getPyVer = async () => {
+        const pyExists = commandExists.sync(python3);
+
+        if (!pyExists) {
+            if (this.mounted) message.error(`Python installation not found, please change Python settings`);
+            if (this.mounted) this.setState(
+                {
+                    pyVer: { status: "error", ver: this.state.pyVer.ver },
+                    binVer: { status: "error", ver: `Python 3 error` }
+                }
+            );
+            return;
+        }
         const proc = cp.spawn(python3, [`-V`]);
 
         proc.stdout.on('data', (data) => {
-            this.setState({ pyVer: { status: "done", ver: data.toString() } });
+            if (this.mounted) this.setState({ pyVer: { status: "done", ver: data.toString() } });
         });
-
 
         proc.on('close', (code) => {
             if (code !== 0) {
-                message.error(`Python installation not found, please change Python settings`);
-                this.setState(
+                if (this.mounted) message.error(`Python installation not found, please change Python settings`);
+                if (this.mounted) this.setState(
                     {
                         pyVer: { status: "error", ver: this.state.pyVer.ver },
-                        pyPath: `N/A`,
                         binVer: { status: "error", ver: `Python 3 error` }
                     }
                 );
@@ -63,38 +82,8 @@ export class Home extends React.Component<{}, IState> {
             else {
                 // success, now get path and binVer
                 this.getBinVer();
-                this.getPyPath();
             }
         })
-    }
-
-    getPyPath = async () => {
-        const p = getLocalStorage(LocalStorageKey.PythonPath)
-        if (p) {
-            this.setState({
-                pyPath: p
-            });
-        }
-        else {
-            // get from sys.executable
-            const proc = cp.spawn(python3, [`-c`, "import sys; print(sys.executable)"]);
-
-            proc.stdout.on('data', (data) => {
-                const sdata = data.toString();
-                this.setState({
-                    pyPath: sdata
-                })
-            })
-
-            proc.on('close', (code) => {
-                if (code !== 0) {
-                    message.error(`Could not get Python path`)
-                    this.setState ({
-                        pyPath: `error`
-                    })
-                }
-            });
-        }
     }
 
     getBinVer = async () => {
@@ -103,61 +92,157 @@ export class Home extends React.Component<{}, IState> {
         proc.stdout.on('data', (data) => {
             const str: string = data.toString();
             const gottenVer = str.substring(str.indexOf('"') + 1, str.lastIndexOf('"'));
-            this.setState({ binVer: { status: "done", ver: gottenVer } });
+            if (this.mounted) this.setState({ binVer: { status: "done", ver: gottenVer } });
         });
 
         proc.on('close', (code) => {
             if (code !== 0) {
                 // TODO:- show modal and exit
-                this.setState({ binVer: { status: "error", ver: this.state.binVer.ver } });
+                if (this.mounted) this.setState({ binVer: { status: "error", ver: this.state.binVer.ver } });
             }
             else {
                 // success, now get deps
-                this.getDeps();
+                this.getDependencyInfo();
             }
         })
     }
 
-    getDeps = async () => {
-        const proc = cp.spawn(python3, [binName, '-deps']);
+    getDependencyInfo = async () => {
+        const dateTime = getLocalStorage(LocalStorageKey.DependencyLastInstallTime);
+        if (dateTime) {
+            const dateString = new Date(parseInt(dateTime, 10));
 
-        let deps: string[];
+            if (this.mounted) this.setState({ dependencyLastInstalledTime: dateString.toString() });
+            return;
+        }
+        
+        if (this.mounted) this.setState({ dependencyLastInstalledTime: `N/A` });
+    }
 
-        proc.stdout.on('data', (data) => {
-            const gottenDeps: string[] = JSON.parse(data.toString())
-            deps = gottenDeps;
-        });
+    reinstallDependencies = async () => {
+        const binPathDir = path.dirname(binName);
+        const requirementsTxt = path.join(binPathDir, `requirements.txt`);
 
-        proc.on('close', (code) => {
+        const proc = cp.spawn(python3, [`-m`, `pip`, `install`, `-r`, requirementsTxt]);
+
+        let outErr: string;
+
+        proc.stderr.on(`data`, (data) => {
+            outErr += data.toString();
+        })
+
+        proc.on(`close`, (code) => {
             if (code !== 0) {
-                // TODO:- show option to install deps
-                this.setState({ depError: true })
+                if (this.mounted) message.error(`Error installing dependencies, please install manually`);
+                console.error(outErr);
             }
             else {
-                // success, now query deps
-                deps.forEach((dep) => {
-                    const depProc = cp.spawnSync(python3, [`-m`, `pip`, `show`, dep]);
-                    if (depProc.stderr.length || depProc.error) {
-                        message.error(`Dependency \`${dep}\` not found, please reinstall dependencies`);
-                        const newPyDeps = this.state.pyDeps;
-                        newPyDeps[dep] = `N/A`;
-                        this.setState({ depError: true, pyDeps: newPyDeps })
-                    }
-                    else {
-                        const out = depProc.stdout.toString();
-                        const vLine = out
-                            .split(`\n`)
-                            .filter((s) => s.includes(`Version`))[0];
-                        const vStr = vLine.substring(9);
-                        const newPyDeps = this.state.pyDeps;
-                        newPyDeps[dep] = vStr;
-                        this.setState({ pyDeps: newPyDeps })
-                    }
-
-                })
+                message.info(`Dependencies installed successfully`);
+                setLocalStorage(LocalStorageKey.DependencyLastInstallTime, Date.now().toString());
+                this.getDependencyInfo();
             }
         })
     }
+
+    // getDeps = async () => {
+    //     // read requirements.txt
+    //     const proc = cp.spawn(python3, [binName, '-deps']);
+
+    //     let deps: string[];
+
+    //     proc.stdout.on('data', (data) => {
+    //         const gottenDeps: string[] = JSON.parse(data.toString())
+    //         deps = gottenDeps;
+    //     });
+
+    //     proc.on('close', (code) => {
+    //         if (code !== 0) {
+    //             // TODO:- show option to install deps
+    //             if (this.mounted) this.setState({ depError: true })
+    //         }
+    //         else {
+    //             const prePyDeps: Record<string, string> = {};
+    //             deps.forEach((dep) => {
+    //                 prePyDeps[dep] = `Loading...`
+    //             })
+    //             if (this.mounted) this.setState({ pyDeps: prePyDeps });
+    //             // success, now query deps
+    //             deps.forEach((dep) => {
+    //                 this.getDepVersion(dep);
+    //             })
+    //         }
+    //     })
+    // }
+
+    // get dep version from python and set it in state
+    // second argument checkForDepErrorFalse set to true if required to set depError to false
+    // getDepVersion = async (dep: string, checkForDepErrorFalse = false) => {
+    //     const depProc = cp.spawn(python3, [`-m`, `pip`, `show`, dep]);
+
+    //     let depout: string;
+
+    //     depProc.stdout.on('data', (data) => {
+    //         depout += data.toString();
+    //     });
+
+    //     depProc.on('close', (depProcCode) => {
+    //         if (depProcCode !== 0) {
+    //             const newPyDeps = this.state.pyDeps;
+    //             newPyDeps[dep] = `N/A`;
+    //             if (this.mounted) message.error(`Dependency \`${dep}\` not found, please install missing dependencies`);
+    //             if (this.mounted) this.setState({ depError: true, pyDeps: newPyDeps })
+    //         }
+    //         else {
+    //             const vLine = depout
+    //                 .split(`\n`)
+    //                 .filter((s) => s.includes(`Version`))[0];
+    //             const vStr = vLine.substring(9);
+    //             const newPyDeps = this.state.pyDeps;
+    //             newPyDeps[dep] = vStr;
+    //             if (this.mounted) {
+    //                 this.setState({ pyDeps: newPyDeps })
+    //                 if (checkForDepErrorFalse) {
+    //                     const ok = Object.values(newPyDeps)
+    //                         .map((ver) => ver !== 'N/A')
+    //                         .reduce((a, b) => a && b)
+    //                     if (ok && this.mounted) {
+    //                         this.setState({ depError: false });
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //     })
+    // }
+
+    // installMissingDependencies = async () => {
+    //     const { pyDeps } = this.state;
+    //     Object.entries(pyDeps).forEach(([dep, ver]) => {
+    //         if (ver === 'N/A') {
+    //             if (this.mounted) message.info(`Installing dependency: \`${dep}\``)
+    //             const proc = cp.spawn(python3, [`-m`, `pip`, `install`, dep]);
+
+    //             let errMsg: string;
+
+    //             proc.stderr.on('data', (data) => {
+    //                 errMsg += data.toString();
+    //             })
+
+    //             proc.on('close', (code) => {
+    //                 if (this.mounted) {
+    //                     if (code !== 0) {
+    //                         message.error(`Error installing dependency \`${dep}\`, please install it manually`);
+    //                         console.error(errMsg);
+
+    //                     }
+    //                     else {
+    //                         message.info(`Dependency \`${dep}\` installed successfully`);
+    //                         this.getDepVersion(dep, true);
+    //                     }
+    //                 }
+    //             })
+    //         }
+    //     })
+    // }
 
     renderVer = (ver: VerState) => {
         if (ver.status === "loading") {
@@ -169,23 +254,26 @@ export class Home extends React.Component<{}, IState> {
         return ver.ver;
     }
 
-    renderPyDepInfo = (pyDeps: Record<string, string>) => {
-        if (Object.keys(pyDeps).length) {
-            return (Object.entries(pyDeps).map(([dep, status]) => {
-                return <p key={dep} style={{ margin: 0 }}>{dep}: {status === `N/A` ? <span style={{ color: 'red' }}>N/A</span> : status}</p>
-            }));
-        }
+    // renderPyDepInfo = (pyDeps: Record<string, string>) => {
+    //     if (Object.keys(pyDeps).length) {
+    //         return (Object.entries(pyDeps).map(([dep, status]) => {
+    //             return <p key={dep} style={{ margin: 0 }}>{dep}: {status === `N/A` ? <span style={{ color: 'red' }}>N/A</span> : status}</p>
+    //         }));
+    //     }
 
-        if (this.state.pyVer.status === "error") {
-            return <span>Python 3 error</span>
-        }
+    //     if (this.state.pyVer.status === "error") {
+    //         return <span style={{ color: 'red' }}>Python 3 error</span>
+    //     }
 
-        return <span>Loading...</span>
+    //     return <span>Loading...</span>
+    // }
+
+    changePaths = () => {
+        return true;
     }
 
-
     render() {
-        const { pyVer, pyDeps, binVer, depError, pyPath } = this.state;
+        const { pyVer, binVer, dependencyLastInstalledTime } = this.state;
         return (
             <div style={{ textAlign: 'center', margin: 'auto' }}>
                 <div>
@@ -196,14 +284,22 @@ export class Home extends React.Component<{}, IState> {
 
                 <div style={{ marginTop: 18, marginBottom: 18 }}>
                     <h3 style={{ fontSize: 24 }}>Machine Info</h3>
+                    <p style={{ marginBottom: 0 }}>Python Path: {python3}</p>
                     <p style={{ marginBottom: 0 }}>Python Version: {this.renderVer(pyVer)}</p>
-                    <p style={{ marginBottom: 0 }}>Python Path: {pyPath}</p>
+                    <p style={{ marginBottom: 0 }}>Interpolatory Path: {binName}</p>
                     <p style={{ marginBottom: 0 }}>Interpolatory Backend Version: {this.renderVer(binVer)}</p>
                     <Button style={{ marginBottom: 18 }}>Change Python 3 / Interpolatory Backend Path</Button>
 
                     <h3>Python Dependencies Info</h3>
-                    <div>{this.renderPyDepInfo(pyDeps)}</div>
-                    {depError && <Button danger>Install Missing Dependencies</Button>}
+                    <div>Last installed: {dependencyLastInstalledTime}</div>
+                    <Popconfirm
+                        title="This will reinstall all dependencies. Are you sure you want to continue?"
+                        onConfirm={this.reinstallDependencies}
+                        okText='Yes'
+                        cancelText='No'
+                        >
+                        <Button danger disabled={binVer.status !== "done"}>Reinstall Dependencies</Button>
+                    </Popconfirm>
                 </div>
             </div>
 

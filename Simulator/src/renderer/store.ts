@@ -1,7 +1,9 @@
 // localStorage interface
 
 export enum LocalStorageKey {
-    PythonPath = "PythonPath"
+    PythonPath = "PythonPath",
+    InterpolatoryPath = "InterpolatoryPath",
+    DependencyLastInstallTime = "DependencyLastInstallTime"
 }
 
 

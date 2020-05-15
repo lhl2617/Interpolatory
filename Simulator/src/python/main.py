@@ -6,7 +6,7 @@ args = sys.argv[1:]
 mode_flag = args[0]
 
 interpolators = ['nearest', 'oversample', 'linear']
-dependencies = ['imageio', 'imageio-ffmpeg', 'scikit-image', 'numpy', 'testdoesnotexist']
+dependencies = ['imageio', 'imageio-ffmpeg', 'scikit-image', 'numpy']
 version = '0.0.1'
 
 if mode_flag == '-h':

@@ -14,7 +14,17 @@ export const setPython3 = (path: string) => {
         return true;
     }
     throw new Error('Unable to set Python path');
-    return false;
+}
+
+export const getInterpolatory = () => {
+    return (getLocalStorage(LocalStorageKey.InterpolatoryPath) ?? `C:\\Users\\lhlee\\Documents\\Interpolatory\\Simulator\\src\\python\\main.py`);
+}
+
+export const setInterpolatory = (path: string) => {
+    if (setLocalStorage(LocalStorageKey.InterpolatoryPath, path)) {
+        return true;
+    }
+    throw new Error('Unable to set Interpolatory path');
 }
 
 export const closeApp = () => {

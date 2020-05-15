@@ -111,7 +111,9 @@
     "webpack-merge": "^4.2.1"
   },
   "dependencies": {
+    "@types/command-exists": "^1.2.0",
     "antd": "^4.2.2",
+    "command-exists": "^1.2.9",
     "react": "^16.13.1",
     "react-dom": "^16.13.1"
   }

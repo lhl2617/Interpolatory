@@ -1,4 +1,4 @@
-export const binName = `C:\\Users\\lhlee\\Documents\\Interpolatory\\Simulator\\src\\python\\main.py`;
+// export const binName = ;
 
 export const supportedVideoFormats = ['mov', 'avi', 'mpg', 'mpeg', 'mp4', 'mkv', 'wmv'];
 
