@@ -27,17 +27,16 @@ def get_motion_vectors(block_size, steps, source_frame, target_frame):
                 for t_row in range(curr_row - S, curr_row + S, S):
                     for t_col in range(curr_col - S, curr_col + S, S):
                         i += 1
-                        if (t_row != s_row or t_col != s_col or center_sad == None) and (t_row >= 0 and t_row <= source_frame.shape[0] - block_size and t_col >= 0 and t_col <= source_frame.shape[1] - block_size):
+                        if (t_row != curr_row or t_col != curr_col or center_sad == None) and (t_row >= 0 and t_row <= source_frame.shape[0] - block_size and t_col >= 0 and t_col <= source_frame.shape[1] - block_size):
                             target_block = target_frame[t_row:t_row+block_size, t_col:t_col+block_size, :]
                             sad = np.sum(np.abs(np.subtract(source_block, target_block)))
-                            if t_row == s_row and t_col == s_col:
-                                center_sad = sad
                             if sad < lowest_sad or (sad == lowest_sad and prec_dic[i] > prec_dic[lowest_i]):
                                 lowest_sad = sad
                                 lowest_idx = (t_row, t_col)
                                 lowest_i = i
                 curr_row = lowest_idx[0]
                 curr_col = lowest_idx[1]
+                center_sad = lowest_sad
             block = np.full((block_size, block_size, 3), [lowest_idx[0] - s_row, lowest_idx[1] - s_col, lowest_sad])
             output[s_row:s_row+block_size, s_col:s_col+block_size, :] = block
             
