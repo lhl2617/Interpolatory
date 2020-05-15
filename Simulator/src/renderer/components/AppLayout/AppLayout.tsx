@@ -1,16 +1,19 @@
 /* eslint-disable */
 import * as React from 'react';
 import { Layout, Menu, Button } from 'antd';
-import { remote } from 'electron';
 import Benchmark from '../Pages/Benchmark/Benchmark';
 import Convert from '../Pages/Convert/Convert';
 import Test from '../Pages/Test/Test';
 import Info from '../Pages/Info/Info';
+import Home from '../Pages/Home/Home';
+import { minApp, closeApp, maxApp } from '../../util';
 
 const { SubMenu } = Menu;
 const { Header, Content, Sider } = Layout;
 
 const logo = require('../../../../assets/img/headerlogo.png').default;
+
+const homeIcon = require('../../../../assets/img/home.png').default;
 const convertIcon = require('../../../../assets/img/convert.png').default;
 const benchmarkIcon = require('../../../../assets/img/benchmark.png').default;
 const testIcon = require('../../../../assets/img/test.png').default;
@@ -22,7 +25,7 @@ const maxIcon = require('../../../../assets/img/window/max.png').default;
 const closeIcon = require('../../../../assets/img/window/close.png').default;
 
 
-type CurrentPage = 'convert' | 'benchmark' | 'test' | 'info';
+type CurrentPage = 'home' | 'convert' | 'benchmark' | 'test' | 'info';
 
 type IState = {
     currentPage: CurrentPage;
@@ -33,8 +36,8 @@ export class AppLayout extends React.Component<{}, IState> {
     constructor(props: any) {
         super(props);
         this.state = {
-            currentPage: 'convert',
-            height: 600,
+            currentPage: 'home',
+            height: 768,
         };
     }
 
@@ -58,26 +61,9 @@ export class AppLayout extends React.Component<{}, IState> {
         this.setState({ height: window.innerHeight });
     }
 
-    closeApp = () => {
-        const w = remote.getCurrentWindow();
-        w.close();
-    }
-
-    minApp = () => {
-        const w = remote.getCurrentWindow();
-        w.minimize();
-    }
-
-    maxApp = () => {
-        const w = remote.getCurrentWindow();
-        if (!w.isMaximized()) {
-            w.maximize();
-        } else {
-            w.unmaximize();
-        }
-    }
 
     getContent = (currentPage: CurrentPage) => {
+        if (currentPage === "home") return <Home />;
         if (currentPage === "benchmark") return <Benchmark />;
         if (currentPage === "convert") return <Convert />;
         if (currentPage === "test") return <Test />;
@@ -102,19 +88,25 @@ export class AppLayout extends React.Component<{}, IState> {
                         alt='Interpolatory Simulator'
                     />
                     <div style={{ float: 'right', color: 'white' }}>
-                        <img className="window-btn" onClick={this.minApp} src={minIcon} alt="Min" />
-                        <img className="window-btn" onClick={this.maxApp} src={maxIcon} alt="Max" />
-                        <img className="window-btn" onClick={this.closeApp} src={closeIcon} alt="Close" />
+                        <img className="window-btn" onClick={minApp} src={minIcon} alt="Min" />
+                        <img className="window-btn" onClick={maxApp} src={maxIcon} alt="Max" />
+                        <img className="window-btn" onClick={closeApp} src={closeIcon} alt="Close" />
                     </div>
 
                 </Header>
                 <Layout className="app-content">
-                    <Sider width={200} className="site-layout-background">
+                    <Sider width={200} className="site-layout-background sider">
                         <Menu
                             mode="inline"
-                            defaultSelectedKeys={['1']}
+                            defaultSelectedKeys={['0']}
                             theme="dark"
                             style={{ height: '100%', borderRight: 0 }}>
+                            <Menu.Item 
+                                key="0" 
+                                icon={<img className="menu-icon" src={homeIcon} alt='Home' />} 
+                                onClick={() => this.gotoPage('home')}>
+                                    Home
+                            </Menu.Item>
                             <Menu.Item 
                                 key="1" 
                                 icon={<img className="menu-icon" src={convertIcon} alt='Convert' />} 
@@ -137,13 +129,13 @@ export class AppLayout extends React.Component<{}, IState> {
                                 key="4" 
                                 icon={<img className="menu-icon" src={infoIcon} alt='Info' />} 
                                 onClick={() => this.gotoPage('info')}>
-                                    Info
+                                    About
                             </Menu.Item>
                         </Menu>
                     </Sider>
-                    <Layout style={{ padding: '0 24px 24px', minHeight: height - 50 }}>
+                    <Layout style={{ padding: 24, height: height - 50, minWidth: 500 }}>
                         <Content
-                            className="site-layout-background"
+                            className="site-layout-background content"
                             style={{
                                 padding: 24,
                                 margin: 0,

@@ -23,11 +23,11 @@ const createWindow = async () => {
         webPreferences: {
             nodeIntegration: true,
         },
-        width: 800,
-        height: 600,
+        width: 1024,
+        height: 768,
         frame: false
     });
-    win.setIcon(path.join(__dirname, '../../assets/img/logo-white.png'));
+    win.setIcon(path.join(__dirname, '../assets/img/logo-white.png'));
 
 
     if (process.env.NODE_ENV !== 'production') {

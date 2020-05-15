@@ -2,3 +2,36 @@
 //     return filePath.replace(/^.*(\\|\/|:)/, '');
 // }
 
+import { remote } from 'electron';
+import { getLocalStorage, LocalStorageKey, setLocalStorage } from "./store"
+
+export const getPython3 = () => {
+    return (getLocalStorage(LocalStorageKey.PythonPath) ?? `python3`);
+}
+
+export const setPython3 = (path: string) => {
+    if (setLocalStorage(LocalStorageKey.PythonPath, path)) {
+        return true;
+    }
+    throw new Error('Unable to set Python path');
+    return false;
+}
+
+export const closeApp = () => {
+    const w = remote.getCurrentWindow();
+    w.close();
+}
+
+export const minApp = () => {
+    const w = remote.getCurrentWindow();
+    w.minimize();
+}
+
+export const maxApp = () => {
+    const w = remote.getCurrentWindow();
+    if (!w.isMaximized()) {
+        w.maximize();
+    } else {
+        w.unmaximize();
+    }
+}

@@ -21,6 +21,10 @@
     -webkit-app-region: drag;
     height: 50px !important;
     background-color: black;
+    /* position: fixed; */
+    /* top: 0;
+    width: 100%;
+    z-index: 9999; */
 }
 
 .ant-menu-item {

@@ -9,10 +9,13 @@ import {
     InfoCircleOutlined
 } from '@ant-design/icons';
 
-import { binName, supportedVideoFormats, supportedTargetFPS } from '../../../consts';
+import { binName, supportedVideoFormats, supportedTargetFPS } from '../../../globals';
+import { getPython3 } from '../../../util';
 
 const { Search } = Input;
 const { Option } = Select;
+
+const python3 = getPython3();
 /*
 {'plugin': 'ffmpeg', 'nframes': 8736, 'ffmpeg_version': '4.1 built with gcc 8.2.1 (GCC) 20181017', 'codec': 'h264', 'pix_fmt': 'yuv420p(progressive)', 'fps': 60.0, 'source_size': (1920, 1080), 'size': (1920, 1080), 'duration': 145.6}
 */
@@ -59,7 +62,7 @@ export class Convert extends React.Component<{}, IState> {
     getInterpolationModes = async () => {
         // load into python
         const args = [binName, `-if`];
-        const proc = cp.spawn(`python3`, args)
+        const proc = cp.spawn(python3, args)
 
         let stdoutData: string[];
         proc.stdout.on('data', (data) => {
@@ -159,7 +162,7 @@ export class Convert extends React.Component<{}, IState> {
 
         // load into python
         const args = [binName, `-m`, filePath];
-        const proc = cp.spawn(`python3`, args)
+        const proc = cp.spawn(python3, args)
 
         let stdoutData: VideoMetadata;
         proc.stdout.on('data', (data) => {
@@ -242,8 +245,7 @@ export class Convert extends React.Component<{}, IState> {
                     <Form.Item
                         label={<h3>Source Video Path</h3>}
                         validateStatus={inputValidator.status}
-                        help={inputValidator.help}
-                    >
+                        help={inputValidator.help} >
                         <Search
                             enterButton="Browse"
                             value={inputVideoPath}
@@ -256,8 +258,7 @@ export class Convert extends React.Component<{}, IState> {
                                 if (filePath && filePath.length) {
                                     this.setInputFilePath(filePath[0]);
                                 }
-                            }}
-                        />
+                            }} />
                     </Form.Item>
 
                     <h3>Source Video Metadata</h3>
@@ -266,8 +267,7 @@ export class Convert extends React.Component<{}, IState> {
                     <Form.Item
                         label={<h3>Destination Video Path</h3>}
                         validateStatus={disabled ? "success" : outputValidator.status}
-                        help={disabled ? "" : outputValidator.help}
-                    >
+                        help={disabled ? "" : outputValidator.help} >
                         <Search
                             disabled={disabled}
                             enterButton="Browse"
