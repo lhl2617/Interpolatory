@@ -3,12 +3,16 @@ import math
 from imageio import imread, imwrite
 import sys
 import cProfile  
+import time
 
 def get_motion_vectors(block_size, steps, source_frame, target_frame):
     output = np.empty_like(source_frame, dtype='float32')
     prec_dic = [1, 2, 1, 2, 3, 2, 1, 2, 1]
+
+    prev_time = time.time()
     for s_row in range(0, source_frame.shape[0], block_size):
-        print(s_row)
+        print(s_row, time.time() - prev_time)
+        prev_time = time.time()
         for s_col in range(0, source_frame.shape[1], block_size):
             source_block = source_frame[s_row:s_row+block_size, s_col:s_col+block_size, :]
             center_sad = None
@@ -36,6 +40,7 @@ def get_motion_vectors(block_size, steps, source_frame, target_frame):
                 curr_col = lowest_idx[1]
             block = np.full((block_size, block_size, 3), [lowest_idx[0] - s_row, lowest_idx[1] - s_col, lowest_sad])
             output[s_row:s_row+block_size, s_col:s_col+block_size, :] = block
+            
     return output
 
 if __name__ == "__main__":
