@@ -126,7 +126,8 @@ export class Home extends React.Component<IProps, IState> {
         })
 
         proc.stderr.on(`end`, () => {
-            console.error(stderrTxt);
+            if (stderrTxt.length)
+                console.error(stderrTxt);
         });
 
         proc.on(`close`, (code) => {
@@ -171,7 +172,8 @@ export class Home extends React.Component<IProps, IState> {
         })
 
         proc.stderr.on(`end`, () => {
-            console.error(outErr);
+            if (outErr.length)
+                console.error(outErr);
         })
 
         proc.on(`close`, (code) => {

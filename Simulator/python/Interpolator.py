@@ -9,6 +9,17 @@ from decimal import Decimal
 from copy import deepcopy
 from Globals import debug_flags
 from VideoStream import BenchmarkVideoStream, VideoStream
+from util import sToMMSS
+
+'''
+estimate time left
+'''
+def getETA(elapsed_seconds, processed_frames, all_frames):
+    remaining_frames = all_frames - processed_frames
+
+    eta_seconds = 0 if processed_frames == 0 else int(float(elapsed_seconds) / processed_frames * remaining_frames)
+    return sToMMSS(eta_seconds)
+
 
 '''
 blends frames
@@ -26,7 +37,7 @@ video_in_path and video_out_path are optional, for example when benchmarking we 
 '''
 
 
-class BaseInterpolator:
+class BaseInterpolator(object):
     def __init__(self, target_fps, video_in_path=None, video_out_path=None, max_out_frames=math.inf, max_cache_size=0, **args):
         self.target_fps = target_fps
         self.video_in_path = video_in_path
@@ -60,7 +71,7 @@ class BaseInterpolator:
         if (debug_flags['debug_IO']):
             print(f'Loaded input video from {self.video_in_path}.')
             print(vid.get_meta_data())
-            
+
         self.video_stream = VideoStream(vid, self.max_cache_size)
 
         # maximum frames possible according to target_fps
@@ -97,10 +108,12 @@ class BaseInterpolator:
             # if ((i % self.target_fps) == 0):
             pct = str(math.floor(100 * i / target_nframes)).rjust(3, ' ')
             curr = int(round(time.time() * 1000))
-            elapsed = (curr - start) / 1000
-            progStr = f'PROGRESS::{pct}%::Frame {i}/{target_nframes} | {elapsed} seconds elapsed.'
+            elapsed_seconds = int((curr-start) / 1000)
+            elapsed = sToMMSS(elapsed_seconds)
+            eta = getETA(elapsed_seconds, i, target_nframes)
+            progStr = f'PROGRESS::{pct}%::Frame {i}/{target_nframes} | Time elapsed: {elapsed} | Estimated Time Left: {eta}'
             print(progStr, flush=True)
-            
+                
             interpolated_frame = self.get_interpolated_frame(i)
             self.video_out_writer.append_data(interpolated_frame)
 
@@ -109,7 +122,8 @@ class BaseInterpolator:
         end = int(round(time.time() * 1000))
 
         # if (debug_flags['debug_timer']):
-        print(f'PROGRESS::100%::Complete: Time taken: {(end-start) / 1000} seconds')
+        elapsed = sToMMSS(int((end-start) / 1000))
+        print(f'PROGRESS::100%::Complete | Time taken: {(end-start) / 1000} seconds', flush=True)
 
     def get_interpolated_frame(self, idx):
         raise Exception('To be implemented by derived classes')
@@ -159,7 +173,7 @@ class BaseInterpolator:
 
 
 class NearestInterpolator(BaseInterpolator):
-    def __init___(self, target_fps, video_in_path=None, video_out_path=None, max_out_frames=math.inf, max_cache_size=2, **args):
+    def __init__(self, target_fps, video_in_path=None, video_out_path=None, max_out_frames=math.inf, max_cache_size=2, **args):
         super().__init__(target_fps, video_in_path,
                          video_out_path, max_out_frames, max_cache_size)
 
@@ -188,7 +202,7 @@ class NearestInterpolator(BaseInterpolator):
 
 
 class OversampleInterpolator(BaseInterpolator):
-    def __init___(self, target_fps, video_in_path=None, video_out_path=None, max_out_frames=math.inf, max_cache_size=2, **args):
+    def __init__(self, target_fps, video_in_path=None, video_out_path=None, max_out_frames=math.inf, max_cache_size=2, **args):
         super().__init__(target_fps, video_in_path,
                          video_out_path, max_out_frames, max_cache_size)
 
@@ -256,7 +270,7 @@ class OversampleInterpolator(BaseInterpolator):
 
 
 class LinearInterpolator(BaseInterpolator):
-    def __init___(self, target_fps, video_in_path=None, video_out_path=None, max_out_frames=math.inf, max_cache_size=2, **args):
+    def __init__(self, target_fps, video_in_path=None, video_out_path=None, max_out_frames=math.inf, max_cache_size=2, **args):
         super().__init__(target_fps, video_in_path,
                          video_out_path, max_out_frames, max_cache_size)
 
