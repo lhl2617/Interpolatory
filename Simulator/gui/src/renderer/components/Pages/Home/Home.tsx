@@ -78,8 +78,8 @@ export class Home extends React.Component<IProps, IState> {
         }
         const proc = cp.spawn(python3, [`-V`]);
 
+
         proc.stdout.on('data', (data) => {
-            // console.log(data.toString());
             if (this.mounted) this.setState({ pyVer: { status: "done", ver: data.toString() } });
         });
 
@@ -102,25 +102,41 @@ export class Home extends React.Component<IProps, IState> {
     }
 
     getBinVer = async () => {
-        const { setFeaturesEnabled } = this.props; 
+        const { setFeaturesEnabled } = this.props;
         const proc = cp.spawn(python3, [binName, '-ver']);
 
+        setTimeout(() => proc.kill(), 1000);
+
+
+        let stderrTxt = ``;
+
         proc.stdout.on('data', (data) => {
-            const str: string = data.toString();
-            const gottenVer = str.substring(str.indexOf('"') + 1, str.lastIndexOf('"'));
-            if (this.mounted) this.setState({ binVer: { status: "done", ver: gottenVer } });
+            const stdoutTxt = data.toString();
+            // "Interpolatory Simulator 0.0.1" for example
+            if (stdoutTxt.includes(`Interpolatory Simulator`)) {
+                const gottenVer = stdoutTxt.substring(25, stdoutTxt.lastIndexOf('"'));
+                if (this.mounted) this.setState({ binVer: { status: "done", ver: gottenVer } });
+            }
         });
 
-        proc.on('close', (code) => {
-            if (code !== 0) {
-                if (this.mounted) message.error(`Could not start Interpolatory backend process, is your Interpolatory Path correct?`)
-                if (this.mounted) this.setState({ binVer: { status: "error", ver: this.state.binVer.ver }, dependencyLastInstalledTime: `N/A` });
-            }
-            else {
+        proc.stderr.on('data', (data) => {
+            stderrTxt += data.toString();
+        })
+
+        proc.on(`close`, (code) => {
+            
+            if (code === 0 && this.state.binVer.status === `done`) {
                 // success, now get deps
                 this.getDependencyInfo();
                 setFeaturesEnabled(true);
             }
+            else {
+                if (this.mounted) message.error(`Could not start Interpolatory backend process, is your Interpolatory Path correct?`)
+                if (stderrTxt.length) console.error(`Gotten error: ${stderrTxt}`)
+                if (this.mounted) this.setState({ binVer: { status: "error", ver: this.state.binVer.ver }, dependencyLastInstalledTime: `N/A` });
+
+            }
+
         })
     }
 
@@ -137,6 +153,7 @@ export class Home extends React.Component<IProps, IState> {
     }
 
     reinstallDependencies = async () => {
+        message.info(`Installing dependencies`)
         const binPathDir = path.dirname(binName);
         const requirementsTxt = path.join(binPathDir, `requirements.txt`);
 
@@ -363,10 +380,10 @@ export class Home extends React.Component<IProps, IState> {
                                 onChange={(e) => { this.setState({ newPyPath: e.target.value }) }}
                                 onSearch={() => {
                                     const filePath = remote.dialog.showOpenDialogSync(
-                                        { 
+                                        {
                                             title: `Select Python 3 Path`,
                                             defaultPath: path.dirname(newPyPath),
-                                            properties: ['openFile'] 
+                                            properties: ['openFile']
                                         }
                                     );
 
@@ -387,7 +404,8 @@ export class Home extends React.Component<IProps, IState> {
                                         {
                                             title: `Select Interpolatory Path`,
                                             defaultPath: path.dirname(newBinPath),
-                                            properties: ['openFile']
+                                            properties: ['openFile'], 
+                                            filters: [{ name: 'Python', extensions: [`py`] }]
                                         }
                                     );
 

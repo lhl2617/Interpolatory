@@ -12,7 +12,7 @@ if (len(sys.argv) > 1):
     mode_flag = args[0]
 
 interpolators = list(InterpolatorDictionary.keys())
-version = '0.0.1'
+version = 'Interpolatory Simulator 0.0.1'
 
 if mode_flag == '-h':
     print('======')
@@ -114,6 +114,7 @@ elif mode_flag == '-ver':
 else:
     print(f'Unknown command. Run `python3 main.py -h` for a usage guide')
 
+# print('', flush=True)
 exit(0)
 
 
