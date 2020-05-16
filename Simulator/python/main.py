@@ -3,6 +3,7 @@ import json
 
 from util import eprint
 from Interpolator import InterpolatorDictionary
+from Benchmark import benchmark, get_middle_frame
 
 
 mode_flag = None
@@ -36,8 +37,9 @@ if mode_flag == '-h':
     print('Get in an input video source from <input-video-path> and, using <interpolation-mode> mode, interpolate to <output-frame-rate> fps and save to <output-file-path>')
     
     print('')
-    print('- python3 main.py -b <interpolation-mode>')
+    print('- python3 main.py -b <interpolation-mode> [<output-folder>]')
     print('Run Middlebury benchmark to get results based on an <interpolation-mode>')
+    print('If provided, outputs interpolated images to <output-folder>')
     
     print('')
     print('- python3 main.py -t <interpolation-mode> -f <frame1> <frame2> -o <output-file-path> [<ground-truth-path>]')
@@ -75,24 +77,20 @@ elif mode_flag == '-i' and len(args) == 8 and '-m' == args[2] and '-f' == args[4
     interpolator = interpolator_obj(target_fps, input_video_path, output_video_path, math.inf)
     interpolator.interpolate_video()
 
-    # print(f'{input_video_path} - {interpolation_mode} - {target_fps} - {output_file_path}')
-    # import time
-    # for i in range (101):
-    #     time.sleep(0.1)
-    #     pct = str(i).rjust(3, ' ')
-    #     print(f'PROGRESS::{pct}%::Frame whatever', flush=True)
-
-
-
 
 
     # print('')
     # print('- python3 main.py -b <interpolation-mode>')
     # print('Run Middlebury benchmark to get results based on an <interpolation-mode>')
-elif mode_flag == '-b' and len(args) == 2:
+elif mode_flag == '-b' and len(args) >= 2:
     interpolation_mode = args[1]
+    output_path = None
+    if (len(args) > 2):
+        output_path = args[2]
 
-    print(f'{interpolation_mode}')
+    benchmark(interpolation_mode, output_path)
+    
+
 
     # print('- python3 main.py -t <interpolation-mode> -f <frame1> <frame2> -o <output-file-path> [<ground-truth-path>]')
     # print('Using <interpolation mode, get the interpolated midpoint frame between <frame1> and <frame2>, saving the output to <output-file-path>')
@@ -106,7 +104,9 @@ elif mode_flag == '-t' and len(args) >= 7 and '-f' == args[2] and '-o' == args[5
     
     if (len(args) > 7):
         ground_truth_path = args[7]        
-    print(f'{interpolation_mode} - {frame_1_path} - {frame_2_path} - {output_file_path} - {ground_truth_path}')
+
+    get_middle_frame(interpolation_mode, frame_1_path, frame_2_path, output_file_path, ground_truth_path)
+    
 
 elif mode_flag == '-ver':
     print(json.dumps(version))
