@@ -1,14 +1,13 @@
 /* eslint-disable */
 import * as React from 'react';
-import { Layout, Menu, Button } from 'antd';
+import { Layout, Menu } from 'antd';
 import Benchmark from '../Pages/Benchmark/Benchmark';
 import Convert from '../Pages/Convert/Convert';
 import Test from '../Pages/Test/Test';
 import Info from '../Pages/Info/Info';
 import Home from '../Pages/Home/Home';
 import { minApp, closeApp, maxApp } from '../../util';
-
-const { SubMenu } = Menu;
+;
 const { Header, Content, Sider } = Layout;
 
 const logo = require('../../../../assets/img/headerlogo.png').default;
@@ -30,6 +29,7 @@ type CurrentPage = 'home' | 'convert' | 'benchmark' | 'test' | 'info';
 type IState = {
     currentPage: CurrentPage;
     height: number;
+    featuresEnabled: boolean; // this is to disable menu bars dependent on interpolatory backend
 };
 
 export class AppLayout extends React.Component<{}, IState> {
@@ -38,6 +38,7 @@ export class AppLayout extends React.Component<{}, IState> {
         this.state = {
             currentPage: 'home',
             height: 768,
+            featuresEnabled: false,
         };
     }
 
@@ -53,17 +54,16 @@ export class AppLayout extends React.Component<{}, IState> {
         window.addEventListener('resize', this.updateWindowDimensions);
     }
 
-    componentWillUnmount = () => {
+    componentWillUnmount = async () =>  {
         window.removeEventListener('resize', this.updateWindowDimensions);
     }
 
-    updateWindowDimensions = () => {
+    updateWindowDimensions = async () => {
         this.setState({ height: window.innerHeight });
     }
 
-
     getContent = (currentPage: CurrentPage) => {
-        if (currentPage === "home") return <Home />;
+        if (currentPage === "home") return <Home setFeaturesEnabled={this.setFeaturesEnabled} />;
         if (currentPage === "benchmark") return <Benchmark />;
         if (currentPage === "convert") return <Convert />;
         if (currentPage === "test") return <Test />;
@@ -71,14 +71,21 @@ export class AppLayout extends React.Component<{}, IState> {
         console.error('Invalid currentPage');
     }
 
-    gotoPage = (page: CurrentPage) => {
+    gotoPage = async (page: CurrentPage) => {
         this.setState({
             currentPage: page
         })
     }
 
+    setFeaturesEnabled = async (b: boolean) => {
+        const { featuresEnabled } = this.state;
+        if (featuresEnabled !== b) {
+            this.setState({ featuresEnabled: b });
+        }
+    };
+
     render() {
-        const { currentPage, height } = this.state;
+        const { currentPage, height, featuresEnabled } = this.state;
         return (
             <Layout>
                 <Header className="header">
@@ -101,35 +108,38 @@ export class AppLayout extends React.Component<{}, IState> {
                             defaultSelectedKeys={['0']}
                             theme="dark"
                             style={{ height: '100%', borderRight: 0 }}>
-                            <Menu.Item 
-                                key="0" 
-                                icon={<img className="menu-icon" src={homeIcon} alt='Home' />} 
+                            <Menu.Item
+                                key="0"
+                                icon={<img className="menu-icon" src={homeIcon} alt='Home' />}
                                 onClick={() => this.gotoPage('home')}>
-                                    Home
+                                Home
                             </Menu.Item>
-                            <Menu.Item 
-                                key="1" 
-                                icon={<img className="menu-icon" src={convertIcon} alt='Convert' />} 
-                                onClick={() => this.gotoPage('convert')}>
-                                    Convert
+                            <Menu.Item
+                                key="1"
+                                icon={<img className="menu-icon" src={convertIcon} alt='Convert' />}
+                                onClick={() => this.gotoPage('convert')}
+                                disabled={!featuresEnabled}>
+                                Convert
                             </Menu.Item>
-                            <Menu.Item 
-                                key="2" 
-                                icon={<img className="menu-icon" src={benchmarkIcon} alt='Benchmark' />} 
-                                onClick={() => this.gotoPage('benchmark')}>
-                                    Benchmark
+                            <Menu.Item
+                                key="2"
+                                icon={<img className="menu-icon" src={benchmarkIcon} alt='Benchmark' />}
+                                onClick={() => this.gotoPage('benchmark')}
+                                disabled={!featuresEnabled}>
+                                Benchmark
                             </Menu.Item>
-                            <Menu.Item 
-                                key="3" 
-                                icon={<img className="menu-icon" src={testIcon} alt='Test' />} 
-                                onClick={() => this.gotoPage('test')}>
-                                    Test
+                            <Menu.Item
+                                key="3"
+                                icon={<img className="menu-icon" src={testIcon} alt='Test' />}
+                                onClick={() => this.gotoPage('test')}
+                                disabled={!featuresEnabled}>
+                                Test
                             </Menu.Item>
-                            <Menu.Item 
-                                key="4" 
-                                icon={<img className="menu-icon" src={infoIcon} alt='Info' />} 
+                            <Menu.Item
+                                key="4"
+                                icon={<img className="menu-icon" src={infoIcon} alt='Info' />}
                                 onClick={() => this.gotoPage('info')}>
-                                    About
+                                About
                             </Menu.Item>
                         </Menu>
                     </Sider>

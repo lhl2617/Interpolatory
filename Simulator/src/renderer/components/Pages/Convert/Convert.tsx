@@ -1,5 +1,6 @@
+/* eslint-disable react/jsx-closing-bracket-location */
 import * as React from 'react';
-import { Input, Form, Select, Radio, message, Button, Popover } from 'antd';
+import { Input, Form, Select, Radio, message, Button, Popover, Modal, Progress, Popconfirm } from 'antd';
 import { remote } from 'electron';
 import * as cp from 'child_process';
 import * as fs from 'fs';
@@ -11,6 +12,9 @@ import {
 
 import { supportedVideoFormats, supportedTargetFPS } from '../../../globals';
 import { getPython3, getInterpolatory } from '../../../util';
+
+// conversion process
+let convProc: cp.ChildProcessWithoutNullStreams | undefined;
 
 const { Search } = Input;
 const { Option } = Select;
@@ -28,17 +32,25 @@ type VideoMetadata = {
     duration: number
 };
 
+type ValidatorStatus = `success` | `error` | `warning`;
+
 const pleaseInput = `Please input video path.`;
 
 type IState = {
     inputVideoPath: string;
     inputVideoMetadata: VideoMetadata | undefined;
-    inputValidator: { status: "success" | "error"; help: string }
+    inputValidator: { status: ValidatorStatus; help: string }
     outputVideoPath: string;
-    outputValidator: { status: "success" | "error"; help: string }
+    outputValidator: { status: ValidatorStatus; help: string }
     interpolationMode: string;
     supportedInterpolationModes: string[];
     targetFPS: number;
+    convertState: "done" | "error" | "converting" | "idle";
+    progressString: string;
+}
+
+const getPercentageFromProgressString = (s: string) => {
+    return parseInt(s.substr(0, 3), 10);
 }
 
 export class Convert extends React.Component<{}, IState> {
@@ -53,6 +65,8 @@ export class Convert extends React.Component<{}, IState> {
             interpolationMode: ``,
             supportedInterpolationModes: [],
             targetFPS: 60,
+            convertState: "idle",
+            progressString: ``,
         };
     }
 
@@ -115,8 +129,25 @@ export class Convert extends React.Component<{}, IState> {
         const srcExt = path.extname(inputVideoPath).substr(1);
         if (srcExt !== path.extname(filePath).substr(1)) {
             this.setState({
-                outputValidator: { status: "error", help: "File extension do not match with input." }
+                outputValidator: { status: "error", help: "File extension does not match with input." }
             });
+            return;
+        }
+
+        // same as input
+        if (inputVideoPath === filePath) {
+            this.setState({
+                outputValidator: { status: "error", help: "Video path is identical to source video path." }
+            });
+            return;
+        }
+
+        // check exists to warn
+        const fileExists = fs.existsSync(filePath);
+        if (fileExists) {
+            this.setState({
+                outputValidator: { status: `warning`, help: 'Output file exists - conversion will overwrite this file!' }
+            })
             return;
         }
 
@@ -231,14 +262,71 @@ export class Convert extends React.Component<{}, IState> {
         });
     }
 
-    startConvert = () => {
-        console.log('start boi');
+
+    processProgressString = async (stdout: string) => {
+        // PROGRESS::DDD%::...
+        const progressStrs = stdout
+            .split(`\n`)
+            .filter((s) => s.substr(0, 8) === `PROGRESS`)
+
+        // get last, don't overwrite error
+        if (progressStrs.length && this.state.convertState !== `error`) {
+            const progressStr = progressStrs[progressStrs.length - 1];
+
+            this.setState({
+                progressString: progressStr.substr(10)
+            });
+
+        }
+    }
+
+    startConvert = async () => {
+        this.setState({ convertState: `converting` });
+        const { inputVideoPath, interpolationMode, targetFPS, outputVideoPath } = this.state;
+
+        let gotStderr: string;
+
+        convProc = cp.spawn(python3, [binName, `-i`, inputVideoPath, `-m`, interpolationMode, `-f`, targetFPS.toString(), `-o`, outputVideoPath]);
+
+        convProc.stdout.on(`data`, (data) => {
+            // TODO:- process progress string
+            this.processProgressString(data.toString())
+        })
+
+        convProc.stderr.on(`data`, (data) => {
+            gotStderr += data.toString();
+        })
+
+        convProc.on(`close`, (code) => {
+            if (code !== 0) {
+                const err = `An error occured: ${code} - ${gotStderr}`;
+                if (this.state.convertState !== `idle`) this.setState({ convertState: `error`, progressString: err })
+            }
+            else {
+                // message.info(`Conversion successful`);
+                this.setState({ convertState: `done` })
+            }
+        });
+    }
+
+    resetConvert = async () => {
+        if (convProc) {
+            convProc.kill();
+            convProc = undefined;
+        }
+        this.setState({
+            convertState: `idle`,
+            progressString: ``,
+        })
     }
 
     render() {
-        const { inputVideoPath, inputVideoMetadata, outputVideoPath, targetFPS, interpolationMode, supportedInterpolationModes, inputValidator, outputValidator } = this.state;
+        const { inputVideoPath, inputVideoMetadata, outputVideoPath, targetFPS, interpolationMode, supportedInterpolationModes, inputValidator, outputValidator, convertState, progressString } = this.state;
 
         const disabled = inputValidator.status === "error";
+        const conversionDisabled = disabled || outputValidator.status === "error" || convertState !== `idle`;
+
+        const progressPercentage = getPercentageFromProgressString(progressString);
 
         return (
             <div>
@@ -253,11 +341,11 @@ export class Convert extends React.Component<{}, IState> {
                             onChange={(e) => this.setInputFilePath(e.target.value)}
                             onSearch={() => {
                                 const filePath = remote.dialog.showOpenDialogSync(
-                                    { 
+                                    {
                                         title: `Select Source Video`,
                                         defaultPath: path.dirname(inputVideoPath),
-                                        properties: ['openFile'], 
-                                        filters: [{ name: 'Videos', extensions: supportedVideoFormats }] 
+                                        properties: ['openFile'],
+                                        filters: [{ name: 'Videos', extensions: supportedVideoFormats }]
                                     }
                                 );
 
@@ -308,8 +396,7 @@ export class Convert extends React.Component<{}, IState> {
 
 
                     <Form.Item
-                        label={<h3>Interpolation Mode</h3>}
-                    >
+                        label={<h3>Interpolation Mode</h3>}>
                         <Select value={interpolationMode} onChange={this.handleInterpolationModeChange}
                             disabled={disabled}>
                             {
@@ -323,10 +410,72 @@ export class Convert extends React.Component<{}, IState> {
                 </Form>
 
                 <div style={{ margin: 'auto', textAlign: 'center', marginTop: 48 }}>
-                    <Button onClick={this.startConvert} size="large" disabled={disabled} type="primary">Start Conversion</Button>
-
+                    <Button onClick={this.startConvert} size="large" disabled={conversionDisabled} type="primary">Start Conversion</Button>
                 </div>
 
+                <Modal
+                    style={{ left: 150 }}
+                    title='Conversion'
+                    visible={convertState !== `idle`}
+                    footer={null}
+                    closable={false}
+                    maskClosable={false}
+                >
+
+                    <h4>Source</h4>
+                    <p>`{inputVideoPath}` ({inputVideoMetadata?.fps} fps)</p>
+                    <h4>Destination</h4>
+                    <p>`{inputVideoPath}` ({inputVideoMetadata?.fps} fps)</p>
+                    <h4>Interpolation Mode</h4>
+                    <p>{interpolationMode}</p>
+                    {
+                        (convertState === `converting`) && <div>
+                            <h4 style={{ textAlign: `center`, margin: `auto`, marginTop: 12 }}>Converting...</h4>
+                            <Progress status='active' percent={progressPercentage} />
+                            <p style={{ textAlign: `center`, margin: `auto` }}>
+                                {progressString.substring(6)}
+                            </p>
+                            <div style={{ textAlign: `center`, margin: `auto`, marginTop: 24 }}>
+
+                                <Popconfirm
+                                    title="This will stop the conversion. Are you sure you want to continue?"
+                                    onConfirm={this.resetConvert}
+                                    okText='Yes'
+                                    cancelText='No'
+                                >
+                                    <Button danger>Stop</Button>
+                                </Popconfirm>
+                            </div>
+                        </div>
+                    }
+                    {
+                        convertState === `done` && <div>
+                            
+                            <h4 style={{ textAlign: `center`, margin: `auto`, marginTop: 12 }}>Finished</h4>
+                            <Progress status='success' percent={progressPercentage} />
+                            <p style={{ textAlign: `center`, margin: `auto` }}>
+                                {progressString.substring(6)}
+                            </p>
+
+                            <div style={{ textAlign: `center`, margin: `auto`, marginTop: 24 }}>
+                                <Button onClick={this.resetConvert}>OK</Button>
+                            </div>
+                        </div>
+                    }
+                    {
+                        convertState === `error` && <div>
+                        <h4 style={{ textAlign: `center`, margin: `auto`, marginTop: 12, color: `red` }}>Error</h4>
+                            <Progress status='exception' percent={progressPercentage} />
+                            <p style={{ textAlign: `center`, margin: `auto` }}>
+                                {progressString}
+                            </p>
+                            <div style={{ textAlign: `center`, margin: `auto`, marginTop: 24 }}>
+                                <Button onClick={this.resetConvert}>OK</Button>
+                            </div>
+                        </div>
+                    }
+                    {/* DDD%%::... */}
+                </Modal>
             </div>
         )
     }

@@ -1,3 +1,4 @@
+/* eslint-disable react/jsx-closing-bracket-location */
 import * as React from 'react';
 import * as cp from 'child_process';
 import * as path from 'path';
@@ -16,6 +17,10 @@ type VerState = { status: "loading" | "done" | "error", ver: string }
 type PyVer = VerState;
 type BinVer = VerState;
 
+type IProps = {
+    setFeaturesEnabled: (b: boolean) => void;
+}
+
 type IState = {
     pyVer: PyVer;
     // pyDeps: Record<string, string>;
@@ -30,7 +35,7 @@ const python3 = getPython3();
 const binName = getInterpolatory();
 
 
-export class Home extends React.Component<{}, IState> {
+export class Home extends React.Component<IProps, IState> {
 
     mounted = false;
 
@@ -74,7 +79,7 @@ export class Home extends React.Component<{}, IState> {
         const proc = cp.spawn(python3, [`-V`]);
 
         proc.stdout.on('data', (data) => {
-            console.log(data.toString());
+            // console.log(data.toString());
             if (this.mounted) this.setState({ pyVer: { status: "done", ver: data.toString() } });
         });
 
@@ -97,6 +102,7 @@ export class Home extends React.Component<{}, IState> {
     }
 
     getBinVer = async () => {
+        const { setFeaturesEnabled } = this.props; 
         const proc = cp.spawn(python3, [binName, '-ver']);
 
         proc.stdout.on('data', (data) => {
@@ -113,6 +119,7 @@ export class Home extends React.Component<{}, IState> {
             else {
                 // success, now get deps
                 this.getDependencyInfo();
+                setFeaturesEnabled(true);
             }
         })
     }
@@ -341,6 +348,10 @@ export class Home extends React.Component<{}, IState> {
                     visible={changePathsModalVisible}
                     onOk={() => { this.changePaths(newPyPath, newBinPath); this.hideChangePathsModal(); }}
                     onCancel={() => { this.setState({ newBinPath: binName, newPyPath: python3 }); this.hideChangePathsModal(); }}
+                    cancelText='Discard Changes'
+                    okText='Save Changes'
+                    closable={false}
+                    maskClosable={false}
                 >
 
                     <Form layout="vertical" >
