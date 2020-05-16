@@ -2,6 +2,7 @@ import imageio
 import math
 import time
 import numpy as np
+import sys
 from io import BytesIO
 from fractions import Fraction
 from decimal import Decimal
@@ -93,12 +94,13 @@ class BaseInterpolator:
         for i in range(target_nframes):
 
             # if (debug_flags['debug_progress']):
-            if ((i % self.target_fps) == 0):
-                pct = str(math.floor(100 * i / target_nframes)).rjust(3, ' ')
-                curr = int(round(time.time() * 1000))
-                elapsed = (curr - start) / 1000
-                print(f'PROGRESS::{pct}%::Frame {i}/{target_nframes} | {elapsed} seconds elapsed', flush=True)
-
+            # if ((i % self.target_fps) == 0):
+            pct = str(math.floor(100 * i / target_nframes)).rjust(3, ' ')
+            curr = int(round(time.time() * 1000))
+            elapsed = (curr - start) / 1000
+            progStr = f'PROGRESS::{pct}%::Frame {i}/{target_nframes} | {elapsed} seconds elapsed.'
+            print(progStr, flush=True)
+            
             interpolated_frame = self.get_interpolated_frame(i)
             self.video_out_writer.append_data(interpolated_frame)
 

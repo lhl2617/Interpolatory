@@ -158,6 +158,7 @@ export class Convert extends React.Component<{}, IState> {
     }
 
     setInputFilePath = async (filePath: string) => {
+        const { outputVideoPath } = this.state;
         // console.log(`Setting filePath to ${filePath}`);
 
         this.setState({
@@ -220,7 +221,9 @@ export class Convert extends React.Component<{}, IState> {
 
                 const outputPath = `${fileDir}${path.sep}${fileNameWithoutExt}_output.${fileExt}`
 
-                this.setOutputFilePath(outputPath);
+                if (outputVideoPath.length === 0) {
+                    this.setOutputFilePath(outputPath);
+                }
 
                 this.setState({
                     inputValidator: { status: "success", help: "" }
@@ -281,15 +284,17 @@ export class Convert extends React.Component<{}, IState> {
     }
 
     startConvert = async () => {
-        this.setState({ convertState: `converting` });
+        this.setState({ convertState: `converting`, progressString: `` });
         const { inputVideoPath, interpolationMode, targetFPS, outputVideoPath } = this.state;
 
-        let gotStderr: string;
+        let gotStderr = ``;
 
         convProc = cp.spawn(python3, [binName, `-i`, inputVideoPath, `-m`, interpolationMode, `-f`, targetFPS.toString(), `-o`, outputVideoPath]);
 
         convProc.stdout.on(`data`, (data) => {
             // TODO:- process progress string
+            console.log(data.toString())
+            console.log(`-`)
             this.processProgressString(data.toString())
         })
 
@@ -298,8 +303,8 @@ export class Convert extends React.Component<{}, IState> {
         })
 
         convProc.on(`close`, (code) => {
-            if (code !== 0 && convProc) {
-                const err = `An error occured: ${code} - ${gotStderr}`;
+            if (code !== 0) {
+                const err = `An error occured: ${code ? code.toString() : ''} ${gotStderr}`;
                 if (this.state.convertState !== `idle`) this.setState({ convertState: `error`, progressString: err })
             }
             else {
@@ -311,7 +316,7 @@ export class Convert extends React.Component<{}, IState> {
 
     resetConvert = async () => {
         if (convProc) {
-            convProc.kill();
+            convProc.kill(`SIGKILL`);
             convProc = undefined;
         }
         this.setState({
@@ -339,6 +344,7 @@ export class Convert extends React.Component<{}, IState> {
                             enterButton="Browse"
                             value={inputVideoPath}
                             onChange={(e) => this.setInputFilePath(e.target.value)}
+                            onPressEnter={undefined}
                             onSearch={() => {
                                 const filePath = remote.dialog.showOpenDialogSync(
                                     {
@@ -367,15 +373,16 @@ export class Convert extends React.Component<{}, IState> {
                             enterButton="Browse"
                             value={outputVideoPath}
                             onChange={(e) => this.setOutputFilePath(e.target.value)}
+                            onPressEnter={undefined}
                             onSearch={() => {
                                 const srcExtension = path.extname(inputVideoPath).substr(1)
 
-                                const filePath = remote.dialog.showOpenDialogSync(
-                                    { properties: ['openFile'], filters: [{ name: 'Video', extensions: [srcExtension] }] }
+                                const filePath = remote.dialog.showSaveDialogSync(
+                                    { properties: ['showOverwriteConfirmation'], filters: [{ name: 'Video', extensions: [srcExtension] }] }
                                 )
 
-                                if (filePath && filePath.length) {
-                                    this.setOutputFilePath(filePath[0]);
+                                if (filePath) {
+                                    this.setOutputFilePath(filePath);
                                 }
                             }}
                         />
@@ -450,7 +457,7 @@ export class Convert extends React.Component<{}, IState> {
                     }
                     {
                         convertState === `done` && <div>
-                            
+
                             <h4 style={{ textAlign: `center`, margin: `auto`, marginTop: 12 }}>Finished</h4>
                             <Progress status='success' percent={progressPercentage} />
                             <p style={{ textAlign: `center`, margin: `auto` }}>
@@ -464,7 +471,7 @@ export class Convert extends React.Component<{}, IState> {
                     }
                     {
                         convertState === `error` && <div>
-                        <h4 style={{ textAlign: `center`, margin: `auto`, marginTop: 12, color: `red` }}>Error</h4>
+                            <h4 style={{ textAlign: `center`, margin: `auto`, marginTop: 12, color: `red` }}>Error</h4>
                             <Progress status='exception' percent={progressPercentage} />
                             <p style={{ textAlign: `center`, margin: `auto` }}>
                                 {progressString}

@@ -105,34 +105,39 @@ export class Home extends React.Component<IProps, IState> {
         const { setFeaturesEnabled } = this.props;
         const proc = cp.spawn(python3, [binName, '-ver']);
 
-        setTimeout(() => proc.kill(), 1000);
+        setTimeout(() => proc.kill(), 3000);
 
-
+        let stdoutTxt = ``;
         let stderrTxt = ``;
 
         proc.stdout.on('data', (data) => {
-            const stdoutTxt = data.toString();
+            stdoutTxt += data.toString();
             // "Interpolatory Simulator 0.0.1" for example
+        });
+        proc.stdout.on(`end`, () => {
             if (stdoutTxt.includes(`Interpolatory Simulator`)) {
                 const gottenVer = stdoutTxt.substring(25, stdoutTxt.lastIndexOf('"'));
                 if (this.mounted) this.setState({ binVer: { status: "done", ver: gottenVer } });
             }
-        });
+        })
 
         proc.stderr.on('data', (data) => {
             stderrTxt += data.toString();
         })
 
+        proc.stderr.on(`end`, () => {
+            console.error(stderrTxt);
+        });
+
         proc.on(`close`, (code) => {
-            
+
             if (code === 0 && this.state.binVer.status === `done`) {
+                setFeaturesEnabled(true);
                 // success, now get deps
                 this.getDependencyInfo();
-                setFeaturesEnabled(true);
             }
             else {
                 if (this.mounted) message.error(`Could not start Interpolatory backend process, is your Interpolatory Path correct?`)
-                if (stderrTxt.length) console.error(`Gotten error: ${stderrTxt}`)
                 if (this.mounted) this.setState({ binVer: { status: "error", ver: this.state.binVer.ver }, dependencyLastInstalledTime: `N/A` });
 
             }
@@ -165,10 +170,13 @@ export class Home extends React.Component<IProps, IState> {
             outErr += data.toString();
         })
 
+        proc.stderr.on(`end`, () => {
+            console.error(outErr);
+        })
+
         proc.on(`close`, (code) => {
             if (code !== 0) {
                 if (this.mounted) message.error(`Error installing dependencies, please install manually`);
-                console.error(outErr);
             }
             else {
                 message.info(`Dependencies installed successfully`);
@@ -375,6 +383,7 @@ export class Home extends React.Component<IProps, IState> {
                         <Form.Item
                             label={<h3>Python 3 Path</h3>}>
                             <Search
+                                onPressEnter={undefined}
                                 enterButton="Browse"
                                 value={newPyPath}
                                 onChange={(e) => { this.setState({ newPyPath: e.target.value }) }}
@@ -396,6 +405,7 @@ export class Home extends React.Component<IProps, IState> {
                         <Form.Item
                             label={<h3>Interpolatory Path</h3>}>
                             <Search
+                                onPressEnter={undefined}
                                 enterButton="Browse"
                                 value={newBinPath}
                                 onChange={(e) => { this.setState({ newBinPath: e.target.value }) }}
@@ -404,7 +414,7 @@ export class Home extends React.Component<IProps, IState> {
                                         {
                                             title: `Select Interpolatory Path`,
                                             defaultPath: path.dirname(newBinPath),
-                                            properties: ['openFile'], 
+                                            properties: ['openFile'],
                                             filters: [{ name: 'Python', extensions: [`py`] }]
                                         }
                                     );
