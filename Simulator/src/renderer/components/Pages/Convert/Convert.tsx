@@ -388,7 +388,7 @@ export class Convert extends React.Component<{}, IState> {
                             disabled={disabled}>
                             {
                                 (supportedTargetFPS.map((fps) => {
-                                    return (<Radio.Button key={fps} value={fps}>{fps}</Radio.Button>)
+                                    return (<Radio.Button key={fps} value={fps} disabled={fps === inputVideoMetadata?.fps}>{fps}</Radio.Button>)
                                 }))
                             }
                         </Radio.Group>
@@ -401,7 +401,7 @@ export class Convert extends React.Component<{}, IState> {
                             disabled={disabled}>
                             {
                                 (supportedInterpolationModes.map((m) => {
-                                    return (<Option key={m} value={m}>{m}</Option>)
+                                    return (<Option key={m} value={m} >{m}</Option>)
                                 }))
                             }
                         </Select>
@@ -425,7 +425,7 @@ export class Convert extends React.Component<{}, IState> {
                     <h4>Source</h4>
                     <p>`{inputVideoPath}` ({inputVideoMetadata?.fps} fps)</p>
                     <h4>Destination</h4>
-                    <p>`{inputVideoPath}` ({inputVideoMetadata?.fps} fps)</p>
+                    <p>`{outputVideoPath}` ({targetFPS} fps)</p>
                     <h4>Interpolation Mode</h4>
                     <p>{interpolationMode}</p>
                     {

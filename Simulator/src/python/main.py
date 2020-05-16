@@ -2,6 +2,8 @@ import sys
 import json
 
 from util import eprint
+from Interpolator import InterpolatorDictionary
+
 
 mode_flag = None
 
@@ -9,7 +11,7 @@ if (len(sys.argv) > 1):
     args = sys.argv[1:]
     mode_flag = args[0]
 
-interpolators = ['nearest', 'oversample', 'linear']
+interpolators = list(InterpolatorDictionary.keys())
 version = '0.0.1'
 
 if mode_flag == '-h':
@@ -63,17 +65,26 @@ elif mode_flag == '-m' and len(args) == 2:
     # print('- python3 main.py -i <input-video-path> -m <interpolation-mode> -f <output-frame-rate> -o <output-file-path>')
     # print('Get in an input video source from <input-video-path> and, using <interpolation-mode> mode, interpolate to <output-frame-rate> fps and save to <output-file-path>')
 elif mode_flag == '-i' and len(args) == 8 and '-m' == args[2] and '-f' == args[4] and '-o' == args[6]:
+    import math
     input_video_path = args[1]
     interpolation_mode = args[3]
-    target_fps = args[5]
-    output_file_path = args[7]
+    target_fps = int(args[5])
+    output_video_path = args[7]
+
+    interpolator_obj = InterpolatorDictionary[interpolation_mode]
+    interpolator = interpolator_obj(target_fps, input_video_path, output_video_path, math.inf)
+    interpolator.interpolate_video()
 
     # print(f'{input_video_path} - {interpolation_mode} - {target_fps} - {output_file_path}')
-    import time
-    for i in range (101):
-        time.sleep(0.1)
-        pct = str(i).rjust(3, ' ')
-        print(f'PROGRESS::{pct}%::Frame whatever', flush=True)
+    # import time
+    # for i in range (101):
+    #     time.sleep(0.1)
+    #     pct = str(i).rjust(3, ' ')
+    #     print(f'PROGRESS::{pct}%::Frame whatever', flush=True)
+
+
+
+
 
     # print('')
     # print('- python3 main.py -b <interpolation-mode>')
