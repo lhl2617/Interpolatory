@@ -37,19 +37,12 @@ export class AppLayout extends React.Component<{}, IState> {
         super(props);
         this.state = {
             currentPage: 'home',
-            height: 768,
+            height: 720,
             featuresEnabled: false,
         };
     }
 
     componentDidMount = () => {
-        /*
-            TODO:-
-                1. Check python3 exists
-                2. Check localStorage for dependency installation
-                3. Check main.py exists
-        */
-
         this.updateWindowDimensions();
         window.addEventListener('resize', this.updateWindowDimensions);
     }

@@ -1,7 +1,7 @@
 {
   "name": "interpolatory-simulator",
   "version": "0.0.1",
-  "description": "",
+  "description": "Video frame-rate interpolation framework for software simulation and benchmarking",
   "main": "./dist/main.js",
   "scripts": {
     "build-main": "cross-env NODE_ENV=production webpack --config webpack.main.prod.config.js",
@@ -29,8 +29,9 @@
   "build": {
     "productName": "Interpolatory Simulator",
     "appId": "interpolatory.simulator",
+    "icon": "assets/icon/icon.ico",
     "mac": {
-      "category": "your.app.category.type"
+      "category": "video.interpolation.simulator"
     },
     "directories": {
       "output": "release"
@@ -45,21 +46,31 @@
     },
     "win": {
       "target": "nsis"
-    }
+    },
+    "extraResources": [
+      {
+        "from": "../python/",
+        "to": "python",
+        "filter": [
+          "*.py",
+          "requirements.txt"
+        ]
+      }
+    ]
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/lhl2617/Interpolatory"
   },
   "author": {
-    "name": "Your name",
-    "email": "Your email"
+    "name": "Interpolatory",
+    "email": "lhl2617@ic.ac.uk"
   },
   "license": "SEE LICENSE",
   "bugs": {
-    "url": "https://github.com/Robinfr/electron-react-typescript/issues"
+    "url": "https://github.com/lhl2617/Interpolatory"
   },
-  "homepage": "https://github.com/Robinfr/electron-react-typescript",
+  "homepage": "https://github.com/lhl2617/Interpolatory",
   "devDependencies": {
     "@babel/core": "^7.9.6",
     "@babel/plugin-proposal-class-properties": "^7.4.4",

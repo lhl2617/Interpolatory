@@ -298,7 +298,7 @@ export class Convert extends React.Component<{}, IState> {
         })
 
         convProc.on(`close`, (code) => {
-            if (code !== 0) {
+            if (code !== 0 && convProc) {
                 const err = `An error occured: ${code} - ${gotStderr}`;
                 if (this.state.convertState !== `idle`) this.setState({ convertState: `error`, progressString: err })
             }

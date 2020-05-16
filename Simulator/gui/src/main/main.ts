@@ -23,11 +23,11 @@ const createWindow = async () => {
         webPreferences: {
             nodeIntegration: true,
         },
-        width: 1024,
-        height: 768,
+        width: 1280,
+        height: 720,
         frame: false
     });
-    win.setIcon(path.join(__dirname, '../assets/img/logo-white.png'));
+    // win.setIcon(path.join(__dirname, '../assets/img/logo-white.png'));
 
 
     if (process.env.NODE_ENV !== 'production') {
@@ -54,6 +54,8 @@ const createWindow = async () => {
         win = null;
     });
 };
+
+app.allowRendererProcessReuse = true;
 
 app.on('ready', createWindow);
 
