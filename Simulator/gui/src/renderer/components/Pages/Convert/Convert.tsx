@@ -11,7 +11,7 @@ import {
 } from '@ant-design/icons';
 
 import { supportedVideoFormats, supportedTargetFPS } from '../../../globals';
-import { getPython3, getInterpolatory } from '../../../util';
+import { getPython3, getInterpolatory, getInterpolationModesFromProcess, ValidatorObj } from '../../../util';
 
 // conversion process
 let convProc: cp.ChildProcessWithoutNullStreams | undefined;
@@ -32,16 +32,15 @@ type VideoMetadata = {
     duration: number
 };
 
-type ValidatorStatus = `success` | `error` | `warning`;
 
 const pleaseInput = `Please input video path.`;
 
 type IState = {
     inputVideoPath: string;
     inputVideoMetadata: VideoMetadata | undefined;
-    inputValidator: { status: ValidatorStatus; help: string }
+    inputValidator: ValidatorObj;
     outputVideoPath: string;
-    outputValidator: { status: ValidatorStatus; help: string }
+    outputValidator: ValidatorObj;
     interpolationMode: string;
     supportedInterpolationModes: string[];
     targetFPS: number;
@@ -75,30 +74,16 @@ export class Convert extends React.Component<{}, IState> {
     };
 
     getInterpolationModes = async () => {
-        // load into python
-        const args = [binName, `-if`];
-        const proc = cp.spawn(python3, args)
-
-        let stdoutData: string[];
-        proc.stdout.on('data', (data) => {
-            // console.log(`Gotten stdout: ${data}`);
-            stdoutData = JSON.parse(data);
+        try {
+            const modes = await getInterpolationModesFromProcess()
             this.setState({
-                supportedInterpolationModes: stdoutData,
-                interpolationMode: stdoutData[0],
+                supportedInterpolationModes: modes,
+                interpolationMode: modes.length ? modes[0] : ``
             })
-        })
-
-        proc.stderr.on('data', (data) => {
-            message.error(data.toString())
-        })
-
-        proc.on('close', (code) => {
-            if (code !== 0) {
-                message.error('Fatal error, please restart the simulator')
-                console.error(`Can't get interpolation modes... exited with ${code}`)
-            }
-        })
+        }
+        catch (err) {
+            message.error(err.message);
+        }
     };
 
     setOutputFilePath = async (filePath: string) => {
@@ -378,7 +363,7 @@ export class Convert extends React.Component<{}, IState> {
                                 const srcExtension = path.extname(inputVideoPath).substr(1)
 
                                 const filePath = remote.dialog.showSaveDialogSync(
-                                    { properties: ['showOverwriteConfirmation'], filters: [{ name: 'Video', extensions: [srcExtension] }] }
+                                    { title: `Select Destination Video Path`, properties: ['showOverwriteConfirmation'], filters: [{ name: 'Video', extensions: [srcExtension] }] }
                                 )
 
                                 if (filePath) {

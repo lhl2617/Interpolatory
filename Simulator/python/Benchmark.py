@@ -44,7 +44,11 @@ def benchmark(interpolation_mode, output_path=None):
     psnr = []
     ssim = []
 
-    for path_to_truth in sorted(glob.glob('../../Datasets/middlebury/*/frame10i11.png')):
+    paths = sorted(glob.glob('../../Datasets/middlebury/*/frame10i11.png'))
+    cnt = 0
+
+    start = int(round(time.time() * 1000))
+    for path_to_truth in paths:
         test_name = path_to_truth.split('/')[-2]
 
         path_1 = path_to_truth.replace('frame10i11', 'frame10')
@@ -64,6 +68,8 @@ def benchmark(interpolation_mode, output_path=None):
 
         psnr.append(skimage.metrics.peak_signal_noise_ratio(im_true, im_test, data_range=255))
         ssim.append(skimage.metrics.structural_similarity(im_true, im_test, data_range=255, multichannel=True))
+
+
 
     res = {
         'PSNR': np.mean(psnr),
