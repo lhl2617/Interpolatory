@@ -29,8 +29,12 @@ if mode_flag == '-h':
     print('Get supported interpolation-modes')
     
     print('')
-    print('- python3 main.py -m <video-path>')
+    print('- python3 main.py -mv <video-path>')
     print('Load a video and print metadata to stdout. If not supported, will return non-zero value')
+    
+    print('')
+    print('- python3 main.py -mi <video-path>')
+    print('Load an image and print height, width, and colour dimensions to stdout. If not supported, will return non-zero value')
     
     print('')
     print('- python3 main.py -i <input-video-path> -m <interpolation-mode> -f <output-frame-rate> -o <output-file-path>')
@@ -54,7 +58,7 @@ if mode_flag == '-h':
 elif mode_flag == '-if':
     print(json.dumps(interpolators))
 
-elif mode_flag == '-m' and len(args) == 2:
+elif mode_flag == '-mv' and len(args) == 2:
     import imageio
     from io import BytesIO
     video_path = args[1]
@@ -62,6 +66,13 @@ elif mode_flag == '-m' and len(args) == 2:
     content = video_file.read()
     video = imageio.get_reader(BytesIO(content), 'ffmpeg', loop=True)
     print(json.dumps(video.get_meta_data()))
+
+elif mode_flag == '-mi' and len(args) == 2:
+    import imageio
+    im_path = args[1]
+    
+    im = imageio.imread(im_path)
+    print(im.shape)
 
     # print('')
     # print('- python3 main.py -i <input-video-path> -m <interpolation-mode> -f <output-frame-rate> -o <output-file-path>')

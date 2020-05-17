@@ -1,3 +1,4 @@
+/* eslint-disable no-underscore-dangle */
 /* eslint-disable react/jsx-closing-bracket-location */
 import * as React from 'react';
 import { Input, Form, Select, Radio, message, Button, Popover, Modal, Progress, Popconfirm } from 'antd';
@@ -11,7 +12,10 @@ import {
 } from '@ant-design/icons';
 
 import { supportedVideoFormats, supportedTargetFPS } from '../../../globals';
-import { getPython3, getInterpolatory, getInterpolationModesFromProcess, ValidatorObj } from '../../../util';
+import { getPython3, getInterpolatory, getInterpolationModesFromProcess, ValidatorObj, defaultValidatorStatus } from '../../../util';
+
+
+message.config({ top: 64, maxCount: 3, duration: 6 })
 
 // conversion process
 let convProc: cp.ChildProcessWithoutNullStreams | undefined;
@@ -53,6 +57,8 @@ const getPercentageFromProgressString = (s: string) => {
 }
 
 export class Convert extends React.Component<{}, IState> {
+    mounted = false;
+
     constructor(props: any) {
         super(props);
         this.state = {
@@ -69,14 +75,26 @@ export class Convert extends React.Component<{}, IState> {
         };
     }
 
+    _setState = (obj: Partial<IState>) => {
+        if (this.mounted)
+            this.setState(obj as any);
+    }
+
+
     componentDidMount = () => {
+        this.mounted = true;
         this.getInterpolationModes();
     };
 
+    componentWillUnmount = () => {
+        this.mounted = false;
+        this.resetConvert();
+    }
+
     getInterpolationModes = async () => {
         try {
-            const modes = await getInterpolationModesFromProcess()
-            this.setState({
+            const modes = await getInterpolationModesFromProcess();
+            this._setState({
                 supportedInterpolationModes: modes,
                 interpolationMode: modes.length ? modes[0] : ``
             })
@@ -87,14 +105,14 @@ export class Convert extends React.Component<{}, IState> {
     };
 
     setOutputFilePath = async (filePath: string) => {
-        this.setState({
+        this._setState({
             outputVideoPath: filePath,
         });
 
 
         // filePath length
         if (filePath.length === 0) {
-            this.setState({
+            this._setState({
                 outputValidator: { status: "error", help: pleaseInput }
             })
             return;
@@ -103,7 +121,7 @@ export class Convert extends React.Component<{}, IState> {
         // check directory exists
         const dirname = path.dirname(filePath);
         if (!fs.existsSync(dirname)) {
-            this.setState({
+            this._setState({
                 outputValidator: { status: "error", help: "Directory does not exist." }
             });
             return;
@@ -113,7 +131,7 @@ export class Convert extends React.Component<{}, IState> {
         const { inputVideoPath } = this.state;
         const srcExt = path.extname(inputVideoPath).substr(1);
         if (srcExt !== path.extname(filePath).substr(1)) {
-            this.setState({
+            this._setState({
                 outputValidator: { status: "error", help: "File extension does not match with input." }
             });
             return;
@@ -121,7 +139,7 @@ export class Convert extends React.Component<{}, IState> {
 
         // same as input
         if (inputVideoPath === filePath) {
-            this.setState({
+            this._setState({
                 outputValidator: { status: "error", help: "Video path is identical to source video path." }
             });
             return;
@@ -130,30 +148,37 @@ export class Convert extends React.Component<{}, IState> {
         // check exists to warn
         const fileExists = fs.existsSync(filePath);
         if (fileExists) {
-            this.setState({
+            this._setState({
                 outputValidator: { status: `warning`, help: 'Output file exists - conversion will overwrite this file!' }
             })
             return;
         }
 
-        this.setState({
-            outputValidator: { status: "success", help: '' }
+        this._setState({
+            outputValidator: defaultValidatorStatus
         })
 
     }
 
+
+
     setInputFilePath = async (filePath: string) => {
         const { outputVideoPath } = this.state;
-        // console.log(`Setting filePath to ${filePath}`);
-
-        this.setState({
+        this._setState({
             inputVideoPath: filePath,
             inputVideoMetadata: undefined
-        })
+        });
+
+
+        // because dest is dependent on input, need to validate again
+        const validateDestinationAgain = async () => {
+            this.setOutputFilePath(this.state.outputVideoPath);
+        }
+
 
         // filePath length
         if (filePath.length === 0) {
-            this.setState({
+            this._setState({
                 inputValidator: { status: "error", help: pleaseInput }
             })
             return;
@@ -162,7 +187,7 @@ export class Convert extends React.Component<{}, IState> {
         // check exists first
         const fileExists = fs.existsSync(filePath);
         if (!fileExists) {
-            this.setState({
+            this._setState({
                 inputValidator: { status: "error", help: 'File does not exist.' }
             })
             return;
@@ -172,21 +197,21 @@ export class Convert extends React.Component<{}, IState> {
         const ext = path.extname(filePath).substr(1);
         // console.log(ext);
         if (supportedVideoFormats.indexOf(ext) === -1) {
-            this.setState({
+            this._setState({
                 inputValidator: { status: "error", help: 'Format is not supported.' }
             })
             return;
         }
 
         // load into python
-        const args = [binName, `-m`, filePath];
+        const args = [binName, `-mv`, filePath];
         const proc = cp.spawn(python3, args)
 
         let stdoutData: VideoMetadata;
         proc.stdout.on('data', (data) => {
             // console.log(`Gotten stdout: ${data}`);
             stdoutData = JSON.parse(data);
-            this.setState({
+            this._setState({
                 inputVideoMetadata: stdoutData,
             })
         })
@@ -197,7 +222,7 @@ export class Convert extends React.Component<{}, IState> {
 
         proc.on('close', (code) => {
             if (code === 0) {
-                // in here we need to set also the outputVideoPath
+                // in here we set also the outputVideoPath if empty
                 const fileName = path.basename(filePath);
                 const fileExt = path.extname(fileName).substr(1);
                 const fileDir = path.dirname(filePath);
@@ -209,17 +234,23 @@ export class Convert extends React.Component<{}, IState> {
                 if (outputVideoPath.length === 0) {
                     this.setOutputFilePath(outputPath);
                 }
+                else {
+                    // the above validates again already
+                    validateDestinationAgain();
+                }
 
-                this.setState({
-                    inputValidator: { status: "success", help: "" }
+                this._setState({
+                    inputValidator: defaultValidatorStatus
                 })
             }
             else {
-                this.setState({
+                // eslint-disable-next-line no-lonely-if
+                this._setState({
                     inputValidator: { status: "error", help: 'Format is not supported.' }
                 })
             }
         })
+
     }
 
     parseMetadata = (metadata: VideoMetadata | undefined) => {
@@ -239,37 +270,42 @@ export class Convert extends React.Component<{}, IState> {
     }
 
     handleTargetFPSChange = async (fps: number) => {
-        this.setState({
+        this._setState({
             targetFPS: fps,
         })
     }
 
     handleInterpolationModeChange = async (mode: string) => {
-        this.setState({
+        this._setState({
             interpolationMode: mode,
         });
     }
 
 
     processProgressString = async (stdout: string) => {
-        // PROGRESS::DDD%::...
-        const progressStrs = stdout
-            .split(`\n`)
-            .filter((s) => s.substr(0, 8) === `PROGRESS`)
+        const getLastProgressLine = () => {
+            const lines = stdout.split(`\n`);
+
+            // eslint-disable-next-line no-plusplus
+            for (let i = lines.length - 1; i >= 0; --i) {
+                if (lines[i].substr(0, 8) === `PROGRESS`) {
+                    return lines[i];
+                }
+            }
+            return undefined;
+        }
 
         // get last, don't overwrite error
-        if (progressStrs.length && this.state.convertState !== `error`) {
-            const progressStr = progressStrs[progressStrs.length - 1];
-
-            this.setState({
-                progressString: progressStr.substr(10)
+        const lastProgressLine = getLastProgressLine();
+        if (lastProgressLine && this.state.convertState !== `error`) {
+            this._setState({
+                progressString: lastProgressLine.substr(10)
             });
-
         }
     }
 
     startConvert = async () => {
-        this.setState({ convertState: `converting`, progressString: `` });
+        this._setState({ convertState: `converting`, progressString: `` });
         const { inputVideoPath, interpolationMode, targetFPS, outputVideoPath } = this.state;
 
         let gotStderr = ``;
@@ -277,7 +313,6 @@ export class Convert extends React.Component<{}, IState> {
         convProc = cp.spawn(python3, [binName, `-i`, inputVideoPath, `-m`, interpolationMode, `-f`, targetFPS.toString(), `-o`, outputVideoPath]);
 
         convProc.stdout.on(`data`, (data) => {
-            // TODO:- process progress string
             console.log(data.toString())
             console.log(`-`)
             this.processProgressString(data.toString())
@@ -290,12 +325,15 @@ export class Convert extends React.Component<{}, IState> {
         convProc.on(`close`, (code) => {
             if (code !== 0) {
                 const err = `An error occured: ${code ? code.toString() : ''} ${gotStderr}`;
-                if (this.state.convertState !== `idle`) this.setState({ convertState: `error`, progressString: err })
+                if (this.state.convertState !== `idle` && this.mounted)
+                    this._setState({ convertState: `error`, progressString: err })
             }
             else {
                 // message.info(`Conversion successful`);
-                this.setState({ convertState: `done` })
+                // eslint-disable-next-line no-lonely-if
+                this._setState({ convertState: `done` })
             }
+            convProc = undefined;
         });
     }
 
@@ -304,7 +342,7 @@ export class Convert extends React.Component<{}, IState> {
             convProc.kill(`SIGKILL`);
             convProc = undefined;
         }
-        this.setState({
+        this._setState({
             convertState: `idle`,
             progressString: ``,
         })
@@ -430,7 +468,7 @@ export class Convert extends React.Component<{}, IState> {
                             <div style={{ textAlign: `center`, margin: `auto`, marginTop: 24 }}>
 
                                 <Popconfirm
-                                    title="This will stop the conversion. Are you sure you want to continue?"
+                                    title="This will stop the conversion. Are you sure?"
                                     onConfirm={this.resetConvert}
                                     okText='Yes'
                                     cancelText='No'
@@ -468,7 +506,6 @@ export class Convert extends React.Component<{}, IState> {
                             </div>
                         </div>
                     }
-                    {/* DDD%%::... */}
                 </Modal>
             </div>
         )

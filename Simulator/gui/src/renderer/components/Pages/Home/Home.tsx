@@ -1,3 +1,4 @@
+/* eslint-disable no-underscore-dangle */
 /* eslint-disable react/jsx-closing-bracket-location */
 import * as React from 'react';
 import * as cp from 'child_process';
@@ -9,7 +10,7 @@ import { getPython3, getInterpolatory, reloadApp } from '../../../util';
 import { LocalStorageKey, getLocalStorage, setLocalStorage, deleteLocalStorage } from '../../../store';
 
 const { Search } = Input;
-message.config({ top: 64, maxCount: 3 })
+message.config({ top: 64, maxCount: 3, duration: 6 })
 const logo = require('../../../../../assets/img/logo.png').default;
 
 type VerState = { status: "loading" | "done" | "error", ver: string }
@@ -20,6 +21,7 @@ type BinVer = VerState;
 type IProps = {
     setFeaturesEnabled: (b: boolean) => void;
 }
+
 
 type IState = {
     pyVer: PyVer;
@@ -49,9 +51,12 @@ export class Home extends React.Component<IProps, IState> {
             newPyPath: python3,
             newBinPath: binName
         };
-        this.mounted = false;
     }
 
+    _setState = (obj: Partial<IState>) => {
+        if (this.mounted)            
+            this.setState(obj as any);
+    }
 
     componentDidMount = () => {
         this.mounted = true;
@@ -68,7 +73,7 @@ export class Home extends React.Component<IProps, IState> {
 
         if (!pyExists) {
             if (this.mounted) message.error(`Python installation not found, please change Python settings`);
-            if (this.mounted) this.setState(
+            this._setState(
                 {
                     pyVer: { status: "error", ver: this.state.pyVer.ver },
                     binVer: { status: "error", ver: `Python 3 error` }
@@ -80,13 +85,13 @@ export class Home extends React.Component<IProps, IState> {
 
 
         proc.stdout.on('data', (data) => {
-            if (this.mounted) this.setState({ pyVer: { status: "done", ver: data.toString() } });
+            this._setState({ pyVer: { status: "done", ver: data.toString() } });
         });
 
         proc.on('close', (code) => {
             if (code !== 0) {
                 if (this.mounted) message.error(`Python installation not found, please change Python settings`);
-                if (this.mounted) this.setState(
+                this._setState(
                     {
                         pyVer: { status: "error", ver: this.state.pyVer.ver },
                         binVer: { status: "error", ver: `Python 3 error` },
@@ -117,7 +122,11 @@ export class Home extends React.Component<IProps, IState> {
         proc.stdout.on(`end`, () => {
             if (stdoutTxt.includes(`Interpolatory Simulator`)) {
                 const gottenVer = stdoutTxt.substring(25, stdoutTxt.lastIndexOf('"'));
-                if (this.mounted) this.setState({ binVer: { status: "done", ver: gottenVer } });
+                this._setState({ binVer: { status: "done", ver: gottenVer } });
+          
+                setFeaturesEnabled(true);
+                // success, now get deps
+                this.getDependencyInfo();
             }
         })
 
@@ -131,15 +140,9 @@ export class Home extends React.Component<IProps, IState> {
         });
 
         proc.on(`close`, (code) => {
-
-            if (code === 0 && this.state.binVer.status === `done`) {
-                setFeaturesEnabled(true);
-                // success, now get deps
-                this.getDependencyInfo();
-            }
-            else {
+            if (code !== 0) {
                 if (this.mounted) message.error(`Could not start Interpolatory backend process, is your Interpolatory Path correct?`)
-                if (this.mounted) this.setState({ binVer: { status: "error", ver: this.state.binVer.ver }, dependencyLastInstalledTime: `N/A` });
+                this._setState({ binVer: { status: "error", ver: this.state.binVer.ver }, dependencyLastInstalledTime: `N/A` });
 
             }
 
@@ -151,11 +154,11 @@ export class Home extends React.Component<IProps, IState> {
         if (dateTime) {
             const dateString = new Date(parseInt(dateTime, 10));
 
-            if (this.mounted) this.setState({ dependencyLastInstalledTime: dateString.toString() });
+            this._setState({ dependencyLastInstalledTime: dateString.toString() });
             return;
         }
 
-        if (this.mounted) this.setState({ dependencyLastInstalledTime: `N/A` });
+        this._setState({ dependencyLastInstalledTime: `N/A` });
     }
 
     reinstallDependencies = async () => {
@@ -203,14 +206,14 @@ export class Home extends React.Component<IProps, IState> {
     //     proc.on('close', (code) => {
     //         if (code !== 0) {
     //             // TODO:- show option to install deps
-    //             if (this.mounted) this.setState({ depError: true })
+    //             this._setState({ depError: true })
     //         }
     //         else {
     //             const prePyDeps: Record<string, string> = {};
     //             deps.forEach((dep) => {
     //                 prePyDeps[dep] = `Loading...`
     //             })
-    //             if (this.mounted) this.setState({ pyDeps: prePyDeps });
+    //             this._setState({ pyDeps: prePyDeps });
     //             // success, now query deps
     //             deps.forEach((dep) => {
     //                 this.getDepVersion(dep);
@@ -235,7 +238,7 @@ export class Home extends React.Component<IProps, IState> {
     //             const newPyDeps = this.state.pyDeps;
     //             newPyDeps[dep] = `N/A`;
     //             if (this.mounted) message.error(`Dependency \`${dep}\` not found, please install missing dependencies`);
-    //             if (this.mounted) this.setState({ depError: true, pyDeps: newPyDeps })
+    //             this._setState({ depError: true, pyDeps: newPyDeps })
     //         }
     //         else {
     //             const vLine = depout
@@ -245,13 +248,13 @@ export class Home extends React.Component<IProps, IState> {
     //             const newPyDeps = this.state.pyDeps;
     //             newPyDeps[dep] = vStr;
     //             if (this.mounted) {
-    //                 this.setState({ pyDeps: newPyDeps })
+    //                 this._setState({ pyDeps: newPyDeps })
     //                 if (checkForDepErrorFalse) {
     //                     const ok = Object.values(newPyDeps)
     //                         .map((ver) => ver !== 'N/A')
     //                         .reduce((a, b) => a && b)
     //                     if (ok && this.mounted) {
-    //                         this.setState({ depError: false });
+    //                         this._setState({ depError: false });
     //                     }
     //                 }
     //             }
@@ -314,11 +317,11 @@ export class Home extends React.Component<IProps, IState> {
     // }
 
     showChangePathsModal = () => {
-        this.setState({ changePathsModalVisible: true })
+        this._setState({ changePathsModalVisible: true })
     }
 
     hideChangePathsModal = () => {
-        this.setState({ changePathsModalVisible: false })
+        this._setState({ changePathsModalVisible: false })
     }
 
     changePaths = (newPyPath: string, newBinName: string) => {
@@ -374,7 +377,7 @@ export class Home extends React.Component<IProps, IState> {
                     title='Change Python 3 / Interpolatory Backend Path'
                     visible={changePathsModalVisible}
                     onOk={() => { this.changePaths(newPyPath, newBinPath); this.hideChangePathsModal(); }}
-                    onCancel={() => { this.setState({ newBinPath: binName, newPyPath: python3 }); this.hideChangePathsModal(); }}
+                    onCancel={() => { this._setState({ newBinPath: binName, newPyPath: python3 }); this.hideChangePathsModal(); }}
                     cancelText='Discard Changes'
                     okText='Save Changes'
                     closable={false}
@@ -388,7 +391,7 @@ export class Home extends React.Component<IProps, IState> {
                                 onPressEnter={undefined}
                                 enterButton="Browse"
                                 value={newPyPath}
-                                onChange={(e) => { this.setState({ newPyPath: e.target.value }) }}
+                                onChange={(e) => { this._setState({ newPyPath: e.target.value }) }}
                                 onSearch={() => {
                                     const filePath = remote.dialog.showOpenDialogSync(
                                         {
@@ -399,7 +402,7 @@ export class Home extends React.Component<IProps, IState> {
                                     );
 
                                     if (filePath && filePath.length) {
-                                        this.setState({ newPyPath: filePath[0] })
+                                        this._setState({ newPyPath: filePath[0] })
                                     }
                                 }} />
                         </Form.Item>
@@ -410,7 +413,7 @@ export class Home extends React.Component<IProps, IState> {
                                 onPressEnter={undefined}
                                 enterButton="Browse"
                                 value={newBinPath}
-                                onChange={(e) => { this.setState({ newBinPath: e.target.value }) }}
+                                onChange={(e) => { this._setState({ newBinPath: e.target.value }) }}
                                 onSearch={() => {
                                     const filePath = remote.dialog.showOpenDialogSync(
                                         {
@@ -422,7 +425,7 @@ export class Home extends React.Component<IProps, IState> {
                                     );
 
                                     if (filePath && filePath.length) {
-                                        this.setState({ newBinPath: filePath[0] })
+                                        this._setState({ newBinPath: filePath[0] })
                                     }
                                 }} />
                         </Form.Item>

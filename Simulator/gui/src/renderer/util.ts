@@ -9,6 +9,7 @@ import { getLocalStorage, LocalStorageKey, setLocalStorage } from "./store"
 
 type ValidatorStatus = `success` | `error` | `warning`;
 export type ValidatorObj = { status: ValidatorStatus; help: string };
+export const defaultValidatorStatus: ValidatorObj = { status: `success`, help: `` };
 
 export const getPython3 = () => {
     return (getLocalStorage(LocalStorageKey.PythonPath) ?? `python3`);
@@ -57,7 +58,7 @@ export const reloadApp = () => {
 }
 
 // get interpolation modes
-export const getInterpolationModesFromProcess = async () => {
+export const getInterpolationModesFromProcess = () => {
     return new Promise<string[]>((resolve, reject) => {
 
         const python3 = getPython3();
@@ -68,25 +69,21 @@ export const getInterpolationModesFromProcess = async () => {
 
 
         let stdoutData = ``;
-        let stderrData = ``;
 
         proc.stdout.on('data', (data) => {
             // console.log(`Gotten stdout: ${data}`);
             stdoutData = data;
         })
 
-        proc.stderr.on('data', (data) => {
-            stderrData += data.toString();
-        })
+        proc.stdout.on(`end`, () => {
+            const ret: string[] = JSON.parse(stdoutData);
+            resolve(ret);
+        });
 
         proc.on('close', (code) => {
             if (code !== 0) {
                 reject(new Error('Unable to get available interpolation modes'));
                 console.error(`Can't get interpolation modes... exited with ${code}`)
-            }
-            else {
-                const ret: string[] = JSON.parse(stdoutData);
-                resolve(ret);
             }
         })
     })
