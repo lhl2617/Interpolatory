@@ -465,6 +465,8 @@ export class Convert extends React.Component<{}, IState> {
                             </p>
 
                             <div style={{ textAlign: `center`, margin: `auto`, marginTop: 24 }}>
+                                <Button onClick={() => { remote.shell.showItemInFolder(outputVideoPath) }}>Open containing folder</Button>
+                                <Button onClick={() => { remote.shell.openItem(outputVideoPath) }}>Open output video</Button>
                                 <Button onClick={this.resetConvert}>OK</Button>
                             </div>
                         </div>
