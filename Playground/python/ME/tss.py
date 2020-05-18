@@ -19,12 +19,12 @@ def get_motion_vectors(block_size, steps, source_frame, target_frame):
             center_sad = None
             lowest_sad = 9999999999999
             lowest_idx = (0, 0)
-            lowest_i = -1
+            lowest_i = 0
             curr_row = s_row
             curr_col = s_col
             for step in range(steps, 0, -1):
                 S = 2 ** (step - 1)
-                i = 0
+                i = -1
                 for t_row in range(curr_row - S, curr_row + S + 1, S):
                     for t_col in range(curr_col - S, curr_col + S + 1, S):
                         i += 1
