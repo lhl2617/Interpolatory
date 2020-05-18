@@ -8,16 +8,22 @@ from tss import get_motion_vectors as mv_tss
 
 def median_filter(block):
     block_flat = block.reshape(-1, block.shape[-1])
-    for i in range(block_flat.shape[0]):
-        block_flat[i, 2] = block_flat[i, 0] * block_flat[i, 0] + block_flat[i, 1] * block_flat[i, 1]
-    sorted_idx = np.argsort(block_flat[:,2])
-    median_idx = sorted_idx[int(sorted_idx.shape[0]/2)]
-    if sorted_idx.shape[0] % 2 == 0:
-        return block_flat[median_idx, :1]
+    sorted_idx_row = np.argsort(block_flat[:,0])
+    sorted_idx_col = np.argsort(block_flat[:,1])
+    median_idx_row = sorted_idx_row[int(sorted_idx_row.shape[0]/2)]
+    median_idx_col = sorted_idx_col[int(sorted_idx_col.shape[0]/2)]
+    if sorted_idx_row.shape[0] % 2 == 0:
+        row = block_flat[median_idx_row, 0]
     else:
-        return (block_flat[median_idx, :1] + block_flat[median_idx+1, :1]) / 2.0
+        row = (block_flat[median_idx_row, 0] + block_flat[median_idx_row+1, 0]) / 2.0
+    if sorted_idx_col.shape[0] % 2 == 0:
+        col = block_flat[median_idx_col, 1]
+    else:
+        col = (block_flat[median_idx_col, 1] + block_flat[median_idx_col+1, 1]) / 2.0 
+    return (row, col)
 
 def smooth(mv_field, size):
+    size -= 1
     out = np.copy(mv_field)
     for row in range(mv_field.shape[0]):
         print(row)
@@ -26,7 +32,9 @@ def smooth(mv_field, size):
             high_row = min(int(row + size/2), mv_field.shape[0])
             low_col = max(0, int(col - size/2))
             high_col = min(int(col + size/2), mv_field.shape[1])
-            out[row, col, :1] = median_filter(mv_field[low_row : high_row, low_col : high_col]) # replace out with mv_field maybe 
+            r, c = median_filter(mv_field[low_row : high_row, low_col : high_col])
+            out[row, col, 0] = r # replace out with mv_field maybe
+            out[row, col, 1] = c 
     return out
 
 if __name__ == "__main__":
