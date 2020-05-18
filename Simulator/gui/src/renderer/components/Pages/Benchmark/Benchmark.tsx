@@ -286,7 +286,7 @@ export class Benchmark extends React.Component<{}, IState> {
                     <p>{outputPath.length ? outputPath : `N/A`}</p>
                     {
                         (benchmarkState === `benchmarking`) && <div>
-                            <h4 style={{ textAlign: `center`, margin: `auto`, marginTop: 12 }}>Benchmarking...</h4>
+                            <h4 style={{ textAlign: `center`, margin: `auto`, marginTop: 12 }}>Benchmarking... <Spin size="small" /></h4>
                             <Progress status='active' percent={progressPercentage} />
                             <p style={{ textAlign: `center`, margin: `auto` }}>
                                 {progressString.substring(6)}

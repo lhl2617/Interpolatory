@@ -513,7 +513,7 @@ export class Test extends React.Component<{}, IState> {
                         <p>{outputPath.length ? outputPath : `N/A`}</p>
                         {
                             (testState === `testing`) && <div>
-                                <h4 style={{ textAlign: `center`, margin: `auto`, marginTop: 12 }}>Testing...</h4>
+                                <h4 style={{ textAlign: `center`, margin: `auto`, marginTop: 12 }}>Testing... <Spin size="small" /></h4>
                                 <div style={{ margin: `auto`, textAlign: `center`, marginTop: 12 }}>
                                     <Spin size='large' />
                                 </div>
