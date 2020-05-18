@@ -150,7 +150,6 @@ class BaseInterpolator(object):
 
         return res
 
-
 '''
 %
 %   e.g. 24->60
@@ -178,7 +177,6 @@ class NearestInterpolator(BaseInterpolator):
 
     def __str__(self):
         return 'nearest'
-
 
 '''
 %

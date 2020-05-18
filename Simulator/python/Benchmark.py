@@ -49,7 +49,7 @@ def benchmark(interpolation_mode, output_path=None):
     psnr = []
     ssim = []
 
-    paths = sorted(glob.glob('../../Datasets/middlebury/*/frame10i11.png'))
+    paths = sorted(glob.glob('./benchmarks/middlebury/*/frame10i11.png'))
 
     cnt_done = 0
     start = int(round(time.time() * 1000))
