@@ -25,8 +25,8 @@ def get_motion_vectors(block_size, steps, source_frame, target_frame):
             for step in range(steps, 0, -1):
                 S = 2 ** (step - 1)
                 i = 0
-                for t_row in range(curr_row - S, curr_row + S, S):
-                    for t_col in range(curr_col - S, curr_col + S, S):
+                for t_row in range(curr_row - S, curr_row + S + 1, S):
+                    for t_col in range(curr_col - S, curr_col + S + 1, S):
                         i += 1
                         if (t_row != curr_row or t_col != curr_col or center_sad == None) and (t_row >= 0 and t_row <= source_frame.shape[0] - block_size and t_col >= 0 and t_col <= source_frame.shape[1] - block_size):
                             target_block = target_frame[t_row:t_row+block_size, t_col:t_col+block_size, :]
