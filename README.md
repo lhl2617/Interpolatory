@@ -14,7 +14,7 @@
 - `master`: Direct push only when absolutely needed. Use PRs whenever possible.
 
 ### Notes
-- Please download `Datasets` folder and paste into the root directory
+- Please download `Datasets` (https://drive.google.com/drive/folders/1W3nm4iKYyboOihJev5x-U6jcjFFEqg9a) folder and paste into the root directory
 - Output video/photos/etc. should be stored in a `Output` folder in the root directory
 
 ### Links
