@@ -4,6 +4,7 @@ from imageio import imread, imwrite
 import sys
 import cProfile  
 import time
+from plot_mv import plot_vector_field
 
 def get_motion_vectors(block_size, steps, source_frame, target_frame):
     output = np.empty_like(source_frame, dtype='float32')
@@ -58,16 +59,18 @@ if __name__ == "__main__":
         output = get_motion_vectors(block_size, steps, im1, im2)
         # np.savetxt(out_path + "/out.csv", output.reshape(-1), delimiter=',')
 
-    output_intensity = np.copy(output)
-    max_intensity = 0
-    for i in range(output_intensity.shape[0]):
-        for j in range(output_intensity.shape[1]):
-            intensity = float(output_intensity[i,j,0]) ** 2.0 + float(output_intensity[i,j,1]) ** 2.0
-            if intensity > max_intensity:
-                max_intensity = intensity
-            output_intensity[i,j,:] = [intensity, intensity, intensity]
-    output_intensity = 255 - (output_intensity * (255.0 / float(max_intensity)))
-    imwrite(out_path, output_intensity)
+    plot_vector_field(output, block_size, out_path)
+
+    # output_intensity = np.copy(output)
+    # max_intensity = 0
+    # for i in range(output_intensity.shape[0]):
+    #     for j in range(output_intensity.shape[1]):
+    #         intensity = float(output_intensity[i,j,0]) ** 2.0 + float(output_intensity[i,j,1]) ** 2.0
+    #         if intensity > max_intensity:
+    #             max_intensity = intensity
+    #         output_intensity[i,j,:] = [intensity, intensity, intensity]
+    # output_intensity = 255 - (output_intensity * (255.0 / float(max_intensity)))
+    # imwrite(out_path, output_intensity)
 
 
 
