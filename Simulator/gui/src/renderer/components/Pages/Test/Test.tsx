@@ -4,7 +4,6 @@ import { Input, Form, Select, message, Button, Modal, Popconfirm, Spin, Popover 
 import { remote } from 'electron';
 import * as cp from 'child_process';
 import * as fs from 'fs';
-import * as path from 'path';
 
 import {
     InfoCircleOutlined
@@ -39,6 +38,7 @@ type IState = {
     groundTruthPathValidator: ValidatorObj;
     testState: `done` | `error` | `testing` | `idle`;
     testResult: BenchmarkResult | undefined;
+    overrideDisable: boolean;
 }
 
 const pleaseInput = `Please input path.`;
@@ -84,6 +84,7 @@ export class Test extends React.Component<{}, IState> {
             groundTruthPathValidator: defaultValidatorStatus,
             testState: `idle`,
             testResult: undefined,
+            overrideDisable: false,
         };
     }
 
@@ -99,6 +100,7 @@ export class Test extends React.Component<{}, IState> {
 
     componentWillUnmount = () => {
         this.mounted = false;
+        this.resetTest();
     }
 
     getInterpolationModes = async () => {
@@ -220,7 +222,7 @@ export class Test extends React.Component<{}, IState> {
             // filePath length
             // if does not exist just set as default, this is optional
             if (filePath.length === 0) {
-                this.setState({
+                this._setState({
                     groundTruthPathValidator: defaultValidatorStatus,
                 })
                 return;
@@ -297,6 +299,8 @@ export class Test extends React.Component<{}, IState> {
             args.push(groundTruthPath);
         }
 
+        args.push(`-gui`);
+
         let gotStderr = ``;
 
         testProc = cp.spawn(python3, args);
@@ -325,7 +329,7 @@ export class Test extends React.Component<{}, IState> {
                 }
             }
             else {
-                this._setState({ testState: `done` })
+                setTimeout(() => this._setState({ testState: `done` }), 1000);
             }
             testProc = undefined;
         });
@@ -333,13 +337,23 @@ export class Test extends React.Component<{}, IState> {
     }
 
     resetTest = async () => {
+        const updateState = () => {
+            this._setState({
+                testState: `idle`,
+                overrideDisable: false,
+            })   
+        }
         if (testProc) {
+            this._setState({ testState: `idle` })
+
             testProc.kill(`SIGKILL`);
             testProc = undefined;
+
+            setTimeout(() => updateState(), 3000);
         }
-        this._setState({
-            testState: `idle`,
-        })
+        else {
+            updateState();
+        }
     }
 
     render() {
@@ -353,10 +367,11 @@ export class Test extends React.Component<{}, IState> {
             groundTruthPath,
             groundTruthPathValidator,
             testResult,
-            testState
+            testState,
+            overrideDisable
         } = this.state;
         const disabled = inputValidators.frame1.status === `error`;
-        const testDisabled = disabled || inputValidators.frame2.status === `error` || outputPathValidator.status === `error`;
+        const testDisabled = overrideDisable || disabled || inputValidators.frame2.status === `error` || outputPathValidator.status === `error` || groundTruthPathValidator.status === `error`;
         return (
 
             <div>
@@ -486,7 +501,7 @@ export class Test extends React.Component<{}, IState> {
                         <h4>Output Path</h4>
                         <p>{outputPath}</p>
                         {
-                            groundTruthPath.length &&
+                            groundTruthPath.length > 0 &&
                             <span>
                                 <h4>Ground Truth Path</h4>
                                 <p>{groundTruthPath}</p>
@@ -494,7 +509,7 @@ export class Test extends React.Component<{}, IState> {
                         }
                         <h4>Interpolation Mode</h4>
                         <p>{interpolationMode}</p>
-                        <h4>Output Frames Directory</h4>
+                        <h4>Output Frame Directory</h4>
                         <p>{outputPath.length ? outputPath : `N/A`}</p>
                         {
                             (testState === `testing`) && <div>

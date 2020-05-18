@@ -10,10 +10,8 @@ import skimage.metrics
 import json
 import time
 import math
-from util import sToMMSS, getETA
-
-# set True to get process
-debug_benchmark_progress = False
+from Globals import debug_flags
+from util import sToMMSS, getETA, signal_progress
 
 # def test():
 #     psnr = {}
@@ -76,18 +74,20 @@ def benchmark(interpolation_mode, output_path=None):
         psnr.append(skimage.metrics.peak_signal_noise_ratio(im_true, im_test, data_range=255))
         ssim.append(skimage.metrics.structural_similarity(im_true, im_test, data_range=255, multichannel=True))
 
-        if debug_benchmark_progress:
-            pct = str(math.floor(100 * float(cnt_done) / len(paths))).rjust(3, ' ')
-            curr = int(round(time.time() * 1000))
-            elapsed_seconds = int((curr-start) / 1000)
-            elapsed = sToMMSS(elapsed_seconds)
-            eta = getETA(elapsed_seconds, cnt_done, len(paths))
-            progStr = f'PROGRESS::{pct}%::Frame {cnt_done}/{len(paths)} | Time elapsed: {elapsed} | Estimated Time Left: {eta}'
+
+        cnt_done += 1
+        pct = str(math.floor(100 * float(cnt_done) / len(paths))).rjust(3, ' ')
+        curr = int(round(time.time() * 1000))
+        elapsed_seconds = int((curr-start) / 1000)
+        elapsed = sToMMSS(elapsed_seconds)
+        eta = getETA(elapsed_seconds, cnt_done, len(paths))
+        progStr = f'PROGRESS::{pct}%::Frame {cnt_done}/{len(paths)} | Time elapsed: {elapsed} | Estimated Time Left: {eta}'
+        signal_progress(progStr)
+        
+        if debug_flags['debug_benchmark_progress']:
             print(progStr)
 
-            cnt_done += 1
-
-    if debug_benchmark_progress:
+    if debug_flags['debug_benchmark_progress']:
         end = int(round(time.time() * 1000))
         print(f'PROGRESS::100%::Completed | Time taken: {sToMMSS((end-start) / 1000)}')
 
@@ -117,5 +117,8 @@ def get_middle_frame(interpolation_mode, frame_1_path, frame_2_path, output_file
             'PSNR': psnr,
             'SSIM': ssim
         }
+
+        if (res['PSNR'] == math.inf):
+            res['PSNR'] = 'Infinity'
 
         print(json.dumps(res))

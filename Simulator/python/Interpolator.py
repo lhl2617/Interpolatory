@@ -9,7 +9,7 @@ from decimal import Decimal
 from copy import deepcopy
 from Globals import debug_flags
 from VideoStream import BenchmarkVideoStream, VideoStream
-from util import sToMMSS, getETA
+from util import sToMMSS, getETA, signal_progress
 
 '''
 blends frames
@@ -102,6 +102,9 @@ class BaseInterpolator(object):
                 elapsed = sToMMSS(elapsed_seconds)
                 eta = getETA(elapsed_seconds, i, target_nframes)
                 progStr = f'PROGRESS::{pct}%::Frame {i}/{target_nframes} | Time elapsed: {elapsed} | Estimated Time Left: {eta}'
+                signal_progress(progStr)
+
+            if (debug_flags['debug_progress']):
                 print(progStr)
                 
             interpolated_frame = self.get_interpolated_frame(i)
@@ -113,7 +116,11 @@ class BaseInterpolator(object):
 
         # if (debug_flags['debug_timer']):
         elapsed = sToMMSS(int((end-start) / 1000))
-        print(f'PROGRESS::100%::Complete | Time taken: {sToMMSS((end-start) / 1000)}')
+        progStr = f'PROGRESS::100%::Complete | Time taken: {sToMMSS((end-start) / 1000)}'
+        signal_progress(progStr)
+        if (debug_flags['debug_progress']):
+            print(progStr)
+        
 
     def get_interpolated_frame(self, idx):
         raise Exception('To be implemented by derived classes')

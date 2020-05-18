@@ -1,10 +1,11 @@
 /* eslint-disable no-underscore-dangle */
 import * as React from 'react';
-import { Input, Form, Select, message, Button, Modal, Popconfirm, Spin } from 'antd';
+import { Input, Form, Select, message, Button, Modal, Popconfirm, Progress } from 'antd';
 import { remote } from 'electron';
 import * as cp from 'child_process';
 import * as fs from 'fs';
-import { getInterpolationModesFromProcess, ValidatorObj, getPython3, getInterpolatory, defaultValidatorStatus } from '../../../util';
+import * as path from 'path';
+import { getInterpolationModesFromProcess, ValidatorObj, getPython3, getInterpolatory, defaultValidatorStatus, getPercentageFromProgressString, getProgressFilePath, processProgressFile } from '../../../util';
 
 const { Search } = Input;
 const { Option } = Select;
@@ -27,6 +28,8 @@ type IState = {
     outputPathValidator: ValidatorObj;
     benchmarkState: `done` | `error` | `benchmarking` | `idle`;
     benchmarkResult: BenchmarkResult | undefined;
+    progressString: string;
+    overrideDisable: boolean;
 }
 
 export class Benchmark extends React.Component<{}, IState> {
@@ -41,12 +44,14 @@ export class Benchmark extends React.Component<{}, IState> {
             outputPath: ``,
             outputPathValidator: defaultValidatorStatus,
             benchmarkResult: undefined,
-            benchmarkState: `idle`
+            benchmarkState: `idle`,
+            progressString: ``,
+            overrideDisable: false,
         };
     }
 
     _setState = (obj: any) => {
-        if (this.mounted)            
+        if (this.mounted)
             this.setState(obj);
     }
 
@@ -122,9 +127,35 @@ export class Benchmark extends React.Component<{}, IState> {
             args.push(outputPath);
         }
 
+        const progressFilePath = getProgressFilePath(args);
+
+        args.push(`-pf=${progressFilePath}`)
+        args.push(`-gui`)
+
         let gotStderr = ``;
 
-        benchProc = cp.spawn(python3, args)
+        benchProc = cp.spawn(python3, args, { cwd: path.dirname(binName) })
+
+        const poll = async () => {
+            try {
+                const progressStr = await processProgressFile(progressFilePath);
+                if (progressStr) {
+                    this._setState({
+                        progressString: progressStr,
+                    })
+                }
+            }
+            catch (err) {
+                console.error(err.message);
+            }
+
+            if (this.mounted && this.state.benchmarkState === `benchmarking`) {
+                setTimeout(() => poll(), 1000);
+            }
+        }
+
+        setTimeout(() => poll(), 1000);
+
 
         benchProc.stdout.on(`data`, (data) => {
             const res = JSON.parse(data);
@@ -134,10 +165,11 @@ export class Benchmark extends React.Component<{}, IState> {
                 SSIM: res.SSIM
             }
 
-            this._setState({
+            // one second delay
+            setTimeout(() => this._setState({
                 benchmarkResult: bRes,
                 benchmarkState: `done`
-            })
+            }), 1000);
         });
 
         benchProc.stderr.on(`data`, (data) => {
@@ -157,19 +189,31 @@ export class Benchmark extends React.Component<{}, IState> {
     }
 
     resetBenchmark = async () => {
+        const updateState = () => {
+            this._setState({
+                benchmarkState: `idle`,
+                progressString: ``,
+                overrideDisable: false,
+            })
+        }
         if (benchProc) {
+            this._setState({ overrideDisable: true, benchmarkState: `idle` });
             benchProc.kill(`SIGKILL`);
             benchProc = undefined;
+            setTimeout(() => updateState(), 3000);
         }
-        this._setState({
-            benchmarkState: `idle`,
-        })
+        else {
+            updateState();
+        }
 
     }
 
     render() {
-        const { interpolationMode, supportedInterpolationModes, outputPathValidator, outputPath, benchmarkState, benchmarkResult } = this.state;
-        const startDisabled = outputPathValidator.status === `error` || supportedInterpolationModes.length === 0;
+        const { progressString, overrideDisable, interpolationMode, supportedInterpolationModes, outputPathValidator, outputPath, benchmarkState, benchmarkResult } = this.state;
+        const startDisabled = overrideDisable || outputPathValidator.status === `error` || supportedInterpolationModes.length === 0;
+
+        const progressPercentage = getPercentageFromProgressString(progressString);
+
         return (
 
             <div>
@@ -243,9 +287,10 @@ export class Benchmark extends React.Component<{}, IState> {
                     {
                         (benchmarkState === `benchmarking`) && <div>
                             <h4 style={{ textAlign: `center`, margin: `auto`, marginTop: 12 }}>Benchmarking...</h4>
-                            <div style={{ margin: `auto`, textAlign: `center`, marginTop: 12 }}>
-                                <Spin size='large' />
-                            </div>
+                            <Progress status='active' percent={progressPercentage} />
+                            <p style={{ textAlign: `center`, margin: `auto` }}>
+                                {progressString.substring(6)}
+                            </p>
                             <div style={{ textAlign: `center`, margin: `auto`, marginTop: 24 }}>
                                 <Popconfirm
                                     title="This will stop the benchmark. Are you sure?"
@@ -262,7 +307,10 @@ export class Benchmark extends React.Component<{}, IState> {
                         benchmarkState === `done` && <div>
 
                             <h4 style={{ textAlign: `center`, margin: `auto`, marginTop: 12, color: `green` }}>Finished</h4>
-
+                            <Progress status='success' percent={progressPercentage} />
+                            <p style={{ textAlign: `center`, margin: `auto` }}>
+                                {progressString.substring(6)}
+                            </p>
                             {
                                 benchmarkResult &&
                                 <div style={{ textAlign: `center`, margin: `auto`, marginTop: 12 }}>
@@ -286,6 +334,10 @@ export class Benchmark extends React.Component<{}, IState> {
                         benchmarkState === `error` && <div>
                             <h4 style={{ textAlign: `center`, margin: `auto`, marginTop: 12, color: `red` }}>An error occured.</h4>
 
+                            <Progress status='exception' percent={progressPercentage} />
+                            <p style={{ textAlign: `center`, margin: `auto` }}>
+                                {progressString}
+                            </p>
                             <div style={{ textAlign: `center`, margin: `auto`, marginTop: 24 }}>
                                 <Button onClick={this.resetBenchmark}>OK</Button>
                             </div>

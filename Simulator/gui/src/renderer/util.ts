@@ -4,6 +4,8 @@
 
 import * as cp from 'child_process';
 import * as path from 'path';
+import * as md5 from 'md5';
+import * as fs from 'fs';
 import { remote } from 'electron';
 import { getLocalStorage, LocalStorageKey, setLocalStorage } from "./store"
 
@@ -88,4 +90,30 @@ export const getInterpolationModesFromProcess = () => {
         })
     })
 
+}
+
+// get a hashed file path for progress output
+export const getProgressFilePath = (args: string[]) => {
+    // concat time now and a random float for no collisions
+    const rawString = args.join(``) + (new Date()).getTime().toString + Math.random().toString();
+    const hash = md5(rawString);
+
+    const filePath = path.join(remote.app.getPath(`temp`), `interpolatory_${hash}.txt`);
+
+    return filePath;
+}
+
+export const processProgressFile = async (progressFilePath: string): Promise<string | undefined> => {
+    
+    if (fs.existsSync(progressFilePath)) {
+        const progString = fs.readFileSync(progressFilePath).toString();
+        if (progString.substr(0, 8) === `PROGRESS`) {
+            return progString.substr(10);
+        }
+    }
+    return undefined;
+}
+
+export const getPercentageFromProgressString = (s: string) => {
+    return parseInt(s.substr(0, 3), 10);
 }

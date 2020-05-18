@@ -2,15 +2,35 @@ import sys
 import json
 
 from util import eprint
+import util
 from Interpolator import InterpolatorDictionary
 from Benchmark import benchmark, get_middle_frame
-
+import Globals
 
 mode_flag = None
 
 if (len(sys.argv) > 1):
     args = sys.argv[1:]
     mode_flag = args[0]
+
+    # if the last flag is -gui
+    # turn off debugs
+    last_arg = args[len(args) - 1]
+    if (last_arg == '-gui'):
+        # turn off debugs
+        for flag in Globals.debug_flags:
+            Globals.debug_flags[flag] = False
+        args = args[:-1]
+
+
+    # if the current last arg is `-pf=<progress-file-path>`
+    # this is to signal progress of the conversion by writing into a file 
+    last_arg = args[len(args) - 1]
+    if (last_arg[:4] == '-pf='):
+        file_path = last_arg[4:]
+        util.progress_file_path = file_path
+        args = args[:-1]
+
 
 interpolators = list(InterpolatorDictionary.keys())
 version = 'Interpolatory Simulator 0.0.1'

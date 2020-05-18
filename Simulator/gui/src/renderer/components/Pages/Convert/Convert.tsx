@@ -12,8 +12,7 @@ import {
 } from '@ant-design/icons';
 
 import { supportedVideoFormats, supportedTargetFPS } from '../../../globals';
-import { getPython3, getInterpolatory, getInterpolationModesFromProcess, ValidatorObj, defaultValidatorStatus } from '../../../util';
-
+import { getPython3, getInterpolatory, getInterpolationModesFromProcess, ValidatorObj, defaultValidatorStatus, getProgressFilePath, processProgressFile, getPercentageFromProgressString } from '../../../util';
 
 message.config({ top: 64, maxCount: 3, duration: 6 })
 
@@ -50,10 +49,7 @@ type IState = {
     targetFPS: number;
     convertState: "done" | "error" | "converting" | "idle";
     progressString: string;
-}
-
-const getPercentageFromProgressString = (s: string) => {
-    return parseInt(s.substr(0, 3), 10);
+    overrideDisable: boolean;
 }
 
 export class Convert extends React.Component<{}, IState> {
@@ -72,6 +68,7 @@ export class Convert extends React.Component<{}, IState> {
             targetFPS: 60,
             convertState: "idle",
             progressString: ``,
+            overrideDisable: false,
         };
     }
 
@@ -282,27 +279,27 @@ export class Convert extends React.Component<{}, IState> {
     }
 
 
-    processProgressString = async (stdout: string) => {
-        const getLastProgressLine = () => {
-            const lines = stdout.split(`\n`);
+    // processProgressString = async (stdout: string) => {
+    //     const getLastProgressLine = () => {
+    //         const lines = stdout.split(`\n`);
 
-            // eslint-disable-next-line no-plusplus
-            for (let i = lines.length - 1; i >= 0; --i) {
-                if (lines[i].substr(0, 8) === `PROGRESS`) {
-                    return lines[i];
-                }
-            }
-            return undefined;
-        }
+    //         // eslint-disable-next-line no-plusplus
+    //         for (let i = lines.length - 1; i >= 0; --i) {
+    //             if (lines[i].substr(0, 8) === `PROGRESS`) {
+    //                 return lines[i];
+    //             }
+    //         }
+    //         return undefined;
+    //     }
 
-        // get last, don't overwrite error
-        const lastProgressLine = getLastProgressLine();
-        if (lastProgressLine && this.state.convertState !== `error`) {
-            this._setState({
-                progressString: lastProgressLine.substr(10)
-            });
-        }
-    }
+    //     // get last, don't overwrite error
+    //     const lastProgressLine = getLastProgressLine();
+    //     if (lastProgressLine && this.state.convertState !== `error`) {
+    //         this._setState({
+    //             progressString: lastProgressLine.substr(10)
+    //         });
+    //     }
+    // }
 
     startConvert = async () => {
         this._setState({ convertState: `converting`, progressString: `` });
@@ -310,38 +307,46 @@ export class Convert extends React.Component<{}, IState> {
 
         let gotStderr = ``;
 
-        convProc = cp.spawn(python3, [`-u`, binName, `-i`, inputVideoPath, `-m`, interpolationMode, `-f`, targetFPS.toString(), `-o`, outputVideoPath]);
+        const args = [binName, `-i`, inputVideoPath, `-m`, interpolationMode, `-f`, targetFPS.toString(), `-o`, outputVideoPath]
+
+        const progressFilePath = getProgressFilePath(args);
+
+        // console.log(progressFilePath);
+
+        args.push(`-pf=${progressFilePath}`)
+        args.push(`-gui`)
+
+        convProc = cp.spawn(python3, args);
 
         // convProc.stdout.pipe(process.stdout)
 
 
-        // const poll = () => {
-        //     console.log(`poll`);
-        //     try {
+        const poll = async () => {
+            try {
+                const progressStr = await processProgressFile(progressFilePath);
+                if (progressStr) {
+                    this._setState({
+                        progressString: progressStr,
+                    })
+                }
+            }
+            catch (err) {
+                console.error(err.message);
+            }
 
-        //         console.log(convProc?.stdout.readable);
+            if (this.mounted && this.state.convertState === `converting`) {
+                setTimeout(() => poll(), 1000);
+            }
+        }
 
-        //         const buf = convProc?.stdout.read();
-            
-        //         console.log(buf ? buf.toString() : `NONE`);
+        setTimeout(() => poll(), 1000);
 
-        //     }
-        //     catch (err) {
-        //         console.error(err.message);
-        //     }
-
-        //     if (running) {
-        //         setTimeout(() => poll(), 1000);
-        //     }
-        // }
-
-        // poll();
-
-        convProc.stdout.on(`data`, (data) => {
-            console.log(data.toString())
-            console.log(`-`)
-            this.processProgressString(data.toString())
-        })
+        // not expecting anything from stdout
+        // convProc.stdout.on(`data`, (data) => {
+        //     console.log(data.toString())
+        //     console.log(`-`)
+        //     this.processProgressString(data.toString())
+        // })
 
 
         convProc.stderr.on(`data`, (data) => {
@@ -351,34 +356,42 @@ export class Convert extends React.Component<{}, IState> {
         convProc.on(`close`, (code) => {
             if (code !== 0) {
                 const err = `An error occured: ${code ? code.toString() : ''} ${gotStderr}`;
-                if (this.state.convertState !== `idle` && this.mounted)
+                if (this.state.convertState !== `idle`)
                     this._setState({ convertState: `error`, progressString: err })
             }
             else {
                 // message.info(`Conversion successful`);
-                // eslint-disable-next-line no-lonely-if
-                this._setState({ convertState: `done` })
+                // one second delay
+                setTimeout(() => this._setState({ convertState: `done` }), 1000);
             }
             convProc = undefined;
         });
     }
 
     resetConvert = async () => {
+        const updateState = () => {
+            this._setState({
+                convertState: `idle`,
+                progressString: ``,
+                overrideDisable: false,
+            })   
+        }
         if (convProc) {
+            this._setState({ overrideDisable: true, convertState: `idle` });
             convProc.kill(`SIGKILL`);
             convProc = undefined;
+            setTimeout(() => updateState(), 3000);
         }
-        this._setState({
-            convertState: `idle`,
-            progressString: ``,
-        })
+        else {
+            updateState();
+        }
     }
 
     render() {
-        const { inputVideoPath, inputVideoMetadata, outputVideoPath, targetFPS, interpolationMode, supportedInterpolationModes, inputValidator, outputValidator, convertState, progressString } = this.state;
+        const { overrideDisable, inputVideoPath, inputVideoMetadata, outputVideoPath, targetFPS, interpolationMode, supportedInterpolationModes, inputValidator, outputValidator, convertState, progressString } = this.state;
 
         const disabled = inputValidator.status === "error";
-        const conversionDisabled = disabled || outputValidator.status === "error" || convertState !== `idle`;
+        const conversionDisabled = overrideDisable || disabled || outputValidator.status === "error" || convertState !== `idle`;
 
         const progressPercentage = getPercentageFromProgressString(progressString);
 
@@ -486,7 +499,7 @@ export class Convert extends React.Component<{}, IState> {
                     <p>{interpolationMode}</p>
                     {
                         (convertState === `converting`) && <div>
-                            <h4 style={{ textAlign: `center`, margin: `auto`, marginTop: 12 }}>Converting... <Spin size="small"/></h4>
+                            <h4 style={{ textAlign: `center`, margin: `auto`, marginTop: 12 }}>Converting... <Spin size="small" /></h4>
                             <Progress status='active' percent={progressPercentage} />
                             <p style={{ textAlign: `center`, margin: `auto` }}>
                                 {progressString.substring(6)}
