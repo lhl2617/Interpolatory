@@ -56,7 +56,7 @@ if __name__ == "__main__":
         im2 = imread(sys.argv[4])[:,:,:3]
         out_path = sys.argv[5]
         output = get_motion_vectors(block_size, steps, im1, im2)
-        np.savetxt(out_path + "/out.csv", output.reshape(-1), delimiter=',')
+        # np.savetxt(out_path + "/out.csv", output.reshape(-1), delimiter=',')
 
     output_intensity = np.copy(output)
     max_intensity = 0
@@ -67,7 +67,7 @@ if __name__ == "__main__":
                 max_intensity = intensity
             output_intensity[i,j,:] = [intensity, intensity, intensity]
     output_intensity = 255 - (output_intensity * (255.0 / float(max_intensity)))
-    imwrite(out_path + "/out_intensity.png", output_intensity)
+    imwrite(out_path, output_intensity)
 
 
 
