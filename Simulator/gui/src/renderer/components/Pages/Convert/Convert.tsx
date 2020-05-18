@@ -14,7 +14,7 @@ import {
 import { supportedVideoFormats, supportedTargetFPS } from '../../../globals';
 import { getPython3, getInterpolatory, getInterpolationModesFromProcess, ValidatorObj, defaultValidatorStatus, getProgressFilePath, processProgressFile, getPercentageFromProgressString } from '../../../util';
 
-message.config({ top: 64, maxCount: 3, duration: 6 })
+message.config({ top: 64, maxCount: 3 })
 
 // conversion process
 let convProc: cp.ChildProcessWithoutNullStreams | undefined;

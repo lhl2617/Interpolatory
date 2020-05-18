@@ -18,7 +18,7 @@ let frame1Dim: any; // this is to check whether sizes are OK
 const { Search } = Input;
 const { Option } = Select;
 
-message.config({ top: 64, maxCount: 3, duration: 6 })
+message.config({ top: 64, maxCount: 3 })
 
 const python3 = getPython3();
 const binName = getInterpolatory();

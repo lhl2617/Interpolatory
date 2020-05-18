@@ -10,7 +10,7 @@ import { getPython3, getInterpolatory, reloadApp } from '../../../util';
 import { LocalStorageKey, getLocalStorage, setLocalStorage, deleteLocalStorage } from '../../../store';
 
 const { Search } = Input;
-message.config({ top: 64, maxCount: 3, duration: 6 })
+message.config({ top: 64, maxCount: 3 })
 const logo = require('../../../../../assets/img/logo.png').default;
 
 type VerState = { status: "loading" | "done" | "error", ver: string }
