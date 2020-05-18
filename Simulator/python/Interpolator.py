@@ -95,14 +95,14 @@ class BaseInterpolator(object):
         for i in range(target_nframes):
 
             # if (debug_flags['debug_progress']):
-            # if ((i % self.target_fps) == 0):
-            pct = str(math.floor(100 * i / target_nframes)).rjust(3, ' ')
-            curr = int(round(time.time() * 1000))
-            elapsed_seconds = int((curr-start) / 1000)
-            elapsed = sToMMSS(elapsed_seconds)
-            eta = getETA(elapsed_seconds, i, target_nframes)
-            progStr = f'PROGRESS::{pct}%::Frame {i}/{target_nframes} | Time elapsed: {elapsed} | Estimated Time Left: {eta}'
-            print(progStr, flush=True)
+            if ((i % self.target_fps) == 0):
+                pct = str(math.floor(100 * i / target_nframes)).rjust(3, ' ')
+                curr = int(round(time.time() * 1000))
+                elapsed_seconds = int((curr-start) / 1000)
+                elapsed = sToMMSS(elapsed_seconds)
+                eta = getETA(elapsed_seconds, i, target_nframes)
+                progStr = f'PROGRESS::{pct}%::Frame {i}/{target_nframes} | Time elapsed: {elapsed} | Estimated Time Left: {eta}'
+                print(progStr)
                 
             interpolated_frame = self.get_interpolated_frame(i)
             self.video_out_writer.append_data(interpolated_frame)
@@ -113,7 +113,7 @@ class BaseInterpolator(object):
 
         # if (debug_flags['debug_timer']):
         elapsed = sToMMSS(int((end-start) / 1000))
-        print(f'PROGRESS::100%::Complete | Time taken: {sToMMSS((end-start) / 1000)}', flush=True)
+        print(f'PROGRESS::100%::Complete | Time taken: {sToMMSS((end-start) / 1000)}')
 
     def get_interpolated_frame(self, idx):
         raise Exception('To be implemented by derived classes')

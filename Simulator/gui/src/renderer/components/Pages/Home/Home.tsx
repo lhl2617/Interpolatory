@@ -162,6 +162,8 @@ export class Home extends React.Component<IProps, IState> {
     }
 
     reinstallDependencies = async () => {
+        const { setFeaturesEnabled } = this.props;
+        setFeaturesEnabled(false);
         message.info(`Installing dependencies`)
         const binPathDir = path.dirname(binName);
         const requirementsTxt = path.join(binPathDir, `requirements.txt`);
@@ -188,6 +190,7 @@ export class Home extends React.Component<IProps, IState> {
                 setLocalStorage(LocalStorageKey.DependencyLastInstallTime, Date.now().toString());
                 this.getDependencyInfo();
             }
+            setFeaturesEnabled(true);
         })
     }
 

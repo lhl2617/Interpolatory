@@ -83,13 +83,13 @@ def benchmark(interpolation_mode, output_path=None):
             elapsed = sToMMSS(elapsed_seconds)
             eta = getETA(elapsed_seconds, cnt_done, len(paths))
             progStr = f'PROGRESS::{pct}%::Frame {cnt_done}/{len(paths)} | Time elapsed: {elapsed} | Estimated Time Left: {eta}'
-            print(progStr, flush=True)
+            print(progStr)
 
             cnt_done += 1
 
     if debug_benchmark_progress:
         end = int(round(time.time() * 1000))
-        print(f'PROGRESS::100%::Completed | Time taken: {sToMMSS((end-start) / 1000)}', flush=True)
+        print(f'PROGRESS::100%::Completed | Time taken: {sToMMSS((end-start) / 1000)}')
 
     res = {
         'PSNR': np.mean(psnr),

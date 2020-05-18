@@ -125,7 +125,7 @@ elif mode_flag == '-ver':
 else:
     print(f'Unknown command. Run `python3 main.py -h` for a usage guide')
 
-# print('', flush=True)
+# print('')
 exit(0)
 
 

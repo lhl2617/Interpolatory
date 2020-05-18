@@ -1,7 +1,7 @@
 /* eslint-disable no-underscore-dangle */
 /* eslint-disable react/jsx-closing-bracket-location */
 import * as React from 'react';
-import { Input, Form, Select, Radio, message, Button, Popover, Modal, Progress, Popconfirm } from 'antd';
+import { Input, Form, Select, Radio, message, Button, Popover, Modal, Progress, Popconfirm, Spin } from 'antd';
 import { remote } from 'electron';
 import * as cp from 'child_process';
 import * as fs from 'fs';
@@ -310,13 +310,39 @@ export class Convert extends React.Component<{}, IState> {
 
         let gotStderr = ``;
 
-        convProc = cp.spawn(python3, [binName, `-i`, inputVideoPath, `-m`, interpolationMode, `-f`, targetFPS.toString(), `-o`, outputVideoPath]);
+        convProc = cp.spawn(python3, [`-u`, binName, `-i`, inputVideoPath, `-m`, interpolationMode, `-f`, targetFPS.toString(), `-o`, outputVideoPath]);
+
+        // convProc.stdout.pipe(process.stdout)
+
+
+        // const poll = () => {
+        //     console.log(`poll`);
+        //     try {
+
+        //         console.log(convProc?.stdout.readable);
+
+        //         const buf = convProc?.stdout.read();
+            
+        //         console.log(buf ? buf.toString() : `NONE`);
+
+        //     }
+        //     catch (err) {
+        //         console.error(err.message);
+        //     }
+
+        //     if (running) {
+        //         setTimeout(() => poll(), 1000);
+        //     }
+        // }
+
+        // poll();
 
         convProc.stdout.on(`data`, (data) => {
             console.log(data.toString())
             console.log(`-`)
             this.processProgressString(data.toString())
         })
+
 
         convProc.stderr.on(`data`, (data) => {
             gotStderr += data.toString();
@@ -460,7 +486,7 @@ export class Convert extends React.Component<{}, IState> {
                     <p>{interpolationMode}</p>
                     {
                         (convertState === `converting`) && <div>
-                            <h4 style={{ textAlign: `center`, margin: `auto`, marginTop: 12 }}>Converting...</h4>
+                            <h4 style={{ textAlign: `center`, margin: `auto`, marginTop: 12 }}>Converting... <Spin size="small"/></h4>
                             <Progress status='active' percent={progressPercentage} />
                             <p style={{ textAlign: `center`, margin: `auto` }}>
                                 {progressString.substring(6)}
