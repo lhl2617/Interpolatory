@@ -7,7 +7,7 @@ import time
 
 def get_motion_vectors(block_size, steps, source_frame, target_frame):
     output = np.empty_like(source_frame, dtype='float32')
-    prec_dic = [1, 2, 1, 2, 3, 2, 1, 2, 1]
+    # prec_dic = [1, 2, 1, 2, 3, 2, 1, 2, 1]
 
     prev_time = time.time()
     for s_row in range(0, source_frame.shape[0], block_size):
