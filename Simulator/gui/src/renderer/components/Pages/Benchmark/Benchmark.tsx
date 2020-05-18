@@ -1,6 +1,6 @@
 /* eslint-disable no-underscore-dangle */
 import * as React from 'react';
-import { Input, Form, Select, message, Button, Modal, Popconfirm, Progress } from 'antd';
+import { Input, Form, Select, message, Button, Modal, Popconfirm, Progress, Spin } from 'antd';
 import { remote } from 'electron';
 import * as cp from 'child_process';
 import * as fs from 'fs';
