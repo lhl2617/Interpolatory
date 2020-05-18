@@ -53,8 +53,7 @@
         "to": "python",
         "filter": [
           "*.py",
-          "requirements.txt",
-          "middlebury/**"
+          "benchmarks/**/*"
         ]
       }
     ]
