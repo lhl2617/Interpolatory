@@ -1,11 +1,11 @@
 import sys
 import json
 
-from util import eprint
-import util
-from Interpolator import InterpolatorDictionary
-from Benchmark import benchmark, get_middle_frame
-import Globals
+
+sys.path.append('./src')
+from src import util, Interpolator, Benchmark, Globals
+from src.Interpolator import InterpolatorDictionary
+from src.Benchmark import benchmark, get_middle_frame
 
 mode_flag = None
 
@@ -74,6 +74,14 @@ if mode_flag == '-h':
     print('- python3 main.py -ver')
     print('Get version')
 
+    print('')
+    print('- python3 main.py -dep')
+    print('Check whether normal requirements are met')
+
+    print('')
+    print('- python3 main.py -depcuda')
+    print('Check whether CUDA dependencies are met')
+
 
 elif mode_flag == '-if':
     print(json.dumps(interpolators))
@@ -141,6 +149,28 @@ elif mode_flag == '-t' and len(args) >= 7 and '-f' == args[2] and '-o' == args[5
 
 elif mode_flag == '-ver':
     print(json.dumps(version))
+
+    
+    # print('')
+    # print('- python3 main.py -dep')
+    # print('Check whether normal requirements are met')
+elif mode_flag == '-dep':
+    import pkg_resources
+
+    dependencies = [
+        'imageio~=2.8.0',
+        'imageio-ffmpeg~=0.4.1',
+        'scikit-image~=0.16.2',
+        'numpy~=1.18.2'
+    ]
+
+    pkg_resources.require(dependencies)
+
+    # print('')
+    # print('- python3 main.py -depcuda')
+    # print('Check whether CUDA dependencies are met')
+
+
 
 else:
     print(f'Unknown command. Run `python3 main.py -h` for a usage guide')

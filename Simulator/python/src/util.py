@@ -1,4 +1,5 @@
 import sys
+import numpy as np
 
 progress_file_path = None
 
@@ -27,3 +28,9 @@ def signal_progress(s):
         with open(progress_file_path, 'w') as progress_file:
             progress_file.write(s)
             progress_file.flush()
+
+'''
+blends frames
+'''
+def blend_frames(frames, weights):
+    return np.average(frames, axis=0, weights=weights).astype(np.uint8, copy=False)

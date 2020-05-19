@@ -1,23 +1,13 @@
-import imageio
-import math
-import time
-import numpy as np
 import sys
+import math
+import numpy as np
+from copy import deepcopy
 from io import BytesIO
 from fractions import Fraction
 from decimal import Decimal
-from copy import deepcopy
-from Globals import debug_flags
-from VideoStream import BenchmarkVideoStream, VideoStream
-from util import sToMMSS, getETA, signal_progress
 
-'''
-blends frames
-'''
-
-
-def blend_frames(frames, weights):
-    return np.average(frames, axis=0, weights=weights).astype(np.uint8, copy=False)
+from ..Globals import debug_flags
+from ..VideoStream import BenchmarkVideoStream, VideoStream
 
 
 '''
@@ -156,170 +146,6 @@ class BaseInterpolator(object):
         self = backup_interpolator
 
         return res
-
-'''
-%
-%   e.g. 24->60
-%   A A A B B C C C D D
-%
-%   e.g. 25->30
-%   A A B C D E F
-%
-'''
-
-
-class NearestInterpolator(BaseInterpolator):
-    def __init__(self, target_fps, video_in_path=None, video_out_path=None, max_out_frames=math.inf, max_cache_size=2, **args):
-        super().__init__(target_fps, video_in_path,
-                         video_out_path, max_out_frames, max_cache_size)
-
-    def get_interpolated_frame(self, idx):
-        source_frame_idx = math.floor(idx / self.rate_ratio)
-
-        if (debug_flags['debug_interpolator']):
-            print(
-                f'targetframe: {idx}, using source frame: {source_frame_idx}')
-
-        return self.video_stream.get_frame(source_frame_idx)
-
-    def __str__(self):
-        return 'nearest'
-
-'''
-%
-%   e.g. 24->60 (rateRatio 2.5, period 5)
-%   A A (A+B)/2 B B C C (C+D)/2 E E
-%
-%   e.g. 25->30 (rateRatio 1.2, period 6)
-%   A .2A+.8B .4B+.6C .6C+.4D .8D+.2E E F
-%
-'''
-
-
-class OversampleInterpolator(BaseInterpolator):
-    def __init__(self, target_fps, video_in_path=None, video_out_path=None, max_out_frames=math.inf, max_cache_size=2, **args):
-        super().__init__(target_fps, video_in_path,
-                         video_out_path, max_out_frames, max_cache_size)
-
-    def get_interpolated_frame(self, idx):
-        output = []
-
-        # this period is the number of frame in the targetRate
-        # before a cycle occurs (e.g. in the 24->60 case it occurs between B &
-        # C at period = 5
-        frac = Fraction(Decimal(self.rate_ratio))
-        period = frac.numerator
-
-        # which targetFrame is this after a period
-        offset = math.floor(idx % period)
-
-        # a key frame is a source frame that matches in time, this key frame
-        # is the latest possible source frame
-        key_frame_idx = math.floor(idx / period) * period
-
-        rate_ratios_from_key_frame = math.floor(offset / self.rate_ratio)
-
-        distance_from_next_rate_ratio_point = (
-            rate_ratios_from_key_frame + 1) * self.rate_ratio - offset
-
-        if distance_from_next_rate_ratio_point >= 1:
-            frame_num = math.floor(
-                key_frame_idx / self.rate_ratio + rate_ratios_from_key_frame)
-
-            if (debug_flags['debug_interpolator']):
-                print(f'targetframe: {idx}, using source frame: {frame_num}')
-
-            output = self.video_stream.get_frame(frame_num)
-
-        else:
-            frameA_idx = math.floor(
-                key_frame_idx / self.rate_ratio + rate_ratios_from_key_frame)
-            frameB_idx = frameA_idx + 1
-
-            frameA = self.video_stream.get_frame(frameA_idx)
-            frameB = self.video_stream.get_frame(frameB_idx)
-
-            weightA = distance_from_next_rate_ratio_point
-            weightB = 1. - weightA
-
-            weights = [weightA, weightB]
-            frames = [frameA, frameB]
-
-            if (debug_flags['debug_interpolator']):
-                print(
-                    f'targetframe: {idx}, using source frame: {weightA} * {frameA_idx} + {weightB} * {frameB_idx}')
-            output = blend_frames(frames, weights)
-
-        return output
-
-    def __str__(self):
-        return 'oversample'
-
-
-'''
-%
-%   e.g. 24->60 (rateRatio 2.5, period 5)
-%   A (1.5A+B)/2.5 (0.5A+2B)/2.5 (2B+0.5C)/2.5 (B+1.5C)/2.5 
-%
-'''
-
-
-class LinearInterpolator(BaseInterpolator):
-    def __init__(self, target_fps, video_in_path=None, video_out_path=None, max_out_frames=math.inf, max_cache_size=2, **args):
-        super().__init__(target_fps, video_in_path,
-                         video_out_path, max_out_frames, max_cache_size)
-
-    def get_interpolated_frame(self, idx):
-        output = []
-
-        # this period is the number of frame in the targetRate
-        # before a cycle occurs (e.g. in the 24->60 case it occurs between B &
-        # C at period = 5
-        frac = Fraction(Decimal(self.rate_ratio))
-        period = frac.numerator
-
-        # which targetFrame is this after a period
-        offset = math.floor(idx % period)
-
-        # a key frame is a source frame that matches in time, this key frame
-        # is the latest possible source frame
-        key_frame_idx = math.floor(idx / period) * period
-
-        rate_ratios_from_key_frame = math.floor(offset / self.rate_ratio)
-
-        distance_from_prev_rate_ratio_point = offset - \
-            (rate_ratios_from_key_frame) * self.rate_ratio
-
-        frameA_idx = math.floor(
-            key_frame_idx / self.rate_ratio + rate_ratios_from_key_frame)
-        frameB_idx = frameA_idx + 1
-
-        frameA = self.video_stream.get_frame(frameA_idx)
-        frameB = self.video_stream.get_frame(frameB_idx)
-
-        weightB = distance_from_prev_rate_ratio_point
-        weightA = self.rate_ratio - weightB
-        if (debug_flags['debug_interpolator']):
-            print(
-                f'targetframe: {idx}, using source frame: ({weightA} * {frameA_idx} + {weightB} * {frameB_idx}) / {self.rate_ratio}')
-
-        weights = [weightA, weightB]
-        frames = [frameA, frameB]
-
-        output = blend_frames(frames, weights)
-
-        return output
-
-    def __str__(self):
-        return 'linear'
-
-
-InterpolatorDictionary = {
-    'nearest': NearestInterpolator,
-    'oversample': OversampleInterpolator,
-    'linear': LinearInterpolator
-}
-
 
 
 '''

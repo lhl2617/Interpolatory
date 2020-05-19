@@ -1,6 +1,5 @@
 # Runs against middlebury evaluation set in ./middlebury
 
-from Interpolator import InterpolatorDictionary
 from os import path
 import glob
 import numpy as np
@@ -10,8 +9,10 @@ import skimage.metrics
 import json
 import time
 import math
-from Globals import debug_flags
-from util import sToMMSS, getETA, signal_progress
+import pathlib
+from .Interpolator import InterpolatorDictionary
+from .Globals import debug_flags
+from .util import sToMMSS, getETA, signal_progress
 
 # def test():
 #     psnr = {}
@@ -47,7 +48,9 @@ def benchmark(interpolation_mode, output_path=None):
     psnr = []
     ssim = []
 
-    paths = sorted(glob.glob('./benchmarks/middlebury/*/frame10i11.png'))
+    basedir = pathlib.Path(__file__).parent.parent.absolute()
+
+    paths = sorted(glob.glob(f'{basedir}/benchmarks/middlebury/*/frame10i11.png'))
 
     cnt_done = 0
     start = int(round(time.time() * 1000))
