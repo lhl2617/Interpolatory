@@ -75,4 +75,4 @@ class OversampleInterpolator(BaseInterpolator):
         return output
 
     def __str__(self):
-        return 'oversample'
+        return 'Oversample'

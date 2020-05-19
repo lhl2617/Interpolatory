@@ -1,11 +1,13 @@
 import sys
 import math
 import numpy as np
+import imageio
+import time
 from copy import deepcopy
 from io import BytesIO
 from fractions import Fraction
 from decimal import Decimal
-
+from ..util import sToMMSS, getETA, signal_progress
 from ..Globals import debug_flags
 from ..VideoStream import BenchmarkVideoStream, VideoStream
 
@@ -113,11 +115,11 @@ class BaseInterpolator(object):
         
 
     def get_interpolated_frame(self, idx):
-        raise Exception('To be implemented by derived classes')
+        raise NotImplementedError('To be implemented by derived classes')
         return []
 
     def __str__(self):
-        raise Exception('To be implemented by derived classes')
+        raise ExcepNotImplementedErrortion('To be implemented by derived classes')
 
 
     '''
@@ -127,6 +129,8 @@ class BaseInterpolator(object):
     Then, we set target_fps to 2 and get the frame at index 1
 
     video_stream now contains benchmark_video_stream
+
+    this is used by interpolators that are not limited
     '''
 
     def get_benchmark_frame(self, image_1, image_2):

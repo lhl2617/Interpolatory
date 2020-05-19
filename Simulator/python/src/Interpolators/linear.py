@@ -66,5 +66,5 @@ class LinearInterpolator(BaseInterpolator):
         return output
 
     def __str__(self):
-        return 'linear'
+        return 'Linear'
 

@@ -30,4 +30,4 @@ class NearestInterpolator(BaseInterpolator):
         return self.video_stream.get_frame(source_frame_idx)
 
     def __str__(self):
-        return 'nearest'
+        return 'Nearest'

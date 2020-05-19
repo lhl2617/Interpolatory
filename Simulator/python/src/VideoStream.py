@@ -16,7 +16,7 @@ class BaseVideoStream:
         return
 
     def get_frame(self, idx):
-        raise Exception('get_frame not implemented in VideoStream!')
+        raise NotImplementedError('get_frame not implemented in VideoStream!')
 
 '''
 Stores the video, also has cache for frames to increase speed,

@@ -4,7 +4,7 @@ import json
 
 sys.path.append('./src')
 from src import util, Interpolator, Benchmark, Globals
-from src.Interpolator import InterpolatorDictionary
+from src.Interpolator import InterpolatorDictionary, LimitedInterpolatorDictionary
 from src.Benchmark import benchmark, get_middle_frame
 
 mode_flag = None
@@ -33,6 +33,7 @@ if (len(sys.argv) > 1):
 
 
 interpolators = list(InterpolatorDictionary.keys())
+limited_interpolators = list(LimitedInterpolatorDictionary.keys())
 version = 'Interpolatory Simulator 0.0.1'
 
 if mode_flag == '-h':
@@ -46,8 +47,12 @@ if mode_flag == '-h':
 
     print('')
     print('- python3 main.py -if')
-    print('Get supported interpolation-modes')
+    print('Get supported fully-featured interpolation-modes - these modes can support video interpolation, testing, and benchmarking')
     
+    print('')
+    print('- python3 main.py -il')
+    print('Get supported limited interpolation-modes - these modes can support testing, and benchmarking')
+
     print('')
     print('- python3 main.py -mv <video-path>')
     print('Load a video and print metadata to stdout. If not supported, will return non-zero value')
@@ -85,6 +90,10 @@ if mode_flag == '-h':
 
 elif mode_flag == '-if':
     print(json.dumps(interpolators))
+    
+
+elif mode_flag == '-il':
+    print(json.dumps(limited_interpolators))
 
 elif mode_flag == '-mv' and len(args) == 2:
     import imageio
