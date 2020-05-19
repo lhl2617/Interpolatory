@@ -103,27 +103,27 @@ def get_motion_vectors(block_size, region, im1, im2):
                 for i in range(2):
                     for j in range(2):
                         block = im1_lst[s][row + i*block_size : row + (i+1)*block_size, col + j*block_size : col + (j+1)*block_size, :]
-                        father_vec = mvs[row >> 1, col >> 1, 0] << 1, mvs[row >> 1, col >> 1, 1] << 1
+                        father_vec = mvs[row >> 1, col >> 1, 0] * 2 - 1, mvs[row >> 1, col >> 1, 1] * 2 - 1
                         father_block = im2_lst[s][int(row + i*block_size + father_vec[0]) : int(row + (i+1)*block_size + father_vec[0]), int(col + j*block_size + father_vec[1]) : int(col + (j+1)*block_size + father_vec[1]), :]
-                        father = blockwise_fs(block, father_block, father_vec)
+                        father = blockwise_fs(block, father_block, (father_vec[0] + 1, father_vec[1] + 1))
                         
                         up_row = (row >> 1) - block_size
                         up_col = col >> 1
                         if up_row < 0 or up_row >= mvs.shape[0] or up_col < 0 or up_col >= mvs.shape[1]:
                             up = ((0,0), 99999999999)
                         else:
-                            up_vec = mvs[(row >> 1) - block_size, (col >> 1), 0] << 1, mvs[(row >> 1) - block_size, (col >> 1), 1] << 1
+                            up_vec = mvs[(row >> 1) - block_size, (col >> 1), 0] * 2 - 1, mvs[(row >> 1) - block_size, (col >> 1), 1] * 2 - 1
                             up_block = im2_lst[s][int(row + i*block_size + up_vec[0]) : int(row + (i+1)*block_size + up_vec[0]), int(col + j*block_size + up_vec[1]) : int(col + (j+1)*block_size + up_vec[1]), :]
-                            up = blockwise_fs(block, up_block, up_vec)
+                            up = blockwise_fs(block, up_block, (up_vec[0] + 1, up_vec[1] + 1))
 
                         right_row = row >> 1 
                         right_col = (col >> 1) + block_size
                         if right_row < 0 or right_row >= mvs.shape[0] or right_col < 0 or right_col >= mvs.shape[1]:
                             right = ((0,0), 99999999999)
                         else:
-                            right_vec = mvs[(row >> 1), (col >> 1) + block_size, 0] << 1, mvs[(row >> 1), (col >> 1) + block_size, 1] << 1
+                            right_vec = mvs[(row >> 1), (col >> 1) + block_size, 0] * 2 - 1, mvs[(row >> 1), (col >> 1) + block_size, 1] * 2 - 1
                             right_block = im2_lst[s][int(row + i*block_size + right_vec[0]) : int(row + (i+1)*block_size + right_vec[0]), int(col + j*block_size + right_vec[1]) : int(col + (j+1)*block_size + right_vec[1]), :]
-                            right = blockwise_fs(block, right_block, right_vec)
+                            right = blockwise_fs(block, right_block, (right_vec[0] + 1, right_vec[1] + 1))
 
                         if father[1] <= up[1] and father[1] <= right[1]:
                             next_mvs[row + i*block_size : row + (i+1)*block_size, col + j*block_size : col + (j+1)*block_size, 0] = father[0][0]
