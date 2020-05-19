@@ -24,8 +24,8 @@ def get_motion_vectors(block_size, target_region, source_frame, target_frame):
             lowest_sad = lowest_sad_const
             lowest_distance = lowest_distance_const
             target_index = (0, 0)
-            for t_row in range(max(0, s_row - target_region), min(target_frame.shape[0] - block_size, s_row + target_region)):
-                for t_col in range(max(0, s_col - target_region), min(target_frame.shape[1] - block_size, s_col + target_region)):
+            for t_row in range(max(0, s_row - target_region), min(target_frame.shape[0] - block_size, s_row + target_region + 1)):
+                for t_col in range(max(0, s_col - target_region), min(target_frame.shape[1] - block_size, s_col + target_region + 1)):
                     target_block = target_frame[t_row:t_row+block_size, t_col:t_col+block_size, :]
                     sad = np.sum(np.abs(np.subtract(source_block, target_block)))
                     distance = (s_row - t_row) *  (s_row - t_row) + (s_col - t_col) * (s_col - t_col)
