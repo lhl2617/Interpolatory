@@ -7,9 +7,13 @@ from full_search import get_motion_vectors as mv_fs
 from tss import get_motion_vectors as mv_tss
 from plot_mv import plot_vector_field
 from median_filter import median_filter
+from mean_filter import mean_filter
+from weighted_mean_filter import weighted_mean_filter
 
 filter_func_dict = {
-    'median' : median_filter
+    'median' : median_filter,
+    'mean' : mean_filter,
+    'weighted_mean' : weighted_mean_filter
 }
 
 def smooth(filter_func, mv_field, block_size):
