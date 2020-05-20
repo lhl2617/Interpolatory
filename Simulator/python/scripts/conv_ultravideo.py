@@ -1,6 +1,6 @@
 # converts ultra-video
 # args: <src-frame-rate> <dst-frame-rate> [<ratio>]
-# ratio is for the downsampled ones
+# ratio is for the downsampled ones (0.5, 0.25)
 
 # run from Interpolatory/Simulator/python/ 
 
@@ -30,7 +30,7 @@ for interpolator in interpolators:
     for rawVidPath in rawVids:
         fileName = rawVidPath.split(sep)[-1]
 
-        target_dir = f'../../Output/ultravideo/ratio{ratio}/{src_frame_rate}-{dst_frame_rate}'
+        target_dir = f'../../Output/ultravideo/ratio{ratio}/{src_frame_rate}-{dst_frame_rate}/{interpolator}'
 
         os.system(f'mkdir -p {target_dir}')
 
