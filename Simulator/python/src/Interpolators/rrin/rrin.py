@@ -10,6 +10,12 @@ class RRINInterpolator(MLBaseInterpolator):
         import torch
 
         model_path = os.path.join(pathlib.Path(__file__).parent, 'models', 'pretrained_model.pth.tar')
+        
+		if not (pathlib.Path(model_path).is_file()):
+			readme_path = os.path.join(pathlib.Path(__file__).parent.parent, 'models', 'README.md')
+			raise Exception(f'Model file ({model_path}) does not exist. Please locate README in {readme_path} for instructions to download models.')
+
+        
         model = Net()
         state = torch.load(model_path)
         model.load_state_dict(state,strict=True)
