@@ -6,8 +6,8 @@ import os
 
 for i in interpolators:
     print(f'===== {i} =====')
-    os.system(f'mkdir -p ../../Output/{i}')
-    os.system(f'python3 main.py -b {i} ../../Output/{i}')
+    os.system(f'mkdir -p ../../Output/Benchmark/{i}')
+    os.system(f'python3 main.py -b {i} ../../Output/Benchmark/{i}')
 
 
 
