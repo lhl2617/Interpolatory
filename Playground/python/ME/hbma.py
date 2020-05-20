@@ -5,38 +5,6 @@ import time
 from plot_mv import plot_vector_field
 from full_search import get_motion_vectors as full_search
 
-# image = imread('../IntelVideoInterpolation/Playground/interpolation-samples/still_frames/eg2/frame1.png')[:,:,:3]
-# out_path = '../IntelVideoInterpolation/Playground/interpolation-samples/still_frames/eg2/downsampled_05.png'
-
-# steps = 3
-
-# a = 0.5
-# w = np.array([0.25 - a/2, 0.25, a, 0.25, 0.25 - a/2])
-# weightings = np.zeros((5,5,3))
-# for i in range(5):
-#     for j in range(5):
-#         weightings[i,j,:] = w[i]*w[j]
-
-# # print(weightings)
-
-# t = time.time()
-
-# for s in range(steps):
-#     next_image = np.zeros((image.shape[0]>>1, image.shape[1]>>1, image.shape[2]))
-#     print('step:',s)
-#     for row in range(2, image.shape[0]-2, 2):
-#         for col in range(2, image.shape[1]-2, 2):
-#             next_image[row>>1, col>>1] = np.sum(weightings * image[row - 2 : row + 3, col - 2 : col + 3], axis=(0,1))
-#     image = next_image
-#     print('time:',time.time()-t)
-#     t=time.time()
-
-# imwrite(out_path, image)
-
-# down scale and store images
-# use full search to calculate mv for most reduced image
-# calculate mvs for next level up using previous mvs
-
 def downscale(image, weightings):
     padded = np.pad(image, 1)[:,:,1:4]
     out = np.zeros((image.shape[0]>>1, image.shape[1]>>1, 3))
@@ -64,21 +32,21 @@ def blockwise_fs(block1, block2, vec):
     if sad_center == min_sad:
         ret = vec
     elif sad_left == min_sad:
-        ret = vec + (0, -1)
+        ret = (vec[0], vec[1] - 1)
     elif sad_right == min_sad:
-        ret = vec + (0, 1)
+        ret = (vec[0], vec[1] + 1)
     elif sad_up == min_sad:
-        ret = vec + (-1, 0)
+        ret = (vec[0] - 1, vec[1])
     elif sad_down == min_sad:
-        ret = vec + (1, 0)
+        ret = (vec[0] + 1, vec[1])
     elif sad_left_up == min_sad:
-        ret = vec + (-1, -1)
+        ret = (vec[0] - 1, vec[1] - 1)
     elif sad_right_up == min_sad:
-        ret = vec + (-1, 1)
+        ret = (vec[0] - 1, vec[1] + 1)
     elif sad_left_down == min_sad:
-        ret = vec + (1, -1)
+        ret = (vec[0] + 1, vec[1] - 1)
     else:
-        ret = vec + (1, 1)
+        ret = (vec[0] + 1, vec[1] + 1)
     return ret, min_sad
 
 def get_motion_vectors(block_size, region, im1, im2):
@@ -88,9 +56,10 @@ def get_motion_vectors(block_size, region, im1, im2):
         for j in range(3):
             weightings[i,j,:] = w[i]*w[j]
 
-    im1_lst = [im1, 0, 0, 0]
-    im2_lst = [im2, 0, 0, 0]
-    for i in range(1, 4):
+    im1_lst = [im1, 0, 0]
+    im2_lst = [im2, 0, 0]
+    for i in range(1, 3):
+        print('Downscaling level',i)
         im1_lst[i] = downscale(im1_lst[i-1], weightings)
         im2_lst[i] = downscale(im2_lst[i-1], weightings)
 
