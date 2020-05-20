@@ -11,8 +11,8 @@ block_size = size of block used in source and target frame
 target_region = number of pixels padding the block to be searched
 '''
 def get_motion_vectors(block_size, target_region, source_frame, target_frame):
-    lowest_sad_const = 999999999999    # maximum sad score for a block
-    lowest_distance_const = 999999999999
+    lowest_sad_const = math.inf    # maximum sad score for a block
+    lowest_distance_const = math.inf
 
     source_frame_pad = np.pad(source_frame, ((0,block_size), (0,block_size), (0,0)))  # to allow for non divisible block sizes
     target_frame_pad = np.pad(target_frame, ((0,block_size), (0,block_size), (0,0)))
