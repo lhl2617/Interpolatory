@@ -36,8 +36,9 @@ for interpolator in interpolators:
 
         target_file_path = f'{target_dir}/{fileName}'
 
-        print(f'python3 -i {rawVidPath} -m {interpolator} -f {dst_frame_rate} -o {target_file_path}')
-        os.system(f'python3 -i {rawVidPath} -m {interpolator} -f {dst_frame_rate} -o {target_file_path}')
+        cmd = (f'python3 main.py -i {rawVidPath} -m {interpolator} -f {dst_frame_rate} -o {target_file_path}')
+        print(cmd)
+        os.system(cmd)
 
 
 
