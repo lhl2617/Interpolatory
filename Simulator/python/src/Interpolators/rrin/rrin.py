@@ -15,7 +15,7 @@ class RRINInterpolator(MLBaseInterpolator):
 
         if not (pathlib.Path(model_path).is_file()):
             readme_path = os.path.join(pathlib.Path(
-                __file__).parent.parent, 'models', 'README.md')
+                __file__).parent, 'models', 'README.md')
             raise Exception(
                 f'Model file ({model_path}) does not exist. Please locate README in {readme_path} for instructions to download models.')
 

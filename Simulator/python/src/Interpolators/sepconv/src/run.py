@@ -85,7 +85,7 @@ class Network(torch.nn.Module):
 		model_path = os.path.join(pathlib.Path(__file__).parent.parent, 'models', f'network-{arguments_strModel}.pytorch')
 
 		if not (pathlib.Path(model_path).is_file()):
-			readme_path = os.path.join(pathlib.Path(__file__).parent.parent, 'models', 'README.md')
+			readme_path = os.path.join(pathlib.Path(__file__).parent, 'models', 'README.md')
 			raise Exception(f'Model file ({model_path}) does not exist. Please locate README in {readme_path} for instructions to download models.')
 
 		self.load_state_dict({ strKey.replace('module', 'net'): tenWeight for strKey, tenWeight in torch.load(model_path).items() })
