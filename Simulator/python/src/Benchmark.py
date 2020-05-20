@@ -71,7 +71,15 @@ def benchmark(interpolation_mode, output_path=None):
         'SSIM': np.mean(ssim)
     }
 
-    print(json.dumps(res))
+    res_json = json.dumps(res)
+    
+    if (not (output_path is None)):
+        output_pathname = path.join(output_path, 'results.txt')
+        f = open(output_pathname, "w")
+        f.write(res_json)
+        f.close()
+
+    print(res_json)
 
 def get_middle_frame(interpolation_mode, frame_1_path, frame_2_path, output_file_path, ground_truth_path=None):
     
@@ -95,8 +103,16 @@ def get_middle_frame(interpolation_mode, frame_1_path, frame_2_path, output_file
 
         if (res['PSNR'] == math.inf):
             res['PSNR'] = 'Infinity'
+            
+    res_json = json.dumps(res)
+    
+    if (not (output_file_path is None)):
+        output_pathname = path.join(output_file_path, 'results.txt')
+        f = open(output_pathname, "w")
+        f.write(res_json)
+        f.close()
 
-        print(json.dumps(res))
+    print(json.dumps(res_json))
 
 # def test():
 #     psnr = {}
