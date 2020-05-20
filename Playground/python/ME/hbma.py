@@ -5,16 +5,10 @@ import time
 from plot_mv import plot_vector_field
 from full_search import get_motion_vectors as full_search
 from tss import get_motion_vectors as tss
+from scipy.ndimage import convolve
 
 def downscale(image, weightings):
-    padded = np.pad(image, 1)[:,:,1:4]
-    out = np.zeros((image.shape[0]>>1, image.shape[1]>>1, 3))
-    for row in range(0, image.shape[0], 2):
-        for col in range(0, image.shape[1], 2):
-            pad_row = row + 1
-            pad_col = col + 1
-            out[row>>1, col>>1] = np.sum(weightings * padded[pad_row - 1 : pad_row + 2, pad_col - 1 : pad_col + 2], axis=(0,1))
-    return out
+    return convolve(image / 255.0, weightings, mode='constant')[::2, ::2] * 255.0
 
 def blockwise_fs(block1, block2, vec):
     if block2.shape[0] != block1.shape[0] + 2 or block2.shape[1] != block2.shape[1] + 2:
@@ -52,10 +46,11 @@ def blockwise_fs(block1, block2, vec):
 
 def get_motion_vectors(block_size, region, im1, im2):
     w = np.array([0.25, 0.5, 0.25])
-    weightings = np.zeros((3,3,3))
+    weightings = np.zeros((3,3))
     for i in range(3):
         for j in range(3):
-            weightings[i,j,:] = w[i]*w[j]
+            weightings[i,j] = w[i]*w[j]
+    weightings = weightings[:, :, None]
 
     im1_lst = [im1, 0, 0]
     im2_lst = [im2, 0, 0]
