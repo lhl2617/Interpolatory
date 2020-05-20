@@ -107,11 +107,11 @@ class BaseInterpolator:
             print(f'Took {(end-start) / 1000} seconds')
 
     def get_interpolated_frame(self, idx):
-        raise Exception('To be implemented by derived classes')
+        raise NotImplementedError('To be implemented by derived classes')
         return []
 
     def __str__(self):
-        raise Exception('To be implemented by derived classes')
+        raise NotImplementedError('To be implemented by derived classes')
 
 
     '''
