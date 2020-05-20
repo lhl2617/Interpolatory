@@ -7,7 +7,7 @@ from copy import deepcopy
 from io import BytesIO
 from fractions import Fraction
 from decimal import Decimal
-from ..util import sToMMSS, getETA, signal_progress
+from ..util import sToMMSS, getETA, signal_progress, is_power_of_two
 from ..Globals import debug_flags
 from ..VideoStream import BenchmarkVideoStream, VideoStream
 
@@ -118,7 +118,7 @@ class BaseInterpolator(object):
         return []
 
     def __str__(self):
-        raise ExcepNotImplementedErrortion('To be implemented by derived classes')
+        raise NotImplementedErrortion('To be implemented by derived classes')
 
 
     '''
@@ -149,6 +149,78 @@ class BaseInterpolator(object):
         self = backup_interpolator
 
         return res
+
+class MLBaseInterpolator(BaseInterpolator):
+    '''
+    This is a base class for ML implementations or methods that only support mid frame interpolation
+    '''
+    def __init__(self, target_fps, video_in_path=None, video_out_path=None, max_out_frames=math.inf, max_cache_size=2, **args):
+
+        super().__init__(target_fps, video_in_path,
+                         video_out_path, max_out_frames, max_cache_size)
+        '''
+        Only supports upscaling by factor of 2
+        '''
+        if not (self.video_in_path is None):
+            if self.rate_ratio < 1:
+                raise Exception(f'{self.__str__()} only supports upconversion, got conversion rate ratio {self.rate_ratio}')
+            if (not is_power_of_two(self.rate_ratio)):
+                raise Exception(f'{self.__str__()} only supports upconversion ratio that is a power of 2, got conversion rate ratio {self.rate_ratio}')
+            
+        '''
+        we store rate_ratio interpolated frames in cache 
+        '''
+        self.cache = {}
+        
+    def get_middle_frame(self, image_1, image_2):
+        # get middle frame
+        raise NotImplementedError('To be implemented by derived classes')
+
+    def repopulate_cahce(self, image_1_idx, image_2_idx):
+        '''
+        gets the middle frame given two images then populates __sepconv_cache
+        recursively call until populated
+
+        assumes image_1 and image_2 already in cache
+        '''
+        if (image_1_idx + 1 == image_2_idx):
+            return
+
+        # assumes the two frames image_1 and image_2 are already in cache
+        image_1 = self.cache[image_1_idx]
+        image_2 = self.cache[image_2_idx]
+
+        mid_image = self.get_middle_frame(image_1, image_2)
+        mid_image_idx = int((image_1_idx + image_2_idx) / 2)
+
+        self.cache[mid_image_idx] = mid_image
+
+        # LHS
+        self.repopulate_cahce(image_1_idx, mid_image_idx)
+        # RHS
+        self.repopulate_cahce(mid_image_idx, image_2_idx)
+        
+    def get_interpolated_frame(self, idx):
+        # if not found in cache
+        if not (idx in self.cache):
+            self.cache.clear()
+            
+            # repopulate cache
+            image_1_idx = int(idx // self.rate_ratio * self.rate_ratio)
+            image_2_idx = int(image_1_idx + self.rate_ratio)
+            
+            # put the relevant frames in cache first
+            frameA_idx = idx // self.rate_ratio
+            frameB_idx = frameA_idx + 1
+            frameA = self.video_stream.get_frame(int(frameA_idx))
+            frameB = self.video_stream.get_frame(int(frameB_idx))
+            self.cache[image_1_idx] = frameA
+            self.cache[image_2_idx] = frameB
+
+            self.repopulate_cahce(image_1_idx, image_2_idx)
+
+        return self.cache[idx]
+
 
 
 '''
