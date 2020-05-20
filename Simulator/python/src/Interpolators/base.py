@@ -85,10 +85,9 @@ class BaseInterpolator(object):
         target_nframes = min(self.max_frames_possible, self.max_out_frames)
 
         for i in range(target_nframes):
-
             # if (debug_flags['debug_progress']):
             if ((i % self.target_fps) == 0):
-                pct = str(math.floor(100 * i / target_nframes)).rjust(3, ' ')
+                pct = str(math.floor(100 * (i+1) / target_nframes)).rjust(3, ' ')
                 curr = int(round(time.time() * 1000))
                 elapsed_seconds = int((curr-start) / 1000)
                 elapsed = sToMMSS(elapsed_seconds)
@@ -96,9 +95,9 @@ class BaseInterpolator(object):
                 progStr = f'PROGRESS::{pct}%::Frame {i}/{target_nframes} | Time elapsed: {elapsed} | Estimated Time Left: {eta}'
                 signal_progress(progStr)
 
-            if (debug_flags['debug_progress']):
-                print(progStr)
-                
+                if (debug_flags['debug_progress']):
+                    print(progStr)
+                    
             interpolated_frame = self.get_interpolated_frame(i)
             self.video_out_writer.append_data(interpolated_frame)
 

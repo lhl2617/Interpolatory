@@ -1,15 +1,52 @@
 from ..base import BaseInterpolator
+from ...util import is_power_of_two
+import math
 
 class SepConvBase(BaseInterpolator):
-    def set_model_arg(self):
-        raise NotImplementedError(
-            'To be implemented by SepConv L1 and Lf classes')
+    def __init__(self, target_fps, video_in_path=None, video_out_path=None, max_out_frames=math.inf, max_cache_size=2, **args):
 
-    def get_benchmark_frame(self, image_1, image_2):
-        raise NotImplementedError(
-            'To be implemented by SepConv L1 and Lf classes')
+        super().__init__(target_fps, video_in_path,
+                         video_out_path, max_out_frames, max_cache_size)
+        '''
+        Only supports upscaling by factor of 2
+        '''
+        if not (self.video_in_path is None):
+            if self.rate_ratio < 1:
+                raise Exception(f'SepConv only supports upconversion, got conversion rate ratio {self.rate_ratio}')
+            if (not is_power_of_two(self.rate_ratio)):
+                raise Exception(f'SepConv only supports upconversion ratio that is a power of 2, got conversion rate ratio {self.rate_ratio}')
+            
+        '''
+        we store rate_ratio interpolated frames in cache 
+        '''
+        self.__sepconv_cache = {}
 
-    def get_sepconv_frame(self, image_1, image_2):
+
+    def __sepconv_repopulate_cache(self, image_1_idx, image_2_idx):
+        '''
+        gets the middle frame given two images then populates __sepconv_cache
+        recursively call until populated
+        '''
+        if (image_1_idx + 1 == image_2_idx):
+            return
+
+        # assumes the two frames image_1 and image_2 are already in cache
+        image_1 = self.__sepconv_cache[image_1_idx]
+        image_2 = self.__sepconv_cache[image_2_idx]
+
+        mid_image = self.__sepconv_get_middle_frame(image_1, image_2)
+        mid_image_idx = int((image_1_idx + image_2_idx) / 2)
+
+        self.__sepconv_cache[mid_image_idx] = mid_image
+
+        # LHS
+        self.__sepconv_repopulate_cache(image_1_idx, mid_image_idx)
+        # RHS
+        self.__sepconv_repopulate_cache(mid_image_idx, image_2_idx)
+        
+
+
+    def __sepconv_get_middle_frame(self, image_1, image_2):
         import numpy
         import torch
         from .src import run
@@ -23,32 +60,44 @@ class SepConvBase(BaseInterpolator):
 
         return out_frame
 
-
     def get_interpolated_frame(self, idx):
-        raise NotImplementedError('Not implemented for limited methods')
+        # if not found in cache
+        if not (idx in self.__sepconv_cache):
+            self.__sepconv_cache.clear()
+            
+            # repopulate cache
+            image_1_idx = int(idx // self.rate_ratio * self.rate_ratio)
+            image_2_idx = int(image_1_idx + self.rate_ratio)
+            
+            # put the relevant frames in cache first
+            frameA_idx = idx // self.rate_ratio
+            frameB_idx = frameA_idx + 1
+            frameA = self.video_stream.get_frame(int(frameA_idx))
+            frameB = self.video_stream.get_frame(int(frameB_idx))
+            self.__sepconv_cache[image_1_idx] = frameA
+            self.__sepconv_cache[image_2_idx] = frameB
+
+            self.__sepconv_repopulate_cache(image_1_idx, image_2_idx)
+
+        return self.__sepconv_cache[idx]
 
 
 class SepConvL1(SepConvBase):
-    def set_model_arg(self):
+    def __init__(self, target_fps, video_in_path=None, video_out_path=None, max_out_frames=math.inf, max_cache_size=2, **args):
         from .src import run
         run.arguments_strModel = 'l1'
-
-    def get_benchmark_frame(self, image1, image2):
-        self.set_model_arg()
-        return self.get_sepconv_frame(image1, image2)
+        super().__init__(target_fps, video_in_path,
+                         video_out_path, max_out_frames, max_cache_size)
 
     def __str__(self):
         return 'SepConv - L1'
 
-
-class SepConvLf(SepConvBase):
-    def set_model_arg(self):
+class SepConvLf(SepConvBase):    
+    def __init__(self, target_fps, video_in_path=None, video_out_path=None, max_out_frames=math.inf, max_cache_size=2, **args):
         from .src import run
         run.arguments_strModel = 'lf'
-
-    def get_benchmark_frame(self, image1, image2):
-        self.set_model_arg()
-        return self.get_sepconv_frame(image1, image2)
+        super().__init__(target_fps, video_in_path,
+                         video_out_path, max_out_frames, max_cache_size)
 
     def __str__(self):
         return 'SepConv - Lf'

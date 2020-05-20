@@ -1,5 +1,6 @@
 import sys
 import numpy as np
+import math
 
 progress_file_path = None
 
@@ -34,3 +35,9 @@ blends frames
 '''
 def blend_frames(frames, weights):
     return np.average(frames, axis=0, weights=weights).astype(np.uint8, copy=False)
+
+def log2(n):
+    return (math.log10(n) / math.log10(2))
+
+def is_power_of_two(n):
+    return (math.ceil(log2(n))) == math.floor(log2(n))

@@ -174,11 +174,23 @@ elif mode_flag == '-dep':
     ]
 
     pkg_resources.require(dependencies)
+    print('Success')
 
     # print('')
     # print('- python3 main.py -depcuda')
     # print('Check whether CUDA dependencies are met')
+elif mode_flag == '-depcuda':
+    import pkg_resources
 
+    dependencies = [
+        'cupy>=5.0.0',
+        'numpy>=1.15.0',
+        'Pillow>=5.0.0',
+        'scikit-image>=0.14.0',
+        'torch>=1.3.0',
+    ]
+    pkg_resources.require(dependencies)
+    print('Success')
 
 
 else:

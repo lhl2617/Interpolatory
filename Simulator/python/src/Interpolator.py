@@ -5,14 +5,14 @@ from .Interpolators.sepconv import sepconv
 InterpolatorDictionary = {
     'Nearest': nearest.NearestInterpolator,
     'Oversample': oversample.OversampleInterpolator,
-    'Linear': linear.LinearInterpolator
+    'Linear': linear.LinearInterpolator,
+    'SepConvL1-CUDA': sepconv.SepConvL1,
+    'SepConvLf-CUDA': sepconv.SepConvLf
 }
 
 # supports only benchmarking and middle frame generation
 # this should contain all interpolators
 LimitedInterpolatorDictionary = {
-    'SepConvL1-CUDA': sepconv.SepConvL1,
-    'SepConvLf-CUDA': sepconv.SepConvLf
 }
 
 # add into all
