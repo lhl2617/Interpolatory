@@ -159,7 +159,9 @@ class MLBaseInterpolator(BaseInterpolator):
         super().__init__(target_fps, video_in_path,
                          video_out_path, max_out_frames, max_cache_size)
         '''
-        Only supports upscaling by factor of 2
+        Only supports upscaling by factor of 2;
+        TODO:- upscale if the factor has denominator 2
+        by blurring the output
         '''
         if not (self.video_in_path is None):
             if self.rate_ratio < 1:
@@ -176,7 +178,7 @@ class MLBaseInterpolator(BaseInterpolator):
         # get middle frame
         raise NotImplementedError('To be implemented by derived classes')
 
-    def repopulate_cahce(self, image_1_idx, image_2_idx):
+    def repopulate_cache(self, image_1_idx, image_2_idx):
         '''
         gets the middle frame given two images then populates __sepconv_cache
         recursively call until populated
@@ -196,9 +198,9 @@ class MLBaseInterpolator(BaseInterpolator):
         self.cache[mid_image_idx] = mid_image
 
         # LHS
-        self.repopulate_cahce(image_1_idx, mid_image_idx)
+        self.repopulate_cache(image_1_idx, mid_image_idx)
         # RHS
-        self.repopulate_cahce(mid_image_idx, image_2_idx)
+        self.repopulate_cache(mid_image_idx, image_2_idx)
         
     def get_interpolated_frame(self, idx):
         # if not found in cache
@@ -217,7 +219,7 @@ class MLBaseInterpolator(BaseInterpolator):
             self.cache[image_1_idx] = frameA
             self.cache[image_2_idx] = frameB
 
-            self.repopulate_cahce(image_1_idx, image_2_idx)
+            self.repopulate_cache(image_1_idx, image_2_idx)
 
         return self.cache[idx]
 

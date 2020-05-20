@@ -10,7 +10,7 @@ import json
 import time
 import math
 import pathlib
-from .Interpolator import LimitedInterpolatorDictionary
+from .Interpolator import InterpolatorDictionary
 from .Globals import debug_flags
 from .util import sToMMSS, getETA, signal_progress
 
@@ -38,7 +38,7 @@ def benchmark(interpolation_mode, output_path=None):
 
         im_true = imageio.imread(path_to_truth)
             
-        interpolator = LimitedInterpolatorDictionary[interpolation_mode](2)
+        interpolator = InterpolatorDictionary[interpolation_mode](2)
         im_test = interpolator.get_benchmark_frame(frame_1, frame_2)
 
 
@@ -86,7 +86,7 @@ def get_middle_frame(interpolation_mode, frame_1_path, frame_2_path, output_file
     frame_1 = imageio.imread(frame_1_path)
     frame_2 = imageio.imread(frame_2_path)
     
-    interpolator = LimitedInterpolatorDictionary[interpolation_mode](2)
+    interpolator = InterpolatorDictionary[interpolation_mode](2)
     im_test = interpolator.get_benchmark_frame(frame_1, frame_2)
 
     imageio.imwrite(output_file_path, im_test)

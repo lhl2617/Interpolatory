@@ -33,7 +33,7 @@ def signal_progress(s):
 '''
 blends frames
 '''
-def blend_frames(frames, weights):
+def blend_frames(frames, weights=None):
     return np.average(frames, axis=0, weights=weights).astype(np.uint8, copy=False)
 
 def log2(n):
