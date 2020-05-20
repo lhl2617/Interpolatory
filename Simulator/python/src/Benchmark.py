@@ -41,6 +41,7 @@ def benchmark(interpolation_mode, output_path=None):
         interpolator = LimitedInterpolatorDictionary[interpolation_mode](2)
         im_test = interpolator.get_benchmark_frame(frame_1, frame_2)
 
+
         if (not (output_path is None)):
             output_pathname = path.join(output_path, f'{test_name}.png')
             imageio.imwrite(output_pathname, im_test)

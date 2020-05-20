@@ -1,7 +1,6 @@
 import sys
 import json
 
-
 sys.path.append('./src')
 from src import util, Interpolator, Benchmark, Globals
 from src.Interpolator import InterpolatorDictionary, LimitedInterpolatorDictionary
@@ -197,9 +196,7 @@ else:
     print(f'Unknown command. Run `python3 main.py -h` for a usage guide')
 
 # print('')
+
+
 exit(0)
-
-
-
-
 
