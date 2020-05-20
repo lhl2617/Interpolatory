@@ -4,6 +4,7 @@ import sys
 import time
 from plot_mv import plot_vector_field
 from full_search import get_motion_vectors as full_search
+from tss import get_motion_vectors as tss
 
 def downscale(image, weightings):
     padded = np.pad(image, 1)[:,:,1:4]
@@ -63,10 +64,13 @@ def get_motion_vectors(block_size, region, im1, im2):
         im1_lst[i] = downscale(im1_lst[i-1], weightings)
         im2_lst[i] = downscale(im2_lst[i-1], weightings)
 
+    print('Calculating initial FS...')
     mvs = full_search(block_size, region, im1_lst[2], im2_lst[2])
+    # mvs = tss(block_size, 3, im1_lst[2], im2_lst[2])
 
     for s in range(1, -1, -1):
-        next_mvs = np.zeros_like(im1_lst[s])
+        print('Propagating back to level',s)
+        next_mvs = np.zeros_like(im1_lst[s], dtype='float32')
         for row in range(0, next_mvs.shape[0], block_size << 1):
             for col in range(0, next_mvs.shape[1], block_size << 1):
                 for i in range(2):
@@ -107,7 +111,7 @@ def get_motion_vectors(block_size, region, im1, im2):
                             next_mvs[row + i*block_size : row + (i+1)*block_size, col + j*block_size : col + (j+1)*block_size, 1] = right[0][1]
                             next_mvs[row + i*block_size : row + (i+1)*block_size, col + j*block_size : col + (j+1)*block_size, 2] = right[1]
         mvs = next_mvs
-
+        
     return mvs
 
 if __name__ == "__main__":

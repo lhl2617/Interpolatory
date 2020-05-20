@@ -15,10 +15,10 @@ def get_motion_vectors(block_size, target_region, source_frame, target_frame):
     lowest_sad_const = block_size * block_size * (255 + 255 + 255) + 1    # maximum sad score for a block
     lowest_distance_const = block_size * block_size
 
-    prev_time = time.time()
+    # prev_time = time.time()
     for s_row in range(0, source_frame.shape[0], block_size):
-        print(s_row, time.time() - prev_time)
-        prev_time = time.time()
+        # print(s_row, time.time() - prev_time)
+        # prev_time = time.time()
         for s_col in range(0, source_frame.shape[1], block_size):
             source_block = source_frame[s_row:s_row+block_size, s_col:s_col+block_size, :]
             lowest_sad = lowest_sad_const
@@ -55,17 +55,6 @@ if __name__ == "__main__":
         # np.savetxt(out_path + "/out.csv", output.reshape(-1), delimiter=',')
 
     plot_vector_field(output, block_size, out_path)
-
-    # output_intensity = np.copy(output)
-    # max_intensity = 0
-    # for i in range(output_intensity.shape[0]):
-    #     for j in range(output_intensity.shape[1]):
-    #         intensity = float(output_intensity[i,j,0]) ** 2.0 + float(output_intensity[i,j,1]) ** 2.0
-    #         if intensity > max_intensity:
-    #             max_intensity = intensity
-    #         output_intensity[i,j,:] = [intensity, intensity, intensity]
-    # output_intensity = 255 - (output_intensity * (255.0 / float(max_intensity)))
-    # imwrite(out_path, output_intensity)
 
 
 
