@@ -110,7 +110,21 @@ import math
         
 #     return mvs
 
-def get_motion_vectors(block_size, target_region, sub_target_region, steps, source_frame, target_frame):
+def search_region(block, window, size):
+    lowest_sad = math.inf
+    lowest_dist = math.inf
+    lowest_vec = (0, 0)
+    for row in range(window.shape[0] - block.shape[0]):
+        for col in range(window.shape[1] - block.shape[1]):
+            sad = np.sum(np.abs(block - window[row : row + block.shape[0], col : col + block.shape[1], :]))
+            dist = (row - size) * (row - size) + (col - size) * (col - size)
+            if sad < lowest_sad or (sad == lowest_sad and dist <= lowest_dist):
+                lowest_sad = sad
+                lowest_dist = dist
+                lowest_vec = (row - size, col - size)
+    return lowest_vec, lowest_sad
+
+def get_motion_vectors(block_size, region, sub_region, steps, source_frame, target_frame):
     weightings = np.array([
         [0.0625, 0.125, 0.0625],
         [0.125, 0.25, 0.125],
@@ -128,10 +142,8 @@ def get_motion_vectors(block_size, target_region, sub_target_region, steps, sour
         im2_lst.append(convolve(im2_lst[-1] / 255.0, weightings, mode='constant')[::2, ::2] * 255.0)
     
     print('Calculating initial motion vectors')
-    mvs = full_search(block_size, target_region, im1_lst[-1], im2_lst[-1])
+    mvs = full_search(block_size, region, im1_lst[-1], im2_lst[-1])
     # mvs = tss(block_size, 3, im1_lst[-1], im1_lst[-1])
-
-    plot_vector_field(mvs, block_size, out_path + '_out.png')
 
     for s in range(steps - 1, -1, -1):
         print('Propagating back to level', s)
@@ -143,15 +155,15 @@ def get_motion_vectors(block_size, target_region, sub_target_region, steps, sour
                 # for each sub block:
                 #   search regions at 3 vecs
                 vecs = []
-                vecs.append(mvs[row, col] * 2 + [-sub_target_region,-sub_target_region,0])  # parent vector (and sad but ignore)
+                vecs.append(mvs[row, col] * 2)  # parent vector (and sad but ignore)
                 if col >= block_size:
-                    vecs.append(mvs[row, col - block_size] * 2 + [-sub_target_region,-sub_target_region,0]) # offset to place in center of search region
+                    vecs.append(mvs[row, col - block_size] * 2) 
                 else:
-                    vecs.append(mvs[row, col + block_size] * 2 + [-sub_target_region,-sub_target_region,0])
+                    vecs.append(mvs[row, col + block_size] * 2)
                 if row >= block_size:
-                    vecs.append(mvs[row - block_size, col] * 2 + [-sub_target_region,-sub_target_region,0])
+                    vecs.append(mvs[row - block_size, col] * 2)
                 else:
-                    vecs.append(mvs[row + block_size, col] * 2 + [-sub_target_region,-sub_target_region,0])
+                    vecs.append(mvs[row + block_size, col] * 2)
                 
                 for i in range(row * 2, (row + block_size) * 2, block_size):
                     for j in range(col * 2, (col + block_size) * 2, block_size):
@@ -159,9 +171,22 @@ def get_motion_vectors(block_size, target_region, sub_target_region, steps, sour
                         # i, j in next_mvs space
                         # row, col in mvs space
                         lowest_sad = math.inf
-                        lowest_vec = math.inf
+                        lowest_vec = (0,0)
+                        block = im1_lst[s][i:i+block_size, j:j+block_size, :]
+                        for vec in vecs:
+                            new_i = i + int(vec[0])
+                            new_j = j + int(vec[1])
+                            search_window = im2_lst[s][new_i-sub_region:new_i+block_size+sub_region, new_j-sub_region:new_j+block_size+sub_region]
+                            result = search_region(block, search_window, sub_region)
+                            if result[1] < lowest_sad:
+                                lowest_sad = result[1]
+                                lowest_vec = (result[0][0] + vec[0], result[0][1] + vec[1])
+                        next_mvs[i:i+block_size, j:j+block_size, 0] = lowest_vec[0]
+                        next_mvs[i:i+block_size, j:j+block_size, 1] = lowest_vec[1]
+                        next_mvs[i:i+block_size, j:j+block_size, 2] = lowest_sad
+        mvs = next_mvs
                 
-    return 0
+    return mvs
 
 if __name__ == "__main__":
     block_size = int(sys.argv[1])
