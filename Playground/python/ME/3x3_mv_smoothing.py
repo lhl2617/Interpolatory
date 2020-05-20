@@ -3,12 +3,13 @@ from imageio import imread, imwrite
 import sys
 import cProfile  
 import time
-from full_search import get_motion_vectors as mv_fs
-from tss import get_motion_vectors as mv_tss
 from plot_mv import plot_vector_field
 from median_filter import median_filter
 from mean_filter import mean_filter
 from weighted_mean_filter import weighted_mean_filter
+from full_search import get_motion_vectors as mv_fs
+from tss import get_motion_vectors as mv_tss
+from hbma import get_motion_vectors as hbma
 
 filter_func_dict = {
     'median' : median_filter,
@@ -41,10 +42,12 @@ if __name__ == "__main__":
     print('Starting ME...')
     if method == 'fs':
         output = mv_fs(block_size, metric, im1, im2)
-    else:
+    elif method == 'tss':
         output = mv_tss(block_size, metric, im1, im2)
+    elif method == 'hbma':
+        output = hbma(block_size, metric, 1, 2, im1, im2)
 
-    print('Starting motion smoothing...')
+    print('Smoothing vectors')
     output = smooth(filter_func_dict[filter_type], output, block_size)
 
     plot_vector_field(output, block_size, out_path)

@@ -134,8 +134,8 @@ def get_motion_vectors(block_size, region, sub_region, steps, source_frame, targ
 
     im1_lst = []
     im2_lst = []
-    im1_lst.append(im1)
-    im2_lst.append(im2)
+    im1_lst.append(source_frame)
+    im2_lst.append(target_frame)
     for i in range(1, steps+1):
         print('Downscaling level',i)
         im1_lst.append(convolve(im1_lst[-1] / 255.0, weightings, mode='constant')[::2, ::2] * 255.0)
