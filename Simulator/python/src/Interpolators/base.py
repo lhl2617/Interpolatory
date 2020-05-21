@@ -115,10 +115,9 @@ class BaseInterpolator(object):
 
     def get_interpolated_frame(self, idx):
         raise NotImplementedError('To be implemented by derived classes')
-        return []
 
     def __str__(self):
-        raise NotImplementedErrortion('To be implemented by derived classes')
+        raise NotImplementedError('To be implemented by derived classes')
 
 
     '''
@@ -230,7 +229,7 @@ class MidFrameBaseInterpolator(BaseInterpolator):
                 self.cache.clear()
                 
                 # repopulate cache
-                image_1_idx = int(true_idx)
+                image_1_idx = int(idx // self.rate_ratio * self.rate_ratio)
                 image_2_idx = int(image_1_idx + self.rate_ratio)
                 
                 # put the relevant frames in cache first
@@ -257,11 +256,12 @@ class MidFrameBaseInterpolator(BaseInterpolator):
                 self.cache.clear()
                 
                 # repopulate cache
-                image_1_idx = int(idx)
+                image_1_idx = int(idx // self.rate_ratio * self.rate_ratio)
                 image_2_idx = int(image_1_idx + self.rate_ratio)
                 
                 # put the relevant frames in cache first
                 frameA_idx = idx // self.rate_ratio
+
                 frameB_idx = frameA_idx + 1
                 frameA = self.video_stream.get_frame(int(frameA_idx))
                 frameB = self.video_stream.get_frame(int(frameB_idx))

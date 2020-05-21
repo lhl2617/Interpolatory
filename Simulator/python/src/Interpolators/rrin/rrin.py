@@ -33,6 +33,7 @@ class RRINMidFrameInterpolator(MidFrameBaseInterpolator):
 
 
     def get_middle_frame(self, image_1, image_2):
+        print('getting')
         import torch
         import torchvision
         from torchvision import transforms
@@ -126,7 +127,7 @@ class RRINLinearInterpolator(BaseInterpolator):
 
     def get_interpolated_frame(self, idx):
         image_1_idx, ratio = get_first_frame_idx_and_ratio(idx, self.rate_ratio)
-        
+
         image_1 = self.video_stream.get_frame(image_1_idx)
         image_2 = self.video_stream.get_frame(image_1_idx + 1)
 
