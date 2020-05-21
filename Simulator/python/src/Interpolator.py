@@ -1,6 +1,7 @@
 from .Interpolators import linear, oversample, nearest, blur, speed
 from .Interpolators.sepconv import sepconv
 from .Interpolators.rrin import rrin
+from .Interpolators.softsplat import softsplat
 
 # supports all features
 InterpolatorDictionary = {
@@ -13,4 +14,10 @@ InterpolatorDictionary = {
     'SepConvLf-CUDA': sepconv.SepConvLf,
     'RRIN-MidFrame-CUDA': rrin.RRINMidFrameInterpolator,
     'RRIN-Linear-CUDA': rrin.RRINLinearInterpolator,
+    'SoftSplat-Linear-Default': softsplat.SoftSplatLinearDefault,
+    'SoftSplat-Linear-KITTI': softsplat.SoftSplatLinearKitti,
+    'SoftSplat-Linear-Sintel': softsplat.SoftSplatLinearSintel,
+    'SoftSplat-MidFrame-Default': softsplat.SoftSplatMidFrameDefault,
+    'SoftSplat-MidFrame-KITTI': softsplat.SoftSplatMidFrameKitti,
+    'SoftSplat-MidFrame-Sintel': softsplat.SoftSplatMidFrameSintel,
 }

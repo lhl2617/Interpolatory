@@ -33,7 +33,6 @@ class RRINMidFrameInterpolator(MidFrameBaseInterpolator):
 
 
     def get_middle_frame(self, image_1, image_2):
-        print('getting')
         import torch
         import torchvision
         from torchvision import transforms

@@ -17,12 +17,13 @@
 # # end
 
 from ..base import BaseFlow
-from .src import run
 import numpy
 
 class LiteFlowNetBase(BaseFlow):
+
     def get_flow(self, image_1, image_2):
         import torch
+        from .src import run
 
         tenFirst = torch.FloatTensor(numpy.ascontiguousarray(numpy.array(image_1)[:, :, ::-1].transpose(2, 0, 1).astype(numpy.float32) * (1.0 / 255.0)))
         tenSecond = torch.FloatTensor(numpy.ascontiguousarray(numpy.array(image_2)[:, :, ::-1].transpose(2, 0, 1).astype(numpy.float32) * (1.0 / 255.0)))
@@ -33,23 +34,29 @@ class LiteFlowNetBase(BaseFlow):
 
         return out
 
-class LiteFlowNetDefault(BaseFlow):
+class LiteFlowNetDefault(LiteFlowNetBase):
     def __init__(self):
+        from .src import run
         run.arguments_strModel = 'default'
+        super().__init__()
 
     def __str__(self):
         return 'LiteFlowNet - default'
 
-class LiteFlowNetKitti(BaseFlow):
+class LiteFlowNetKitti(LiteFlowNetBase):
     def __init__(self):
+        from .src import run
         run.arguments_strModel = 'kitti'
+        super().__init__()
 
     def __str__(self):
         return 'LiteFlowNet - kitti'
 
-class LiteFlowNetSintel(BaseFlow):
+class LiteFlowNetSintel(LiteFlowNetBase):
     def __init__(self):
+        from .src import run
         run.arguments_strModel = 'sintel'
+        super().__init__()
 
     def __str__(self):
         return 'LiteFlowNet - sintel'

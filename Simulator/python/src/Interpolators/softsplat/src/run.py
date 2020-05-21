@@ -1,11 +1,9 @@
 #!/usr/bin/env python
 
 import torch
-
-import cv2
 import numpy
 
-import softsplat
+from . import softsplat
 
 ##########################################################
 
@@ -45,15 +43,27 @@ def backwarp(tenInput, tenFlow):
 
 ##########################################################
 
-def estimate(image_1, image_2, flow):
+def estimate(image_1, image_2, flow, ratio=0.5):
 	tenFirst = torch.FloatTensor(numpy.ascontiguousarray(numpy.array(image_1).transpose(2, 0, 1)[None, :, :, :].astype(numpy.float32) * (1.0 / 255.0))).cuda()
 	tenSecond = torch.FloatTensor(numpy.ascontiguousarray(numpy.array(image_2).transpose(2, 0, 1)[None, :, :, :].astype(numpy.float32) * (1.0 / 255.0))).cuda()
 	tenFlow = torch.FloatTensor(numpy.ascontiguousarray(numpy.array(flow).transpose(2, 0, 1)[None, :, :, :])).cuda()
 
-	tenMetric = torch.nn.functional.l1_loss(input=tenFirst, target=backwarp(tenInput=tenSecond, tenFlow=tenFlow), reduction='none').mean(1, True)
-	tenSoftmax = softsplat.FunctionSoftsplat(tenInput=tenFirst, tenFlow=tenFlow * fltTime, tenMetric=-20.0 * tenMetric, strType='softmax') # -20.0 is a hyperparameter, called 'beta' in the paper, that could be learned using a torch.Parameter
 
-    out_frame = (tenSoftmax.clamp(0.0, 1.0).numpy().transpose(1, 2, 0)[:, :, ::-1] * 255.0).astype(numpy.uint8)
+	tenMetric = torch.nn.functional.l1_loss(input=tenFirst, target=backwarp(tenInput=tenSecond, tenFlow=tenFlow), reduction='none').mean(1, True)
+	tenSoftmax = softsplat.FunctionSoftsplat(tenInput=tenFirst, tenFlow=tenFlow * ratio, tenMetric=-20.0 * tenMetric, strType='softmax') # -20.0 is a hyperparameter, called 'beta' in the paper, that could be learned using a torch.Parameter
+
+	
+
+	tenSoftmaxCPU = tenSoftmax.cpu()
+
+	tenNumpy = tenSoftmaxCPU.clamp(0.0, 1.0).numpy()[0, :, :, :]
+
+
+	transposed = tenNumpy.transpose(1, 2, 0)
+
+	out_frame = (transposed * 255.0).astype(numpy.uint8)
+
+	return out_frame
 	
 
 

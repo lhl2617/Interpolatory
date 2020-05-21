@@ -196,6 +196,8 @@ class MidFrameBaseInterpolator(BaseInterpolator):
         # get middle frame
         raise NotImplementedError('To be implemented by derived classes')
 
+    # WARNING: the first top level recursive call must be a valid group of images
+    # i.e. the LHS and RHS must correspond to real frames in the original video
     def repopulate_cache(self, image_1_idx, image_2_idx):
         '''
         gets the middle frame given two images then populates __sepconv_cache

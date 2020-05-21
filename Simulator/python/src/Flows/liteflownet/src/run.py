@@ -9,6 +9,7 @@ import os
 import PIL
 import PIL.Image
 import sys
+import pathlib
 
 from .correlation import correlation # the custom cost volume layer
 
@@ -297,8 +298,8 @@ class Network(torch.nn.Module):
 		if not (pathlib.Path(model_path).is_file()):
 			readme_path = os.path.join(pathlib.Path(__file__).parent, 'models', 'README.md')
 			raise Exception(f'Model file ({model_path}) does not exist. Please locate README in {readme_path} for instructions to download models.')
-
-		self.load_state_dict({ strKey.replace('module', 'net'): tenWeight for strKey, tenWeight in torch.load(model_path)).items() })
+		
+		self.load_state_dict({ strKey.replace('module', 'net'): tenWeight for strKey, tenWeight in torch.load(model_path).items() })
 	# end
 
 	def forward(self, tenFirst, tenSecond):
@@ -350,8 +351,8 @@ def estimate(tenFirst, tenSecond):
 	intWidth = tenFirst.shape[2]
 	intHeight = tenFirst.shape[1]
 
-	assert(intWidth == 1024) # remember that there is no guarantee for correctness, comment this line out if you acknowledge this and want to continue
-	assert(intHeight == 436) # remember that there is no guarantee for correctness, comment this line out if you acknowledge this and want to continue
+	# assert(intWidth == 1024) # remember that there is no guarantee for correctness, comment this line out if you acknowledge this and want to continue
+	# assert(intHeight == 436) # remember that there is no guarantee for correctness, comment this line out if you acknowledge this and want to continue
 
 	tenPreprocessedFirst = tenFirst.cuda().view(1, 3, intHeight, intWidth)
 	tenPreprocessedSecond = tenSecond.cuda().view(1, 3, intHeight, intWidth)
