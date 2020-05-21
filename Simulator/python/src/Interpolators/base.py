@@ -7,7 +7,7 @@ from copy import deepcopy
 from io import BytesIO
 from fractions import Fraction
 from decimal import Decimal
-from ..util import sToMMSS, getETA, signal_progress, is_power_of_two
+from ..util import sToMMSS, getETA, signal_progress, is_power_of_two, blend_frames
 from ..Globals import debug_flags
 from ..VideoStream import BenchmarkVideoStream, VideoStream
 
@@ -158,17 +158,36 @@ class MLBaseInterpolator(BaseInterpolator):
 
         super().__init__(target_fps, video_in_path,
                          video_out_path, max_out_frames, max_cache_size)
+        
+        # denominator is 2
+        self.den2 = False
+        
         '''
-        Only supports upscaling by factor of 2;
-        TODO:- upscale if the factor has denominator 2
+        Only supports upscaling by factor of 2 or 
+        if the factor has denominator 2
         by blurring the output
+        (this is mainly to support 24->60 by doing 24->120->60)
         '''
         if not (self.video_in_path is None):
             if self.rate_ratio < 1:
                 raise Exception(f'{self.__str__()} only supports upconversion, got conversion rate ratio {self.rate_ratio}')
-            if (not is_power_of_two(self.rate_ratio)):
-                raise Exception(f'{self.__str__()} only supports upconversion ratio that is a power of 2, got conversion rate ratio {self.rate_ratio}')
             
+            from fractions import Fraction
+            from decimal import Decimal
+
+            frac = Fraction(Decimal(self.rate_ratio))
+            denominator = frac.denominator
+            
+            if (not is_power_of_two(self.rate_ratio)) and denominator != 2:
+                raise Exception(f'{self.__str__()} only supports upconversion ratio that is a power of 2 OR has denominator 2 (e.g. 2.5 = 5/2), got conversion rate ratio {self.rate_ratio}')
+            
+            if denominator == 2:
+                self.den2 = True
+                # we now need to double the target fps
+                self.target_fps *= 2
+                # and also rate_ratio
+                self.rate_ratio = int(self.rate_ratio * 2)
+
         '''
         we store rate_ratio interpolated frames in cache 
         '''
@@ -203,25 +222,55 @@ class MLBaseInterpolator(BaseInterpolator):
         self.repopulate_cache(mid_image_idx, image_2_idx)
         
     def get_interpolated_frame(self, idx):
-        # if not found in cache
-        if not (idx in self.cache):
-            self.cache.clear()
+        if self.den2:
+            # denominator 2 case
+            true_idx = idx * 2
             
-            # repopulate cache
-            image_1_idx = int(idx // self.rate_ratio * self.rate_ratio)
-            image_2_idx = int(image_1_idx + self.rate_ratio)
-            
-            # put the relevant frames in cache first
-            frameA_idx = idx // self.rate_ratio
-            frameB_idx = frameA_idx + 1
-            frameA = self.video_stream.get_frame(int(frameA_idx))
-            frameB = self.video_stream.get_frame(int(frameB_idx))
-            self.cache[image_1_idx] = frameA
-            self.cache[image_2_idx] = frameB
+            if not (true_idx in self.cache):
+                self.cache.clear()
+                
+                # repopulate cache
+                image_1_idx = int(true_idx)
+                image_2_idx = int(image_1_idx + self.rate_ratio)
+                
+                # put the relevant frames in cache first
+                frameA_idx = true_idx // self.rate_ratio
+                frameB_idx = frameA_idx + 1
+                frameA = self.video_stream.get_frame(int(frameA_idx))
+                frameB = self.video_stream.get_frame(int(frameB_idx))
+                self.cache[image_1_idx] = frameA
+                self.cache[image_2_idx] = frameB
 
-            self.repopulate_cache(image_1_idx, image_2_idx)
+                self.repopulate_cache(image_1_idx, image_2_idx)
 
-        return self.cache[idx]
+            blend_1 = self.cache[true_idx]
+            blend_2 = self.cache[true_idx + 1]
+
+            blended_frame = blend_frames([blend_1, blend_2])
+
+            return blended_frame
+
+        else:
+            # normal case
+            # if not found in cache
+            if not (idx in self.cache):
+                self.cache.clear()
+                
+                # repopulate cache
+                image_1_idx = int(idx)
+                image_2_idx = int(image_1_idx + self.rate_ratio)
+                
+                # put the relevant frames in cache first
+                frameA_idx = idx // self.rate_ratio
+                frameB_idx = frameA_idx + 1
+                frameA = self.video_stream.get_frame(int(frameA_idx))
+                frameB = self.video_stream.get_frame(int(frameB_idx))
+                self.cache[image_1_idx] = frameA
+                self.cache[image_2_idx] = frameB
+
+                self.repopulate_cache(image_1_idx, image_2_idx)
+
+            return self.cache[idx]
 
 
 

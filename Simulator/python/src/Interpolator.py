@@ -1,4 +1,4 @@
-from .Interpolators import linear, oversample, nearest, blur
+from .Interpolators import linear, oversample, nearest, blur, speed
 from .Interpolators.sepconv import sepconv
 from .Interpolators.rrin import rrin
 
@@ -8,6 +8,7 @@ InterpolatorDictionary = {
     'Oversample': oversample.OversampleInterpolator,
     'Linear': linear.LinearInterpolator,
     'Blur': blur.BlurInterpolator,
+    'Speed': speed.SpeedInterpolator,
     'SepConvL1-CUDA': sepconv.SepConvL1,
     'SepConvLf-CUDA': sepconv.SepConvLf,
     'RRIN-CUDA': rrin.RRINInterpolator,
