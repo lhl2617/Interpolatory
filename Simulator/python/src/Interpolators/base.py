@@ -150,9 +150,9 @@ class BaseInterpolator(object):
 
         return res
 
-class MLBaseInterpolator(BaseInterpolator):
+class MidFrameBaseInterpolator(BaseInterpolator):
     '''
-    This is a base class for ML implementations or methods that only support mid frame interpolation
+    This is a base class for ML implementations or methods that only support mid frame interpolation (e.g. SepConv)
     '''
     def __init__(self, target_fps, video_in_path=None, video_out_path=None, max_out_frames=math.inf, max_cache_size=2, **args):
 

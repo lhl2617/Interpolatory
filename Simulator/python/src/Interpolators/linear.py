@@ -8,7 +8,7 @@ from fractions import Fraction
 from decimal import Decimal
 
 from ..Globals import debug_flags
-from ..util import blend_frames
+from ..util import blend_frames, get_first_frame_idx_and_ratio
 
 from .base import BaseInterpolator
 '''
@@ -25,35 +25,14 @@ class LinearInterpolator(BaseInterpolator):
                          video_out_path, max_out_frames, max_cache_size)
 
     def get_interpolated_frame(self, idx):
-        output = []
-
-        # this period is the number of frame in the targetRate
-        # before a cycle occurs (e.g. in the 24->60 case it occurs between B &
-        # C at period = 5
-        frac = Fraction(Decimal(self.rate_ratio))
-        period = frac.numerator
-
-        # which targetFrame is this after a period
-        offset = math.floor(idx % period)
-
-        # a key frame is a source frame that matches in time, this key frame
-        # is the latest possible source frame
-        key_frame_idx = math.floor(idx / period) * period
-
-        rate_ratios_from_key_frame = math.floor(offset / self.rate_ratio)
-
-        distance_from_prev_rate_ratio_point = offset - \
-            (rate_ratios_from_key_frame) * self.rate_ratio
-
-        frameA_idx = math.floor(
-            key_frame_idx / self.rate_ratio + rate_ratios_from_key_frame)
+        frameA_idx, weightA = get_first_frame_idx_and_ratio(idx, self.rate_ratio)
         frameB_idx = frameA_idx + 1
 
         frameA = self.video_stream.get_frame(frameA_idx)
         frameB = self.video_stream.get_frame(frameB_idx)
 
-        weightB = distance_from_prev_rate_ratio_point
-        weightA = self.rate_ratio - weightB
+        weightB = 1. - weightA
+
         if (debug_flags['debug_interpolator']):
             print(
                 f'targetframe: {idx}, using source frame: ({weightA} * {frameA_idx} + {weightB} * {frameB_idx}) / {self.rate_ratio}')

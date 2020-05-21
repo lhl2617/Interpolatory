@@ -11,6 +11,6 @@ InterpolatorDictionary = {
     'Speed': speed.SpeedInterpolator,
     'SepConvL1-CUDA': sepconv.SepConvL1,
     'SepConvLf-CUDA': sepconv.SepConvLf,
-    'RRIN-CUDA': rrin.RRINInterpolator,
-
+    'RRIN-MidFrame-CUDA': rrin.RRINMidFrameInterpolator,
+    'RRIN-Linear-CUDA': rrin.RRINLinearInterpolator,
 }
