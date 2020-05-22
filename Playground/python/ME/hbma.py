@@ -124,7 +124,7 @@ def search_region(block, window, size):
                 lowest_vec = (row - size, col - size)
     return lowest_vec, lowest_sad
 
-def get_motion_vectors(block_size, region, sub_region, min_block_size, steps, im1, im2):
+def get_motion_vectors(block_size, region, sub_region, steps, min_block_size, im1, im2):
     weightings = np.array([
         [0.0625, 0.125, 0.0625],
         [0.125, 0.25, 0.125],
