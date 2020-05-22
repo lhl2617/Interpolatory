@@ -20,13 +20,22 @@ def get_motion_vectors(block_size, target_region, source_frame, target_frame):
     output = np.empty_like(source_frame_pad, dtype='float32')
 
     for s_row in range(0, source_frame.shape[0], block_size):
+        # print(s_row)
         for s_col in range(0, source_frame.shape[1], block_size):
             source_block = source_frame_pad[s_row:s_row+block_size, s_col:s_col+block_size, :]
             lowest_sad = lowest_sad_const
             lowest_distance = lowest_distance_const
             target_index = (0, 0)
-            for t_row in range(max(0, s_row - target_region), min(target_frame_pad.shape[0] - block_size, s_row + target_region + 1)):
-                for t_col in range(max(0, s_col - target_region), min(target_frame_pad.shape[1] - block_size, s_col + target_region + 1)):
+            if s_row + block_size > source_frame.shape[0]:
+                target_max_row = s_row + 1
+            else:
+                target_max_row = source_frame.shape[0]
+            if s_col + block_size > source_frame.shape[0]:
+                target_max_col = s_col + 1
+            else:
+                target_max_col = source_frame.shape[1]
+            for t_row in range(max(0, s_row - target_region), min(target_max_row, s_row + target_region + 1)):
+                for t_col in range(max(0, s_col - target_region), min(target_max_col, s_col + target_region + 1)):
                     target_block = target_frame_pad[t_row:t_row+block_size, t_col:t_col+block_size, :]
                     sad = np.sum(np.abs(np.subtract(source_block, target_block)))
                     distance = (s_row - t_row) *  (s_row - t_row) + (s_col - t_col) * (s_col - t_col)
