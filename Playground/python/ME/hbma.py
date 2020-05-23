@@ -112,7 +112,7 @@ import math
 
 def search_region(block, window, size):
     if (window.shape[0] != window.shape[1]):    # for now, if going over boundry, don't search further...
-        return (0, 0), 0
+        return (0, 0), 0                        # TODO: think of another way to correct this
     lowest_sad = math.inf
     lowest_dist = math.inf
     lowest_vec = (0, 0)
