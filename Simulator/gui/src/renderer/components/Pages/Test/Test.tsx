@@ -319,6 +319,7 @@ export class Test extends React.Component<{}, IState> {
 
         testProc.stderr.on(`data`, (data) => {
             gotStderr += data.toString();
+            console.error(data.toString())
         })
 
         testProc.on(`close`, (code) => {

@@ -215,6 +215,7 @@ export class Convert extends React.Component<{}, IState> {
 
         proc.stderr.on('data', (data) => {
             // message.error(data.toString())
+            console.error(data.toString())
         })
 
         proc.on('close', (code) => {
@@ -351,6 +352,7 @@ export class Convert extends React.Component<{}, IState> {
 
         convProc.stderr.on(`data`, (data) => {
             gotStderr += data.toString();
+            console.error(data.toString())
         })
 
         convProc.on(`close`, (code) => {

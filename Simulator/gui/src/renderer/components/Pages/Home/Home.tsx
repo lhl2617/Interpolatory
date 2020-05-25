@@ -138,6 +138,7 @@ export class Home extends React.Component<IProps, IState> {
 
         proc.stderr.on('data', (data) => {
             stderrTxt += data.toString();
+            console.error(data.toString())
         })
 
         proc.stderr.on(`end`, () => {
@@ -221,6 +222,7 @@ export class Home extends React.Component<IProps, IState> {
 
         proc.stderr.on(`data`, (data) => {
             outErr += data.toString();
+            console.error(data.toString())
         })
 
         proc.stderr.on(`end`, () => {
@@ -229,7 +231,6 @@ export class Home extends React.Component<IProps, IState> {
         })
 
         proc.on(`exit`, (code) => {
-            console.warn(`closed`);
             if (code !== 0) {
                 if (this.mounted) message.error(`Error installing dependencies, please install manually`);
             }
