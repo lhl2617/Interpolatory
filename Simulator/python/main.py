@@ -156,13 +156,14 @@ elif mode_flag == '-ver':
     # print('Check whether normal requirements are met')
 elif mode_flag == '-dep':
     import pkg_resources
+    import pathlib
+    import os
+    
+    basedir = pathlib.Path(__file__).parent.absolute()
 
-    dependencies = [
-        'imageio~=2.8.0',
-        'imageio-ffmpeg~=0.4.1',
-        'scikit-image~=0.16.2',
-        'numpy~=1.18.2'
-    ]
+    f = open(f'{basedir}{os.path.sep}requirements.txt', 'r')
+    
+    dependencies = f.read().split('\n')
 
     pkg_resources.require(dependencies)
     print('Success')
@@ -173,14 +174,14 @@ elif mode_flag == '-dep':
 elif mode_flag == '-depcuda':
     import pkg_resources
     import pathlib
+    import os
     
     basedir = pathlib.Path(__file__).parent.absolute()
 
-    f = open(f'{}cuda-requirements.txt', 'r')
+    f = open(f'{basedir}{os.path.sep}cuda-requirements.txt', 'r')
 
     dependencies = f.read().split('\n')
 
-    print(dependencies)
     pkg_resources.require(dependencies)
     print('Success')
 
