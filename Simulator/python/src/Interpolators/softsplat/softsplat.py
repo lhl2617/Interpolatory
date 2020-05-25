@@ -31,7 +31,7 @@ class SoftSplatLinearBase(BaseInterpolator):
 
         flow = self.get_flow(image_1_idx, image_1, image_2)
         
-        output = run.estimate(image_1, image_2, flow, ratio)
+        output = run.estimate(image_1, image_2, flow, 1. - ratio)
 
         return output
 
