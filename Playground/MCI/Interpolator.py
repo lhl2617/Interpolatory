@@ -4,13 +4,18 @@ import time
 import numpy as np
 from io import BytesIO
 from fractions import Fraction
-from motion_estimation import get_motion_vectors_fs
-from tss import get_motion_vectors_tss
+from full_search import get_motion_vectors as get_motion_vectors_fs
+from tss import get_motion_vectors as get_motion_vectors_tss
 from decimal import Decimal
 from copy import deepcopy
 from Globals import debug_flags
 from VideoStream import BenchmarkVideoStream, VideoStream
 import matplotlib.pyplot as plt
+from _3x3_mv_smoothing import smooth
+from median_filter import median_filter
+from mean_filter import mean_filter
+from weighted_mean_filter import weighted_mean_filter
+from hbma import get_motion_vectors as hbma
 
 '''
 blends frames
@@ -85,7 +90,7 @@ class BaseInterpolator:
             self.video_out_path, fps=self.target_fps, macro_block_size=0, quality=6)
 
 
-    def interpolate_video(self):
+    def interpolate_video(self,b,t):
         if self.video_in_path is None or self.video_out_path is None:
             raise Exception(
                 'Cannot interpolate video, no input video path or output video path')
@@ -102,7 +107,7 @@ class BaseInterpolator:
                 if ((i % self.target_fps) == 0):
                     print(f'{i}/{target_nframes} | {100 * i / target_nframes} %')
 
-            interpolated_frame = self.get_interpolated_frame(i)
+            interpolated_frame = self.get_interpolated_frame(i,b,t)
             self.video_out_writer.append_data(interpolated_frame)
 
         self.video_out_writer.close()
@@ -112,12 +117,12 @@ class BaseInterpolator:
         if (debug_flags['debug_timer']):
             print(f'Took {(end-start) / 1000} seconds')
 
-    def get_interpolated_frame(self, idx):
-        raise NotImplementedError('To be implemented by derived classes')
+    def get_interpolated_frame(self, idx, b, t):
+        raise Exception('To be implemented by derived classes')
         return []
 
     def __str__(self):
-        raise NotImplementedError('To be implemented by derived classes')
+        raise Exception('To be implemented by derived classes')
 
 
     '''
@@ -129,7 +134,7 @@ class BaseInterpolator:
     video_stream now contains benchmark_video_stream
     '''
 
-    def get_benchmark_frame(self, image_1, image_2):
+    def get_benchmark_frame(self, image_1, image_2, b ,t):
         # so that we can restore to defaults
         backup_interpolator = deepcopy(self)
 
@@ -140,7 +145,7 @@ class BaseInterpolator:
         self.rate_ratio = 2.
         self.max_frames_possible = 2
 
-        res = self.get_interpolated_frame(1)
+        res = self.get_interpolated_frame(1,b,t)
 
         # restore
         self = backup_interpolator
@@ -162,12 +167,12 @@ class MEMCIInterpolator(BaseInterpolator):
                          video_out_path, max_out_frames, max_cache_size)
 
 
-    def get_interpolated_frame(self, idx):
-
+    def get_interpolated_frame(self, idx, b, t):
+    # def get_interpolated_frame(self, idx, b, t):
         #source_frame is the previous frame in the source vidoe.
         source_frame_idx = math.floor(idx/self.rate_ratio)
         source_frame = self.video_stream.get_frame(source_frame_idx)
-
+        print(source_frame_idx)
         #Normalized distance from current_frame to the source frame.
         dist = idx/self.rate_ratio - math.floor(idx/self.rate_ratio)
 
@@ -179,11 +184,20 @@ class MEMCIInterpolator(BaseInterpolator):
         #Check if the frame to be interpolated is between the two frames
         #that the current motion field is estimated on.
         if not self.MV_field_idx < idx/self.rate_ratio < self.MV_field_idx+1:
-            block_size = 10
-            steps = 6
             target_frame = self.video_stream.get_frame(source_frame_idx+1)
-            self.MV_field = get_motion_vectors_fs(block_size, steps, source_frame, target_frame)
-            # self.MV_field = get_motion_vectors_tss(block_size,steps, source_frame, target_frame)
+
+            # self.MV_field = get_motion_vectors_fs(b, t, source_frame, target_frame)
+            # self.MV_field = smooth(mean_filter,self.MV_field,5)
+            # self.MV_field = get_motion_vectors_tss(b,t, source_frame, target_frame)
+            # self.MV_field=get_motion_vectors_tss(4,3,source_frame,target_frame)
+            # block_size = 16
+            # region = 7
+            sub_region =1
+            steps_HBMA = 1
+            min_block_size = 2
+            self.MV_field = hbma(b,t,sub_region,steps_HBMA,min_block_size,source_frame,target_frame)
+            # print("Begin smoothing")
+            self.MV_field = smooth(mean_filter,self.MV_field,5)
             self.MV_field_idx = source_frame_idx
 
 
@@ -206,13 +220,14 @@ class MEMCIInterpolator(BaseInterpolator):
                 #Get the new coordinates by following scaled MV.
                 u_i = int(u + round(self.MV_field[u,v,0]*dist))
                 v_i = int(v + round(self.MV_field[u,v,1]*dist))
+                # print("u_i ",u_i," v_i ",v_i)
+                if(u_i<source_frame.shape[0] and v_i<source_frame.shape[1]):
+                    if  self.MV_field[u,v,2] <= SAD_interpolated_frame[u_i, v_i]:
 
-                if  self.MV_field[u,v,2] <= SAD_interpolated_frame[u_i, v_i]:
+                        Interpolated_Frame[u_i, v_i] =  source_frame[u, v]
+                        SAD_interpolated_frame[u_i, v_i] = self.MV_field[u,v,2]
 
-                    Interpolated_Frame[u_i, v_i] =  source_frame[u, v]
-                    SAD_interpolated_frame[u_i, v_i] = self.MV_field[u,v,2]
-
-
+        # New_Interpolated_Frame = smooth(mean_filter, self.MV_field, 10)
 
         #Run median filter over empty pixels in the interpolated frame.
         k=10 #Median filter size = (2k+1)x(2k+1)
@@ -496,8 +511,8 @@ class LinearInterpolator(BaseInterpolator):
 
 
 InterpolatorDictionary = {
-    # 'MEMCI' : MEMCIInterpolator,
-    'BI':Bi
+    'MEMCI' : MEMCIInterpolator
+    # 'BI':Bi
     #'nearest': NearestInterpolator,
     #'oversample': OversampleInterpolator,
     #'linear': LinearInterpolator

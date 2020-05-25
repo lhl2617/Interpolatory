@@ -108,12 +108,12 @@ class BenchmarkVideoStream(BaseVideoStream):
     def __init__(self, frame_1, frame_2):
         self.frame_1 = frame_1
         self.frame_2 = frame_2
-        
+
         self.nframes = 2
         self.fps = 1
         # self.size # this is not used
         self.duration = 2
-        
+
 
     def get_frame(self, idx):
         if idx == 0:
@@ -121,4 +121,3 @@ class BenchmarkVideoStream(BaseVideoStream):
         elif idx == 1:
             return self.frame_2
         raise Exception(f'Tried to get invalid frame idx {idx}')
-
