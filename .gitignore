@@ -47,3 +47,7 @@ temp
 # Interpolatory
 Datasets
 Output
+*.pytorch
+
+# Olly and Naim
+Playground/python/ME/frames/*/*.png

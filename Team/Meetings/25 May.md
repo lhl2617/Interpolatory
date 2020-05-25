@@ -41,8 +41,8 @@
             - Save a copy of their current branch   
                 - git merge master
     
-    - GUI finish up
     - Leaflet, Naim hardware (today)
+    - GUI finish up
     - Finish up 3rd ML
 
 - Olly/Naim

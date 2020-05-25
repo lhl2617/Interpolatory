@@ -1,6 +1,5 @@
 # Runs against middlebury evaluation set in ./middlebury
 
-from Interpolator import InterpolatorDictionary
 from os import path
 import glob
 import numpy as np
@@ -10,44 +9,19 @@ import skimage.metrics
 import json
 import time
 import math
-from Globals import debug_flags
-from util import sToMMSS, getETA, signal_progress
+import pathlib
+from .Interpolator import InterpolatorDictionary
+from .Globals import debug_flags
+from .util import sToMMSS, getETA, signal_progress
 
-# def test():
-#     psnr = {}
-#     ssim = {}
-
-
-#     for interpolator_str, interpolator_obj in InterpolatorDictionary.items():
-#         psnr[interpolator_str] = []
-#         ssim[interpolator_str] = []
-#         for path_to_truth in sorted(glob.glob('../../Datasets/middlebury/*/frame10i11.png')):
-#             test_name = path_to_truth.split('/')[-2]
-
-#             path_1 = path_to_truth.replace('frame10i11', 'frame10')
-#             path_2 = path_to_truth.replace('frame10i11', 'frame11')
-
-#             frame_1 = imageio.imread(path_1)
-#             frame_2 = imageio.imread(path_2)
-
-#             im_true = imageio.imread(path_to_truth)
-                
-#             interpolator = interpolator_obj(2)
-#             im_test = interpolator.get_benchmark_frame(frame_1, frame_2)
-
-#             imageio.imwrite(f'../../Output/middlebury_output/{interpolator_str}_{test_name}.png', im_test)
-            
-#             psnr[interpolator_str].append(skimage.metrics.peak_signal_noise_ratio(im_true, im_test, data_range=255))
-#             ssim[interpolator_str].append(skimage.metrics.structural_similarity(im_true, im_test, data_range=255, multichannel=True))
-#         print(interpolator_str)
-#         print(f'mean psnr: {np.mean(psnr[interpolator_str])}')
-#         print(f'mean ssim: {np.mean(ssim[interpolator_str])}')
 
 def benchmark(interpolation_mode, output_path=None):
     psnr = []
     ssim = []
 
-    paths = sorted(glob.glob('./benchmarks/middlebury/*/frame10i11.png'))
+    basedir = pathlib.Path(__file__).parent.parent.absolute()
+
+    paths = sorted(glob.glob(f'{basedir}/benchmarks/middlebury/*/frame10i11.png'))
 
     cnt_done = 0
     start = int(round(time.time() * 1000))
@@ -66,6 +40,7 @@ def benchmark(interpolation_mode, output_path=None):
             
         interpolator = InterpolatorDictionary[interpolation_mode](2)
         im_test = interpolator.get_benchmark_frame(frame_1, frame_2)
+
 
         if (not (output_path is None)):
             output_pathname = path.join(output_path, f'{test_name}.png')
@@ -96,7 +71,15 @@ def benchmark(interpolation_mode, output_path=None):
         'SSIM': np.mean(ssim)
     }
 
-    print(json.dumps(res))
+    res_json = json.dumps(res)
+    
+    if (not (output_path is None)):
+        output_pathname = path.join(output_path, 'results.txt')
+        f = open(output_pathname, "w")
+        f.write(res_json)
+        f.close()
+
+    print(res_json)
 
 def get_middle_frame(interpolation_mode, frame_1_path, frame_2_path, output_file_path, ground_truth_path=None):
     
@@ -120,5 +103,43 @@ def get_middle_frame(interpolation_mode, frame_1_path, frame_2_path, output_file
 
         if (res['PSNR'] == math.inf):
             res['PSNR'] = 'Infinity'
+            
+    res_json = json.dumps(res)
+    
+    if (not (output_file_path is None)):
+        output_pathname = path.join(output_file_path, 'results.txt')
+        f = open(output_pathname, "w")
+        f.write(res_json)
+        f.close()
 
-        print(json.dumps(res))
+    print(json.dumps(res_json))
+
+# def test():
+#     psnr = {}
+#     ssim = {}
+
+
+#     for interpolator_str, interpolator_obj in InterpolatorDictionary.items():
+#         psnr[interpolator_str] = []
+#         ssim[interpolator_str] = []
+#         for path_to_truth in sorted(glob.glob('../../Datasets/middlebury/*/frame10i11.png')):
+#             test_name = path_to_truth.split('/')[-2]
+
+#             path_1 = path_to_truth.replace('frame10i11', 'frame10')
+#             path_2 = path_to_truth.replace('frame10i11', 'frame11')
+
+#             frame_1 = imageio.imread(path_1)
+#             frame_2 = imageio.imread(path_2)
+
+#             im_true = imageio.imread(path_to_truth)
+                
+#             interpolator = interpolator_obj(2)
+#             im_test = interpolator.get_benchmark_frame(frame_1, frame_2)
+
+#             imageio.imwrite(f'../../Output/middlebury_output/{interpolator_str}_{test_name}.png', im_test)
+            
+#             psnr[interpolator_str].append(skimage.metrics.peak_signal_noise_ratio(im_true, im_test, data_range=255))
+#             ssim[interpolator_str].append(skimage.metrics.structural_similarity(im_true, im_test, data_range=255, multichannel=True))
+#         print(interpolator_str)
+#         print(f'mean psnr: {np.mean(psnr[interpolator_str])}')
+#         print(f'mean ssim: {np.mean(ssim[interpolator_str])}')

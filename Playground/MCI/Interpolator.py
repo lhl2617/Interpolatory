@@ -2,14 +2,20 @@ import imageio
 import math
 import time
 import numpy as np
-import sys
 from io import BytesIO
 from fractions import Fraction
+from full_search import get_motion_vectors as get_motion_vectors_fs
+from tss import get_motion_vectors as get_motion_vectors_tss
 from decimal import Decimal
 from copy import deepcopy
 from Globals import debug_flags
 from VideoStream import BenchmarkVideoStream, VideoStream
-from util import sToMMSS, getETA, signal_progress
+import matplotlib.pyplot as plt
+from _3x3_mv_smoothing import smooth
+from median_filter import median_filter
+from mean_filter import mean_filter
+from weighted_mean_filter import weighted_mean_filter
+from hbma import get_motion_vectors as hbma
 
 '''
 blends frames
@@ -27,7 +33,7 @@ video_in_path and video_out_path are optional, for example when benchmarking we 
 '''
 
 
-class BaseInterpolator(object):
+class BaseInterpolator:
     def __init__(self, target_fps, video_in_path=None, video_out_path=None, max_out_frames=math.inf, max_cache_size=0, **args):
         self.target_fps = target_fps
         self.video_in_path = video_in_path
@@ -36,6 +42,9 @@ class BaseInterpolator(object):
         self.max_cache_size = max_cache_size
         self.video_stream = None
         self.video_out_writer = None
+
+        self.MV_field_idx= -1 #Index in source video that the current motion field is based on.
+        self.MV_field=[]
 
         self.max_frames_possible = None
         self.rate_ratio = None
@@ -74,14 +83,14 @@ class BaseInterpolator(object):
             raise Exception('video output path not given')
 
 
-            ''' 
+            '''
             See bottom of file for options
             '''
         self.video_out_writer = imageio.get_writer(
             self.video_out_path, fps=self.target_fps, macro_block_size=0, quality=6)
-        
 
-    def interpolate_video(self):
+
+    def interpolate_video(self,b,t):
         if self.video_in_path is None or self.video_out_path is None:
             raise Exception(
                 'Cannot interpolate video, no input video path or output video path')
@@ -94,35 +103,21 @@ class BaseInterpolator(object):
 
         for i in range(target_nframes):
 
-            # if (debug_flags['debug_progress']):
-            if ((i % self.target_fps) == 0):
-                pct = str(math.floor(100 * i / target_nframes)).rjust(3, ' ')
-                curr = int(round(time.time() * 1000))
-                elapsed_seconds = int((curr-start) / 1000)
-                elapsed = sToMMSS(elapsed_seconds)
-                eta = getETA(elapsed_seconds, i, target_nframes)
-                progStr = f'PROGRESS::{pct}%::Frame {i}/{target_nframes} | Time elapsed: {elapsed} | Estimated Time Left: {eta}'
-                signal_progress(progStr)
-
             if (debug_flags['debug_progress']):
-                print(progStr)
-                
-            interpolated_frame = self.get_interpolated_frame(i)
+                if ((i % self.target_fps) == 0):
+                    print(f'{i}/{target_nframes} | {100 * i / target_nframes} %')
+
+            interpolated_frame = self.get_interpolated_frame(i,b,t)
             self.video_out_writer.append_data(interpolated_frame)
 
         self.video_out_writer.close()
 
         end = int(round(time.time() * 1000))
 
-        # if (debug_flags['debug_timer']):
-        elapsed = sToMMSS(int((end-start) / 1000))
-        progStr = f'PROGRESS::100%::Complete | Time taken: {sToMMSS((end-start) / 1000)}'
-        signal_progress(progStr)
-        if (debug_flags['debug_progress']):
-            print(progStr)
-        
+        if (debug_flags['debug_timer']):
+            print(f'Took {(end-start) / 1000} seconds')
 
-    def get_interpolated_frame(self, idx):
+    def get_interpolated_frame(self, idx, b, t):
         raise Exception('To be implemented by derived classes')
         return []
 
@@ -139,7 +134,7 @@ class BaseInterpolator(object):
     video_stream now contains benchmark_video_stream
     '''
 
-    def get_benchmark_frame(self, image_1, image_2):
+    def get_benchmark_frame(self, image_1, image_2, b ,t):
         # so that we can restore to defaults
         backup_interpolator = deepcopy(self)
 
@@ -150,17 +145,138 @@ class BaseInterpolator(object):
         self.rate_ratio = 2.
         self.max_frames_possible = 2
 
-        res = self.get_interpolated_frame(1)
+        res = self.get_interpolated_frame(1,b,t)
 
         # restore
         self = backup_interpolator
 
         return res
 
+
+'''
+MEMCI using full search for ME and uniderictional
+MCI with median filter for filling holes.
+
+
+
+'''
+
+class MEMCIInterpolator(BaseInterpolator):
+    def __init___(self, target_fps, video_in_path=None, video_out_path=None, max_out_frames=math.inf, max_cache_size=2, **args):
+        super().__init__(target_fps, video_in_path,
+                         video_out_path, max_out_frames, max_cache_size)
+
+
+    def get_interpolated_frame(self, idx, b, t):
+    # def get_interpolated_frame(self, idx, b, t):
+        #source_frame is the previous frame in the source vidoe.
+        source_frame_idx = math.floor(idx/self.rate_ratio)
+        source_frame = self.video_stream.get_frame(source_frame_idx)
+        print(source_frame_idx)
+        #Normalized distance from current_frame to the source frame.
+        dist = idx/self.rate_ratio - math.floor(idx/self.rate_ratio)
+
+        #If the frame to be interpolated is coinciding with a source frame.
+        if dist == 0:
+            return source_frame
+
+
+        #Check if the frame to be interpolated is between the two frames
+        #that the current motion field is estimated on.
+        if not self.MV_field_idx < idx/self.rate_ratio < self.MV_field_idx+1:
+            target_frame = self.video_stream.get_frame(source_frame_idx+1)
+
+            # self.MV_field = get_motion_vectors_fs(b, t, source_frame, target_frame)
+            # self.MV_field = smooth(mean_filter,self.MV_field,5)
+            # self.MV_field = get_motion_vectors_tss(b,t, source_frame, target_frame)
+            # self.MV_field=get_motion_vectors_tss(4,3,source_frame,target_frame)
+            # block_size = 16
+            # region = 7
+            sub_region =1
+            steps_HBMA = 1
+            min_block_size = 2
+            self.MV_field = hbma(b,t,sub_region,steps_HBMA,min_block_size,source_frame,target_frame)
+            # print("Begin smoothing")
+            self.MV_field = smooth(mean_filter,self.MV_field,5)
+            self.MV_field_idx = source_frame_idx
+
+
+            #Uncomment if you want to plot vector field when running benchmark.py
+            #self.plot_vector_field(block_size,steps, source_frame)
+
+
+
+
+        #Initialize new frame
+        Interpolated_Frame =  np.ones(source_frame.shape)*-1
+        #Matrix with lowest sad value fo every interpolated pixel.
+        SAD_interpolated_frame = np.full([source_frame.shape[0],source_frame.shape[1]],np.inf)
+
+        #Follow motion vectorcs to obtain interpolated pixel Values
+        #If interpolated frame has multiple values, take the one with lowest SAD.
+        for u in range(0, source_frame.shape[0]):
+            for v in range(0, source_frame.shape[1]):
+
+                #Get the new coordinates by following scaled MV.
+                u_i = int(u + round(self.MV_field[u,v,0]*dist))
+                v_i = int(v + round(self.MV_field[u,v,1]*dist))
+                # print("u_i ",u_i," v_i ",v_i)
+                if(u_i<source_frame.shape[0] and v_i<source_frame.shape[1]):
+                    if  self.MV_field[u,v,2] <= SAD_interpolated_frame[u_i, v_i]:
+
+                        Interpolated_Frame[u_i, v_i] =  source_frame[u, v]
+                        SAD_interpolated_frame[u_i, v_i] = self.MV_field[u,v,2]
+
+        # New_Interpolated_Frame = smooth(mean_filter, self.MV_field, 10)
+
+        #Run median filter over empty pixels in the interpolated frame.
+        k=10 #Median filter size = (2k+1)x(2k+1)
+        #Bad implementation. Did not find any 3d median filter
+        # that can be applied to specific pixels.
+        New_Interpolated_Frame = np.copy(Interpolated_Frame)
+        for u in range(0, Interpolated_Frame.shape[0]):
+            for v in range(0, Interpolated_Frame.shape[1]):
+                if Interpolated_Frame[u,v,0] == -1:
+                    u_min=max(0,u-k)
+                    u_max=min(Interpolated_Frame.shape[0],u+k+1)
+                    v_min=max(0,v-k)
+                    v_max=min(Interpolated_Frame.shape[1],v+k+1)
+                    New_Interpolated_Frame[u,v,0] = np.median(Interpolated_Frame[u_min:u_max,v_min:v_max,0])
+                    New_Interpolated_Frame[u,v,1] = np.median(Interpolated_Frame[u_min:u_max,v_min:v_max,1])
+                    New_Interpolated_Frame[u,v,2] = np.median(Interpolated_Frame[u_min:u_max,v_min:v_max,2])
+
+        New_Interpolated_Frame = New_Interpolated_Frame.astype(source_frame.dtype)
+        return New_Interpolated_Frame
+
+
+    def plot_vector_field(self,block_size,steps,source_frame):
+        #Downsample so each vector represents one block.
+
+        Down_sampled_MV=self.MV_field[::block_size,::block_size,:]
+        X, Y = np.meshgrid(np.linspace(0,self.MV_field.shape[1]-1, Down_sampled_MV.shape[1]), \
+                            np.linspace(0,self.MV_field.shape[0]-1, Down_sampled_MV.shape[0]))
+
+        U = Down_sampled_MV[:,:,0]  #X-direction
+        V = Down_sampled_MV[:,:,1]  #Y-direction
+        M = np.hypot(U, V)          #Magnitude of vector.
+
+        fig, ax = plt.subplots(1,1)
+        source_image = ax.imshow(source_frame)
+        vector_field = ax.quiver(X, Y, U, V ,M,cmap='coolwarm', angles='uv',units='x', pivot='tip', width=1,
+                       scale=1 / 0.5)
+
+        cbar=fig.colorbar(vector_field)
+        cbar.ax.set_ylabel('|MV| in pixels')
+        plt.title("Block size="+str(block_size)+ "\nSteps="+str(steps))
+        plt.show()
+
+    def __str__(self):
+        return 'MEMCI'
+
 '''
 %
 %   e.g. 24->60
-%   A A A B B C C C D D
+%   A A A B B C C    C D D
 %
 %   e.g. 25->30
 %   A A B C D E F
@@ -168,8 +284,88 @@ class BaseInterpolator(object):
 '''
 
 
+class Bi(BaseInterpolator):
+    def __init___(self, target_fps, video_in_path=None, video_out_path=None, max_out_frames=math.inf, max_cache_size=2,
+                  **args):
+        super().__init__(target_fps, video_in_path,
+                         video_out_path, max_out_frames, max_cache_size)
+
+    def get_interpolated_frame(self, idx):
+
+        source_frame_idx = math.floor(idx / self.rate_ratio)
+        source_frame = self.video_stream.get_frame(source_frame_idx)
+
+        dist = idx / self.rate_ratio - math.floor(idx / self.rate_ratio)
+
+        if dist == 0:
+            return source_frame
+
+        if not self.MV_field_idx < idx / self.rate_ratio < self.MV_field_idx + 1:
+            target_frame = self.video_stream.get_frame(source_frame_idx + 1)
+            # self.MV_field = get_motion_vectors(4, 10, source_frame, target_frame)
+            self.MV_field_idx = source_frame_idx
+
+            '''
+            fwd = get_motion_vectors(4, 10, source_frame, target_frame)
+            bwd = get_motion_vectors(4, 10, target_frame, source_frame)
+
+            if fwd[,,2]>bwd[,,2]: #use the one with smaller SAD
+                self.MV_field = bwd
+                dist = 1 - dist
+            else :
+                self.MV_field = fwd
+
+            self.MV_field_idx = source_frame_idx
+            '''
+            fwd = get_motion_vectors_tss(4, 3, source_frame, target_frame)
+            bwd = get_motion_vectors_tss(4, 3, target_frame, source_frame)
+            self.MV_field = fwd
+        Interpolated_Frame = np.ones(source_frame.shape, dtype='float64') * -1
+        SAD_interpolated_frame = np.full([source_frame.shape[0], source_frame.shape[1]], np.inf)
+
+        for u in range(0, source_frame.shape[0]):
+            for v in range(0, source_frame.shape[1]):
+                if fwd[u, v, 2] > bwd[u, v, 2]:
+                    dist = 1.0 - dist
+                    u_i = int(u + round(bwd[u, v, 0] * dist))
+                    v_i = int(v + round(bwd[u, v, 1] * dist))
+
+                    if bwd[u, v, 2] <= SAD_interpolated_frame[u_i, v_i]:
+                        Interpolated_Frame[u_i, v_i] = source_frame[u, v]
+                        SAD_interpolated_frame[u_i, v_i] = bwd[u, v, 2]
+                        self.MV_field[u, v] = bwd[u, v]
+
+                        # self.MV_field[u,v,0] = bwd[u,v,0]
+                        # self.MV_field[u,v,1] = bwd[u,v,1]
+                        # self.MV_field[u,v,2] = bwd[u,v,2]
+
+                else:
+                    u_i = int(u + round(fwd[u, v, 0] * dist))
+                    v_i = int(v + round(fwd[u, v, 1] * dist))
+
+                    if fwd[u, v, 2] <= SAD_interpolated_frame[u_i, v_i]:
+                        Interpolated_Frame[u_i, v_i] = source_frame[u, v]
+                        SAD_interpolated_frame[u_i, v_i] = fwd[u, v, 2]
+
+        k = 5  # Median filter size = (2k+1)x(2k+1)
+        for u in range(0, Interpolated_Frame.shape[0]):
+            for v in range(0, Interpolated_Frame.shape[1]):
+                if Interpolated_Frame[u, v, 0] == -1:
+                    u_min = max(0, u - k)
+                    u_max = min(Interpolated_Frame.shape[0], u + k + 1)
+                    v_min = max(0, v - k)
+                    v_max = min(Interpolated_Frame.shape[1], v + k + 1)
+                    Interpolated_Frame[u, v, 0] = np.median(Interpolated_Frame[u_min:u_max, v_min:v_max, 0])
+                    Interpolated_Frame[u, v, 1] = np.median(Interpolated_Frame[u_min:u_max, v_min:v_max, 1])
+                    Interpolated_Frame[u, v, 2] = np.median(Interpolated_Frame[u_min:u_max, v_min:v_max, 2])
+
+        return Interpolated_Frame
+
+    def __str__(self):
+        return 'BI'
+
 class NearestInterpolator(BaseInterpolator):
-    def __init__(self, target_fps, video_in_path=None, video_out_path=None, max_out_frames=math.inf, max_cache_size=2, **args):
+    def __init___(self, target_fps, video_in_path=None, video_out_path=None, max_out_frames=math.inf, max_cache_size=2, **args):
         super().__init__(target_fps, video_in_path,
                          video_out_path, max_out_frames, max_cache_size)
 
@@ -185,6 +381,7 @@ class NearestInterpolator(BaseInterpolator):
     def __str__(self):
         return 'nearest'
 
+
 '''
 %
 %   e.g. 24->60 (rateRatio 2.5, period 5)
@@ -197,13 +394,13 @@ class NearestInterpolator(BaseInterpolator):
 
 
 class OversampleInterpolator(BaseInterpolator):
-    def __init__(self, target_fps, video_in_path=None, video_out_path=None, max_out_frames=math.inf, max_cache_size=2, **args):
+    def __init___(self, target_fps, video_in_path=None, video_out_path=None, max_out_frames=math.inf, max_cache_size=2, **args):
         super().__init__(target_fps, video_in_path,
                          video_out_path, max_out_frames, max_cache_size)
 
     def get_interpolated_frame(self, idx):
-        output = []
 
+        output = []
         # this period is the number of frame in the targetRate
         # before a cycle occurs (e.g. in the 24->60 case it occurs between B &
         # C at period = 5
@@ -230,7 +427,6 @@ class OversampleInterpolator(BaseInterpolator):
                 print(f'targetframe: {idx}, using source frame: {frame_num}')
 
             output = self.video_stream.get_frame(frame_num)
-
         else:
             frameA_idx = math.floor(
                 key_frame_idx / self.rate_ratio + rate_ratios_from_key_frame)
@@ -259,13 +455,13 @@ class OversampleInterpolator(BaseInterpolator):
 '''
 %
 %   e.g. 24->60 (rateRatio 2.5, period 5)
-%   A (1.5A+B)/2.5 (0.5A+2B)/2.5 (2B+0.5C)/2.5 (B+1.5C)/2.5 
+%   A (1.5A+B)/2.5 (0.5A+2B)/2.5 (2B+0.5C)/2.5 (B+1.5C)/2.5
 %
 '''
 
 
 class LinearInterpolator(BaseInterpolator):
-    def __init__(self, target_fps, video_in_path=None, video_out_path=None, max_out_frames=math.inf, max_cache_size=2, **args):
+    def __init___(self, target_fps, video_in_path=None, video_out_path=None, max_out_frames=math.inf, max_cache_size=2, **args):
         super().__init__(target_fps, video_in_path,
                          video_out_path, max_out_frames, max_cache_size)
 
@@ -315,9 +511,11 @@ class LinearInterpolator(BaseInterpolator):
 
 
 InterpolatorDictionary = {
-    'nearest': NearestInterpolator,
-    'oversample': OversampleInterpolator,
-    'linear': LinearInterpolator
+    'MEMCI' : MEMCIInterpolator
+    # 'BI':Bi
+    #'nearest': NearestInterpolator,
+    #'oversample': OversampleInterpolator,
+    #'linear': LinearInterpolator
 }
 
 
@@ -369,4 +567,3 @@ Parameters for saving
         can't decode videos that are odd in size and some codecs will produce
         poor results or fail. See https://en.wikipedia.org/wiki/Macroblock.
     '''
-    

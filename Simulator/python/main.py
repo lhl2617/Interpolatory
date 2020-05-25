@@ -1,11 +1,10 @@
 import sys
 import json
 
-from util import eprint
-import util
-from Interpolator import InterpolatorDictionary
-from Benchmark import benchmark, get_middle_frame
-import Globals
+sys.path.append('./src')
+from src import util, Interpolator, Benchmark, Globals
+from src.Interpolator import InterpolatorDictionary
+from src.Benchmark import benchmark, get_middle_frame
 
 mode_flag = None
 
@@ -33,6 +32,7 @@ if (len(sys.argv) > 1):
 
 
 interpolators = list(InterpolatorDictionary.keys())
+# limited_interpolators = list(LimitedInterpolatorDictionary.keys())
 version = 'Interpolatory Simulator 0.0.1'
 
 if mode_flag == '-h':
@@ -45,9 +45,9 @@ if mode_flag == '-h':
     print('Get this help.')
 
     print('')
-    print('- python3 main.py -if')
-    print('Get supported interpolation-modes')
-    
+    print('- python3 main.py -il')
+    print('List all supported interpolation modes')
+
     print('')
     print('- python3 main.py -mv <video-path>')
     print('Load a video and print metadata to stdout. If not supported, will return non-zero value')
@@ -74,8 +74,16 @@ if mode_flag == '-h':
     print('- python3 main.py -ver')
     print('Get version')
 
+    print('')
+    print('- python3 main.py -dep')
+    print('Check whether normal requirements are met')
 
-elif mode_flag == '-if':
+    print('')
+    print('- python3 main.py -depcuda')
+    print('Check whether CUDA dependencies are met')
+
+
+elif mode_flag == '-il':
     print(json.dumps(interpolators))
 
 elif mode_flag == '-mv' and len(args) == 2:
@@ -142,13 +150,45 @@ elif mode_flag == '-t' and len(args) >= 7 and '-f' == args[2] and '-o' == args[5
 elif mode_flag == '-ver':
     print(json.dumps(version))
 
+    
+    # print('')
+    # print('- python3 main.py -dep')
+    # print('Check whether normal requirements are met')
+elif mode_flag == '-dep':
+    import pkg_resources
+    import pathlib
+    import os
+    
+    basedir = pathlib.Path(__file__).parent.absolute()
+
+    f = open(f'{basedir}{os.path.sep}requirements.txt', 'r')
+    
+    dependencies = f.read().split('\n')
+
+    pkg_resources.require(dependencies)
+    print('Success')
+
+    # print('')
+    # print('- python3 main.py -depcuda')
+    # print('Check whether CUDA dependencies are met')
+elif mode_flag == '-depcuda':
+    import pkg_resources
+    import pathlib
+    import os
+    
+    basedir = pathlib.Path(__file__).parent.absolute()
+
+    f = open(f'{basedir}{os.path.sep}cuda-requirements.txt', 'r')
+
+    dependencies = f.read().split('\n')
+
+    pkg_resources.require(dependencies)
+    print('Success')
+
 else:
     print(f'Unknown command. Run `python3 main.py -h` for a usage guide')
 
 # print('')
+
 exit(0)
-
-
-
-
 
