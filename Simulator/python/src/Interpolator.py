@@ -1,4 +1,4 @@
-from .Interpolators import linear, oversample, nearest, blur, speed
+from .Interpolators import nearest, blur, speed, oversample, linear
 from .Interpolators.sepconv import sepconv
 from .Interpolators.rrin import rrin
 from .Interpolators.softsplat import softsplat
