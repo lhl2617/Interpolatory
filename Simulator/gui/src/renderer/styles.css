@@ -1,0 +1,63 @@
+@import '~antd/dist/antd.css';
+* {
+    font-family: Proxima;
+}
+
+@font-face {
+    font-family: Proxima;
+    src: local('Proxima Nova Regular'), url('../../assets/fonts/ProximaNovaRegular.eot'),
+        url('../../assets/fonts/ProximaNovaRegular.ttf') format('truetype');
+    /*for CSS3*/
+}
+
+#header-logo {
+    height: 75%;
+    padding-left: 1%;
+    margin-top: -12px;
+}
+
+.header {
+    padding: 0 !important;
+    -webkit-app-region: drag;
+    height: 50px !important;
+    background-color: black;
+    /* position: fixed; */
+    /* top: 0;
+    width: 100%;
+    z-index: 9999; */
+}
+
+.ant-menu-item {
+    margin: 0 !important;
+}
+
+.menu-icon {
+    max-width: 20px;
+    margin-left: -5px;
+    margin-right: 5px;
+}
+
+.window-btn {
+    transition: transform .2s;
+    -webkit-app-region: no-drag;
+    height: 20px;
+    margin: 10px;
+    margin-top: -18px;
+    margin-left: 5px;
+}
+
+.window-btn:hover {
+    transform: scale(1.1);
+}
+
+h3 {
+    margin: 0;
+}
+
+.ant-form-vertical .ant-form-item-label {
+    padding: 0 !important;
+}
+
+.ant-form-item {
+    margin-bottom: 12px !important;
+}

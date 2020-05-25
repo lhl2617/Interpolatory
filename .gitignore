@@ -4,7 +4,11 @@ project.lock.json
 .DS_Store
 *.pyc
 nupkg/
-*.png
+
+# react electron etc.
+node_modules/
+dist/
+release/
 
 # Visual Studio Code
 .vscode
@@ -43,3 +47,7 @@ temp
 # Interpolatory
 Datasets
 Output
+*.pytorch
+
+# Olly and Naim
+Playground/python/ME/frames/*/*.png
