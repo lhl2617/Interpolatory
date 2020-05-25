@@ -4,18 +4,19 @@ import os
 from Interpolator import InterpolatorDictionary
 import cProfile
 
-video_root = '../../Datasets/bigbuckbunny/'
+video_root = '../interpolation-samples/'
 
-video_paths = ['24fps/native.mkv', '30fps/native.mkv', '20fps/native.mkv']
+video_paths = ['24fps/native.mkv']#, '30fps/native.mkv', '20fps/native.mkv']
 
-interpolators = ['nearest', 'oversample', 'linear']
+# interpolators = ['nearest', 'oversample', 'linear']
+interpolators=['MEMCI']
 
 
 target_fps = 60
 
 def get_video_out_path(video_path, interpolator):
-    dir = f'../../Output/{video_path[:5]}'
-    
+    dir = f'./other_output/{video_path[:5]}'
+
     if not os.path.exists(dir):
         os.makedirs(dir)
 

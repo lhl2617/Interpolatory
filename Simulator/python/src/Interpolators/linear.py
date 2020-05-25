@@ -7,10 +7,10 @@ from io import BytesIO
 from fractions import Fraction
 from decimal import Decimal
 
-from ..Globals import debug_flags
-from ..util import blend_frames, get_first_frame_idx_and_ratio
+from Simulator.python.src.Globals import debug_flags
+from Simulator.python.src.util import blend_frames, get_first_frame_idx_and_ratio
 
-from .base import BaseInterpolator
+from Simulator.python.src.Interpolators.base import BaseInterpolator
 '''
 %
 %   e.g. 24->60 (rateRatio 2.5, period 5)
