@@ -114,7 +114,7 @@ class RRINLinearInterpolator(BaseInterpolator):
         pader = torch.nn.ReplicationPad2d([0, W_-W, 0, H_-H])
         img1, img2 = pader(img1), pader(img2)
 
-        output = self.model(img1, img2, ratio)
+        output = self.model(img1, img2, 1. - ratio)
 
         output = output[0, :, 0:H, 0:W].squeeze(0).cpu()
 
@@ -129,6 +129,7 @@ class RRINLinearInterpolator(BaseInterpolator):
 
         image_1 = self.video_stream.get_frame(image_1_idx)
         image_2 = self.video_stream.get_frame(image_1_idx + 1)
+
 
         output = self.get_frame_at_ratio(image_1, image_2, ratio)
 

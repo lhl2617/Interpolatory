@@ -2,7 +2,7 @@
 
 # run from Interpolatory/Simulator/python/ 
 
-interpolator = 'Linear'
+interpolator = 'RRIN-Linear-CUDA'
 
 import os
 import sys
@@ -13,9 +13,12 @@ sep = os.path.sep
 args = sys.argv[1:]
 
 src_dst_frame_rates = [(15,60), (24,60)]
-ratios = [0.5, 1]
+ratios = [0.5]
 
+root_path = '../../Datasets/ultravideo'
 for ratio in ratios:
+    if ratio != 1:
+        root_path = f'../../Datasets/ultravideo/downsampled/{ratio}'
     for (src_frame_rate, dst_frame_rate) in src_dst_frame_rates:
         rawVids = glob.glob(f'{root_path}{sep}{src_frame_rate}fps{sep}*')
         for rawVidPath in rawVids:

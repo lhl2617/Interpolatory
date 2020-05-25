@@ -104,15 +104,15 @@ def get_middle_frame(interpolation_mode, frame_1_path, frame_2_path, output_file
         if (res['PSNR'] == math.inf):
             res['PSNR'] = 'Infinity'
             
-    res_json = json.dumps(res)
-    
-    if (not (output_file_path is None)):
-        output_pathname = path.join(output_file_path, 'results.txt')
-        f = open(output_pathname, "w")
-        f.write(res_json)
-        f.close()
+        res_json = json.dumps(res)
+        
+        if (not (output_file_path is None)):
+            output_pathname = path.join(output_file_path, 'results.txt')
+            f = open(output_pathname, "w")
+            f.write(res_json)
+            f.close()
 
-    print(json.dumps(res_json))
+        print(json.dumps(res_json))
 
 # def test():
 #     psnr = {}
