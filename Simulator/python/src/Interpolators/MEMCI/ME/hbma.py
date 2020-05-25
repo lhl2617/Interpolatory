@@ -2,9 +2,9 @@ import numpy as np
 from imageio import imread, imwrite
 import sys
 import time
-from plot_mv import plot_vector_field
-from full_search import get_motion_vectors as full_search
-from tss import get_motion_vectors as tss
+from .plot_mv import plot_vector_field
+from .full_search import get_motion_vectors as full_search
+from .tss import get_motion_vectors as tss
 from scipy.ndimage import convolve
 import math
 
