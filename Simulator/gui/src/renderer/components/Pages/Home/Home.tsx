@@ -27,7 +27,9 @@ type IState = {
     pyVer: PyVer;
     binVer: BinVer;
     dependencyStatus: string;
+    dependencyInstalling: boolean;
     cudaDependencyStatus: string;
+    cudaDependencyInstalling: boolean;
     changePathsModalVisible: boolean;
     newPyPath: string;
     newBinPath: string;
@@ -47,7 +49,9 @@ export class Home extends React.Component<IProps, IState> {
             pyVer: { status: "loading", ver: "" },
             binVer: { status: "loading", ver: "" },
             dependencyStatus: `Loading...`,
+            dependencyInstalling: false,
             cudaDependencyStatus: `Loading...`,
+            cudaDependencyInstalling: false,
             changePathsModalVisible: false,
             newPyPath: python3,
             newBinPath: binName
@@ -157,9 +161,10 @@ export class Home extends React.Component<IProps, IState> {
 
     getDependencyInfo = async () => {
         const getBasicDepInfo = async () => {
+            // console.log(`getting basic`)
             const proc = cp.spawn(python3, [binName, `-dep`]);
 
-            proc.on(`close`, (code) => {
+            proc.on(`exit`, (code) => {
                 if (code !== 0) {
                     this._setState({
                         dependencyStatus: `Error`
@@ -175,10 +180,9 @@ export class Home extends React.Component<IProps, IState> {
         }
 
         const getCudaDepInfo = async () => {
-            
             const proc = cp.spawn(python3, [binName, `-depcuda`]);
 
-            proc.on(`close`, (code) => {
+            proc.on(`exit`, (code) => {
                 if (code !== 0) {
                     this._setState({
                         cudaDependencyStatus: `Error`
@@ -200,8 +204,16 @@ export class Home extends React.Component<IProps, IState> {
         const { setFeaturesEnabled } = this.props;
         setFeaturesEnabled(false);
         message.info(`Installing ${cuda ? `CUDA` : `basic`} dependencies`)
+        
+        if (cuda) {
+            this._setState({ cudaDependencyInstalling: true });
+        }
+        else {
+            this._setState({ dependencyInstalling: true });
+        }
+
         const binPathDir = path.dirname(binName);
-        const requirementsTxt = path.join(binPathDir, cuda ? `cuda-dependencies.txt` : `requirements.txt`);
+        const requirementsTxt = path.join(binPathDir, cuda ? `cuda-requirements.txt` : `requirements.txt`);
 
         const proc = cp.spawn(python3, [`-m`, `pip`, `install`, `-r`, requirementsTxt]);
 
@@ -216,7 +228,8 @@ export class Home extends React.Component<IProps, IState> {
                 console.error(outErr);
         })
 
-        proc.on(`close`, (code) => {
+        proc.on(`exit`, (code) => {
+            console.warn(`closed`);
             if (code !== 0) {
                 if (this.mounted) message.error(`Error installing dependencies, please install manually`);
             }
@@ -225,6 +238,12 @@ export class Home extends React.Component<IProps, IState> {
                 this.getDependencyInfo();
             }
             setFeaturesEnabled(true);
+            if (cuda) {
+                this._setState({ cudaDependencyInstalling: false });
+            }
+            else {
+                this._setState({ dependencyInstalling: false });
+            }
         })
     }
 
@@ -264,7 +283,7 @@ export class Home extends React.Component<IProps, IState> {
     }
 
     render() {
-        const { pyVer, binVer, dependencyStatus, cudaDependencyStatus, changePathsModalVisible, newBinPath, newPyPath } = this.state;
+        const { pyVer, binVer, dependencyStatus, cudaDependencyStatus, changePathsModalVisible, newBinPath, newPyPath, dependencyInstalling, cudaDependencyInstalling } = this.state;
         return (
             <div style={{ textAlign: 'center', margin: 'auto' }}>
                 <div>
@@ -273,7 +292,7 @@ export class Home extends React.Component<IProps, IState> {
                     <h4>Video frame-rate interpolation framework for software simulation and benchmarking</h4>
                 </div>
 
-                <div style={{ marginTop: 18, marginBottom: 18 }}>
+                <div style={{ marginTop: 18, marginBottom: 12 }}>
                     <h3 style={{ fontSize: 24 }}>Machine Info</h3>
                     <p style={{ marginBottom: 0 }}>Python Path: {python3}</p>
                     <p style={{ marginBottom: 0 }}>Python Version: {this.renderVer(pyVer)}</p>
@@ -288,9 +307,9 @@ export class Home extends React.Component<IProps, IState> {
                         onConfirm={() => this.reinstallDependencies()}
                         okText='Yes'
                         cancelText='No'
-                        disabled={binVer.status !== "done"}
+                        disabled={binVer.status !== "done"|| dependencyInstalling}
                     >
-                        <Button danger disabled={binVer.status !== "done"}>Reinstall Basic Dependencies</Button>
+                        <Button danger disabled={binVer.status !== "done" || dependencyInstalling }>Reinstall Basic Dependencies</Button>
                     </Popconfirm>
                     <div>CUDA dependencies status: {cudaDependencyStatus}</div>
                     <Popconfirm
@@ -298,9 +317,9 @@ export class Home extends React.Component<IProps, IState> {
                         onConfirm={() => this.reinstallDependencies(true)}
                         okText='Yes'
                         cancelText='No'
-                        disabled={binVer.status !== "done"}
+                        disabled={binVer.status !== "done"|| cudaDependencyInstalling}
                     >
-                        <Button danger disabled={binVer.status !== "done"}>Reinstall CUDA Dependencies</Button>
+                        <Button danger disabled={binVer.status !== "done" || cudaDependencyInstalling }>Reinstall CUDA Dependencies</Button>
                     </Popconfirm>
                 </div>
                 <Modal

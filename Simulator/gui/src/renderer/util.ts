@@ -66,7 +66,7 @@ export const getInterpolationModesFromProcess = () => {
         const python3 = getPython3();
         const binName = getInterpolatory();
 
-        const args = [binName, `-if`];
+        const args = [binName, `-il`];
         const proc = cp.spawn(python3, args)
 
 
