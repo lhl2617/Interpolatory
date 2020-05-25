@@ -27,11 +27,11 @@ def get_motion_vectors(block_size, target_region, source_frame, target_frame):
             lowest_distance = lowest_distance_const
             target_index = (0, 0)
             
-            if s_row + block_size > source_frame.shape[0]:
+            if s_row + block_size >= source_frame.shape[0]:
                 target_max_row = s_row + 1
             else:
                 target_max_row = source_frame.shape[0] - block_size
-            if s_col + block_size > source_frame.shape[0]:
+            if s_col + block_size >= source_frame.shape[0]:
                 target_max_col = s_col + 1
             else:
                 target_max_col = source_frame.shape[1] - block_size

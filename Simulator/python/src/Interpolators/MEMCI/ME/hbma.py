@@ -111,6 +111,8 @@ import math
 #     return mvs
 
 def search_region(block, window, size):
+    if (window.shape[0] != window.shape[1]):    # for now, if going over boundry, don't search further...
+        return (0, 0), 0                        # TODO: think of another way to correct this
     lowest_sad = math.inf
     lowest_dist = math.inf
     lowest_vec = (0, 0)
@@ -124,7 +126,7 @@ def search_region(block, window, size):
                 lowest_vec = (row - size, col - size)
     return lowest_vec, lowest_sad
 
-def get_motion_vectors(block_size, region, sub_region, min_block_size, steps, im1, im2):
+def get_motion_vectors(block_size, region, sub_region, steps, min_block_size, im1, im2):
     weightings = np.array([
         [0.0625, 0.125, 0.0625],
         [0.125, 0.25, 0.125],
@@ -137,16 +139,16 @@ def get_motion_vectors(block_size, region, sub_region, min_block_size, steps, im
     im1_lst.append(im1)
     im2_lst.append(im2)
     for i in range(1, steps+1):
-        # print('Downscaling level',i)
+        print('Downscaling level',i)
         im1_lst.append(convolve(im1_lst[-1] / 255.0, weightings, mode='constant')[::2, ::2] * 255.0)
         im2_lst.append(convolve(im2_lst[-1] / 255.0, weightings, mode='constant')[::2, ::2] * 255.0)
     
-    # print('Calculating initial motion vectors')
+    print('Calculating initial motion vectors')
     mvs = full_search(block_size, region, im1_lst[-1], im2_lst[-1])
     # mvs = tss(block_size, 3, im1_lst[-1], im1_lst[-1])
 
     for s in range(steps - 1, -1, -1):
-        # print('Propagating back to level', s)
+        print('Propagating back to level', s)
         next_mvs = np.zeros_like(im1_lst[s], dtype='float32')
         for row in range(0, mvs.shape[0], block_size):
             for col in range(0, mvs.shape[1], block_size):
@@ -182,7 +184,7 @@ def get_motion_vectors(block_size, region, sub_region, min_block_size, steps, im
 
     while(block_size > min_block_size):
         block_size = block_size >> 1
-        # print('Increasing density with block size', block_size)
+        print('Increasing density with block size', block_size)
         next_mvs = np.zeros_like(im1, dtype='float32')
         for row in range(0, mvs.shape[0], block_size << 1):
             for col in range(0, mvs.shape[1], block_size << 1):
@@ -228,5 +230,5 @@ if __name__ == "__main__":
     out_path = sys.argv[8]
     output = get_motion_vectors(block_size, region, sub_region, steps, min_block_size, im1, im2)
 
-    # print('Printing output...')
+    print('Printing output...')
     plot_vector_field(output, 4, out_path)

@@ -16,7 +16,7 @@ def get_motion_vectors(block_size, steps, source_frame, target_frame):
 
     prev_time = time.time()
     for s_row in range(0, source_frame.shape[0], block_size):
-        # print(s_row, time.time() - prev_time)
+        print(s_row, time.time() - prev_time)
         prev_time = time.time()
         for s_col in range(0, source_frame.shape[1], block_size):
             source_block = source_frame_pad[s_row:s_row+block_size, s_col:s_col+block_size, :]
@@ -30,11 +30,11 @@ def get_motion_vectors(block_size, steps, source_frame, target_frame):
                 S = 2 ** (step - 1)
                 i = -1
                 
-                if s_row + block_size > source_frame.shape[0]:
+                if s_row + block_size >= source_frame.shape[0]:
                     target_max_row = s_row + 1
                 else:
                     target_max_row = source_frame.shape[0] - block_size
-                if s_col + block_size > source_frame.shape[0]:
+                if s_col + block_size >= source_frame.shape[0]:
                     target_max_col = s_col + 1
                 else:
                     target_max_col = source_frame.shape[1] - block_size
