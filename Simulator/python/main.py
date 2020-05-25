@@ -185,7 +185,6 @@ elif mode_flag == '-depcuda':
     pkg_resources.require(dependencies)
     print('Success')
 
-
 else:
     print(f'Unknown command. Run `python3 main.py -h` for a usage guide')
 
