@@ -1,21 +1,15 @@
-import imageio
+import sys
 import math
-import time
 import numpy as np
+import imageio
+import time
+from copy import deepcopy
 from io import BytesIO
 from fractions import Fraction
 from decimal import Decimal
-from copy import deepcopy
-from Globals import debug_flags
-from VideoStream import BenchmarkVideoStream, VideoStream
-
-'''
-blends frames
-'''
-
-
-def blend_frames(frames, weights):
-    return np.average(frames, axis=0, weights=weights).astype(np.uint8, copy=False)
+from ..util import sToMMSS, getETA, signal_progress, is_power_of_two, blend_frames
+from ..Globals import debug_flags
+from ..VideoStream import BenchmarkVideoStream, VideoStream
 
 
 '''
@@ -25,7 +19,7 @@ video_in_path and video_out_path are optional, for example when benchmarking we 
 '''
 
 
-class BaseInterpolator:
+class BaseInterpolator(object):
     def __init__(self, target_fps, video_in_path=None, video_out_path=None, max_out_frames=math.inf, max_cache_size=0, **args):
         self.target_fps = target_fps
         self.video_in_path = video_in_path
@@ -59,7 +53,7 @@ class BaseInterpolator:
         if (debug_flags['debug_IO']):
             print(f'Loaded input video from {self.video_in_path}.')
             print(vid.get_meta_data())
-            
+
         self.video_stream = VideoStream(vid, self.max_cache_size)
 
         # maximum frames possible according to target_fps
@@ -91,11 +85,19 @@ class BaseInterpolator:
         target_nframes = min(self.max_frames_possible, self.max_out_frames)
 
         for i in range(target_nframes):
+            # if (debug_flags['debug_progress']):
+            if ((i % self.target_fps) == 0):
+                pct = str(math.floor(100 * (i+1) / target_nframes)).rjust(3, ' ')
+                curr = int(round(time.time() * 1000))
+                elapsed_seconds = int((curr-start) / 1000)
+                elapsed = sToMMSS(elapsed_seconds)
+                eta = getETA(elapsed_seconds, i, target_nframes)
+                progStr = f'PROGRESS::{pct}%::Frame {i}/{target_nframes} | Time elapsed: {elapsed} | Estimated Time Left: {eta}'
+                signal_progress(progStr)
 
-            if (debug_flags['debug_progress']):
-                if ((i % self.target_fps) == 0):
-                    print(f'{i}/{target_nframes} | {100 * i / target_nframes} %')
-
+                if (debug_flags['debug_progress']):
+                    print(progStr)
+                    
             interpolated_frame = self.get_interpolated_frame(i)
             self.video_out_writer.append_data(interpolated_frame)
 
@@ -103,12 +105,16 @@ class BaseInterpolator:
 
         end = int(round(time.time() * 1000))
 
-        if (debug_flags['debug_timer']):
-            print(f'Took {(end-start) / 1000} seconds')
+        # if (debug_flags['debug_timer']):
+        elapsed = sToMMSS(int((end-start) / 1000))
+        progStr = f'PROGRESS::100%::Complete | Time taken: {sToMMSS((end-start) / 1000)}'
+        signal_progress(progStr)
+        if (debug_flags['debug_progress']):
+            print(progStr)
+        
 
     def get_interpolated_frame(self, idx):
         raise NotImplementedError('To be implemented by derived classes')
-        return []
 
     def __str__(self):
         raise NotImplementedError('To be implemented by derived classes')
@@ -121,6 +127,8 @@ class BaseInterpolator:
     Then, we set target_fps to 2 and get the frame at index 1
 
     video_stream now contains benchmark_video_stream
+
+    this is used by interpolators that are not limited
     '''
 
     def get_benchmark_frame(self, image_1, image_2):
@@ -141,170 +149,130 @@ class BaseInterpolator:
 
         return res
 
+class MidFrameBaseInterpolator(BaseInterpolator):
+    '''
+    This is a base class for ML implementations or methods that only support mid frame interpolation (e.g. SepConv)
+    '''
+    def __init__(self, target_fps, video_in_path=None, video_out_path=None, max_out_frames=math.inf, max_cache_size=2, **args):
 
-'''
-%
-%   e.g. 24->60
-%   A A A B B C C C D D
-%
-%   e.g. 25->30
-%   A A B C D E F
-%
-'''
-
-
-class NearestInterpolator(BaseInterpolator):
-    def __init___(self, target_fps, video_in_path=None, video_out_path=None, max_out_frames=math.inf, max_cache_size=2, **args):
         super().__init__(target_fps, video_in_path,
                          video_out_path, max_out_frames, max_cache_size)
+        
+        # denominator is 2
+        self.den2 = False
+        
+        '''
+        Only supports upscaling by factor of 2 or 
+        if the factor has denominator 2
+        by blurring the output
+        (this is mainly to support 24->60 by doing 24->120->60)
+        '''
+        if not (self.video_in_path is None):
+            if self.rate_ratio < 1:
+                raise Exception(f'{self.__str__()} only supports upconversion, got conversion rate ratio {self.rate_ratio}')
+            
+            from fractions import Fraction
+            from decimal import Decimal
 
+            frac = Fraction(Decimal(self.rate_ratio))
+            denominator = frac.denominator
+            
+            if (not is_power_of_two(self.rate_ratio)) and denominator != 2:
+                raise Exception(f'{self.__str__()} only supports upconversion ratio that is a power of 2 OR has denominator 2 (e.g. 2.5 = 5/2), got conversion rate ratio {self.rate_ratio}')
+            
+            if denominator == 2:
+                self.den2 = True
+                # we now need to double the target fps
+                self.target_fps *= 2
+                # and also rate_ratio
+                self.rate_ratio = int(self.rate_ratio * 2)
+
+        '''
+        we store rate_ratio interpolated frames in cache 
+        '''
+        self.cache = {}
+        
+    def get_middle_frame(self, image_1, image_2):
+        # get middle frame
+        raise NotImplementedError('To be implemented by derived classes')
+
+    # WARNING: the first top level recursive call must be a valid group of images
+    # i.e. the LHS and RHS must correspond to real frames in the original video
+    def repopulate_cache(self, image_1_idx, image_2_idx):
+        '''
+        gets the middle frame given two images then populates __sepconv_cache
+        recursively call until populated
+
+        assumes image_1 and image_2 already in cache
+        '''
+        if (image_1_idx + 1 == image_2_idx):
+            return
+
+        # assumes the two frames image_1 and image_2 are already in cache
+        image_1 = self.cache[image_1_idx]
+        image_2 = self.cache[image_2_idx]
+
+        mid_image = self.get_middle_frame(image_1, image_2)
+        mid_image_idx = int((image_1_idx + image_2_idx) / 2)
+
+        self.cache[mid_image_idx] = mid_image
+
+        # LHS
+        self.repopulate_cache(image_1_idx, mid_image_idx)
+        # RHS
+        self.repopulate_cache(mid_image_idx, image_2_idx)
+        
     def get_interpolated_frame(self, idx):
-        source_frame_idx = math.floor(idx / self.rate_ratio)
+        if self.den2:
+            # denominator 2 case
+            true_idx = idx * 2
+            
+            if not (true_idx in self.cache):
+                self.cache.clear()
+                
+                # repopulate cache
+                image_1_idx = int(idx // self.rate_ratio * self.rate_ratio)
+                image_2_idx = int(image_1_idx + self.rate_ratio)
+                
+                # put the relevant frames in cache first
+                frameA_idx = true_idx // self.rate_ratio
+                frameB_idx = frameA_idx + 1
+                frameA = self.video_stream.get_frame(int(frameA_idx))
+                frameB = self.video_stream.get_frame(int(frameB_idx))
+                self.cache[image_1_idx] = frameA
+                self.cache[image_2_idx] = frameB
 
-        if (debug_flags['debug_interpolator']):
-            print(
-                f'targetframe: {idx}, using source frame: {source_frame_idx}')
+                self.repopulate_cache(image_1_idx, image_2_idx)
 
-        return self.video_stream.get_frame(source_frame_idx)
+            blend_1 = self.cache[true_idx]
+            blend_2 = self.cache[true_idx + 1]
 
-    def __str__(self):
-        return 'nearest'
+            blended_frame = blend_frames([blend_1, blend_2])
 
-
-'''
-%
-%   e.g. 24->60 (rateRatio 2.5, period 5)
-%   A A (A+B)/2 B B C C (C+D)/2 E E
-%
-%   e.g. 25->30 (rateRatio 1.2, period 6)
-%   A .2A+.8B .4B+.6C .6C+.4D .8D+.2E E F
-%
-'''
-
-
-class OversampleInterpolator(BaseInterpolator):
-    def __init___(self, target_fps, video_in_path=None, video_out_path=None, max_out_frames=math.inf, max_cache_size=2, **args):
-        super().__init__(target_fps, video_in_path,
-                         video_out_path, max_out_frames, max_cache_size)
-
-    def get_interpolated_frame(self, idx):
-        output = []
-
-        # this period is the number of frame in the targetRate
-        # before a cycle occurs (e.g. in the 24->60 case it occurs between B &
-        # C at period = 5
-        frac = Fraction(Decimal(self.rate_ratio))
-        period = frac.numerator
-
-        # which targetFrame is this after a period
-        offset = math.floor(idx % period)
-
-        # a key frame is a source frame that matches in time, this key frame
-        # is the latest possible source frame
-        key_frame_idx = math.floor(idx / period) * period
-
-        rate_ratios_from_key_frame = math.floor(offset / self.rate_ratio)
-
-        distance_from_next_rate_ratio_point = (
-            rate_ratios_from_key_frame + 1) * self.rate_ratio - offset
-
-        if distance_from_next_rate_ratio_point >= 1:
-            frame_num = math.floor(
-                key_frame_idx / self.rate_ratio + rate_ratios_from_key_frame)
-
-            if (debug_flags['debug_interpolator']):
-                print(f'targetframe: {idx}, using source frame: {frame_num}')
-
-            output = self.video_stream.get_frame(frame_num)
+            return blended_frame
 
         else:
-            frameA_idx = math.floor(
-                key_frame_idx / self.rate_ratio + rate_ratios_from_key_frame)
-            frameB_idx = frameA_idx + 1
+            # normal case
+            # if not found in cache
+            if not (idx in self.cache):
+                self.cache.clear()
+                
+                # repopulate cache
+                image_1_idx = int(idx // self.rate_ratio * self.rate_ratio)
+                image_2_idx = int(image_1_idx + self.rate_ratio)
+                
+                # put the relevant frames in cache first
+                frameA_idx = idx // self.rate_ratio
 
-            frameA = self.video_stream.get_frame(frameA_idx)
-            frameB = self.video_stream.get_frame(frameB_idx)
+                frameB_idx = frameA_idx + 1
+                frameA = self.video_stream.get_frame(int(frameA_idx))
+                frameB = self.video_stream.get_frame(int(frameB_idx))
+                self.cache[image_1_idx] = frameA
+                self.cache[image_2_idx] = frameB
 
-            weightA = distance_from_next_rate_ratio_point
-            weightB = 1. - weightA
+                self.repopulate_cache(image_1_idx, image_2_idx)
 
-            weights = [weightA, weightB]
-            frames = [frameA, frameB]
-
-            if (debug_flags['debug_interpolator']):
-                print(
-                    f'targetframe: {idx}, using source frame: {weightA} * {frameA_idx} + {weightB} * {frameB_idx}')
-            output = blend_frames(frames, weights)
-
-        return output
-
-    def __str__(self):
-        return 'oversample'
-
-
-'''
-%
-%   e.g. 24->60 (rateRatio 2.5, period 5)
-%   A (1.5A+B)/2.5 (0.5A+2B)/2.5 (2B+0.5C)/2.5 (B+1.5C)/2.5 
-%
-'''
-
-
-class LinearInterpolator(BaseInterpolator):
-    def __init___(self, target_fps, video_in_path=None, video_out_path=None, max_out_frames=math.inf, max_cache_size=2, **args):
-        super().__init__(target_fps, video_in_path,
-                         video_out_path, max_out_frames, max_cache_size)
-
-    def get_interpolated_frame(self, idx):
-        output = []
-
-        # this period is the number of frame in the targetRate
-        # before a cycle occurs (e.g. in the 24->60 case it occurs between B &
-        # C at period = 5
-        frac = Fraction(Decimal(self.rate_ratio))
-        period = frac.numerator
-
-        # which targetFrame is this after a period
-        offset = math.floor(idx % period)
-
-        # a key frame is a source frame that matches in time, this key frame
-        # is the latest possible source frame
-        key_frame_idx = math.floor(idx / period) * period
-
-        rate_ratios_from_key_frame = math.floor(offset / self.rate_ratio)
-
-        distance_from_prev_rate_ratio_point = offset - \
-            (rate_ratios_from_key_frame) * self.rate_ratio
-
-        frameA_idx = math.floor(
-            key_frame_idx / self.rate_ratio + rate_ratios_from_key_frame)
-        frameB_idx = frameA_idx + 1
-
-        frameA = self.video_stream.get_frame(frameA_idx)
-        frameB = self.video_stream.get_frame(frameB_idx)
-
-        weightB = distance_from_prev_rate_ratio_point
-        weightA = self.rate_ratio - weightB
-        if (debug_flags['debug_interpolator']):
-            print(
-                f'targetframe: {idx}, using source frame: ({weightA} * {frameA_idx} + {weightB} * {frameB_idx}) / {self.rate_ratio}')
-
-        weights = [weightA, weightB]
-        frames = [frameA, frameB]
-
-        output = blend_frames(frames, weights)
-
-        return output
-
-    def __str__(self):
-        return 'linear'
-
-
-InterpolatorDictionary = {
-    'nearest': NearestInterpolator,
-    'oversample': OversampleInterpolator,
-    'linear': LinearInterpolator
-}
+            return self.cache[idx]
 
 
 

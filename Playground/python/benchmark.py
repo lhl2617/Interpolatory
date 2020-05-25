@@ -1,6 +1,5 @@
 # Runs against middlebury evaluation set in ./middlebury
 
-import torch
 from Interpolator import InterpolatorDictionary
 import glob
 import numpy as np
