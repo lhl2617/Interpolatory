@@ -7,7 +7,7 @@ import { message, Button, Popconfirm, Modal, Form, Input } from 'antd';
 import * as commandExists from 'command-exists';
 import { remote } from 'electron';
 import { getPython3, getInterpolatory, reloadApp } from '../../../util';
-import { LocalStorageKey, getLocalStorage, setLocalStorage, deleteLocalStorage } from '../../../store';
+import { LocalStorageKey, setLocalStorage, deleteLocalStorage } from '../../../store';
 
 const { Search } = Input;
 message.config({ top: 64, maxCount: 3 })
@@ -25,9 +25,9 @@ type IProps = {
 
 type IState = {
     pyVer: PyVer;
-    // pyDeps: Record<string, string>;
     binVer: BinVer;
-    dependencyLastInstalledTime: string;
+    dependencyStatus: string;
+    cudaDependencyStatus: string;
     changePathsModalVisible: boolean;
     newPyPath: string;
     newBinPath: string;
@@ -46,7 +46,8 @@ export class Home extends React.Component<IProps, IState> {
         this.state = {
             pyVer: { status: "loading", ver: "" },
             binVer: { status: "loading", ver: "" },
-            dependencyLastInstalledTime: `Loading...`,
+            dependencyStatus: `Loading...`,
+            cudaDependencyStatus: `Loading...`,
             changePathsModalVisible: false,
             newPyPath: python3,
             newBinPath: binName
@@ -54,7 +55,7 @@ export class Home extends React.Component<IProps, IState> {
     }
 
     _setState = (obj: Partial<IState>) => {
-        if (this.mounted)            
+        if (this.mounted)
             this.setState(obj as any);
     }
 
@@ -95,7 +96,8 @@ export class Home extends React.Component<IProps, IState> {
                     {
                         pyVer: { status: "error", ver: this.state.pyVer.ver },
                         binVer: { status: "error", ver: `Python 3 error` },
-                        dependencyLastInstalledTime: `N/A`
+                        dependencyStatus: `N/A`,
+                        cudaDependencyStatus: `N/A`
                     }
                 );
             }
@@ -123,7 +125,7 @@ export class Home extends React.Component<IProps, IState> {
             if (stdoutTxt.includes(`Interpolatory Simulator`)) {
                 const gottenVer = stdoutTxt.substring(25, stdoutTxt.lastIndexOf('"'));
                 this._setState({ binVer: { status: "done", ver: gottenVer } });
-          
+
                 setFeaturesEnabled(true);
                 // success, now get deps
                 this.getDependencyInfo();
@@ -142,7 +144,11 @@ export class Home extends React.Component<IProps, IState> {
         proc.on(`close`, (code) => {
             if (code !== 0) {
                 if (this.mounted) message.error(`Could not start Interpolatory backend process, is your Interpolatory Path correct?`)
-                this._setState({ binVer: { status: "error", ver: this.state.binVer.ver }, dependencyLastInstalledTime: `N/A` });
+                this._setState({
+                    binVer: { status: "error", ver: this.state.binVer.ver },
+                    dependencyStatus: `N/A`,
+                    cudaDependencyStatus: `N/A`
+                });
 
             }
 
@@ -150,23 +156,52 @@ export class Home extends React.Component<IProps, IState> {
     }
 
     getDependencyInfo = async () => {
-        const dateTime = getLocalStorage(LocalStorageKey.DependencyLastInstallTime);
-        if (dateTime) {
-            const dateString = new Date(parseInt(dateTime, 10));
+        const getBasicDepInfo = async () => {
+            const proc = cp.spawn(python3, [binName, `-dep`]);
 
-            this._setState({ dependencyLastInstalledTime: dateString.toString() });
-            return;
+            proc.on(`close`, (code) => {
+                if (code !== 0) {
+                    this._setState({
+                        dependencyStatus: `Error`
+                    });
+                }
+                else {
+                    this._setState({
+                        dependencyStatus: `OK`
+                    });
+                }
+            });
+
         }
 
-        this._setState({ dependencyLastInstalledTime: `N/A` });
+        const getCudaDepInfo = async () => {
+            
+            const proc = cp.spawn(python3, [binName, `-depcuda`]);
+
+            proc.on(`close`, (code) => {
+                if (code !== 0) {
+                    this._setState({
+                        cudaDependencyStatus: `Error`
+                    });
+                }
+                else {
+                    this._setState({
+                        cudaDependencyStatus: `OK`
+                    });
+                }
+            });
+        }
+
+        getBasicDepInfo();
+        getCudaDepInfo();
     }
 
-    reinstallDependencies = async () => {
+    reinstallDependencies = async (cuda: boolean = false) => {
         const { setFeaturesEnabled } = this.props;
         setFeaturesEnabled(false);
-        message.info(`Installing dependencies`)
+        message.info(`Installing ${cuda ? `CUDA` : `basic`} dependencies`)
         const binPathDir = path.dirname(binName);
-        const requirementsTxt = path.join(binPathDir, `requirements.txt`);
+        const requirementsTxt = path.join(binPathDir, cuda ? `cuda-dependencies.txt` : `requirements.txt`);
 
         const proc = cp.spawn(python3, [`-m`, `pip`, `install`, `-r`, requirementsTxt]);
 
@@ -187,113 +222,11 @@ export class Home extends React.Component<IProps, IState> {
             }
             else {
                 message.info(`Dependencies installed successfully`);
-                setLocalStorage(LocalStorageKey.DependencyLastInstallTime, Date.now().toString());
                 this.getDependencyInfo();
             }
             setFeaturesEnabled(true);
         })
     }
-
-
-    // getDeps = async () => {
-    //     // read requirements.txt
-    //     const proc = cp.spawn(python3, [binName, '-deps']);
-
-    //     let deps: string[];
-
-    //     proc.stdout.on('data', (data) => {
-    //         const gottenDeps: string[] = JSON.parse(data.toString())
-    //         deps = gottenDeps;
-    //     });
-
-    //     proc.on('close', (code) => {
-    //         if (code !== 0) {
-    //             // TODO:- show option to install deps
-    //             this._setState({ depError: true })
-    //         }
-    //         else {
-    //             const prePyDeps: Record<string, string> = {};
-    //             deps.forEach((dep) => {
-    //                 prePyDeps[dep] = `Loading...`
-    //             })
-    //             this._setState({ pyDeps: prePyDeps });
-    //             // success, now query deps
-    //             deps.forEach((dep) => {
-    //                 this.getDepVersion(dep);
-    //             })
-    //         }
-    //     })
-    // }
-
-    // get dep version from python and set it in state
-    // second argument checkForDepErrorFalse set to true if required to set depError to false
-    // getDepVersion = async (dep: string, checkForDepErrorFalse = false) => {
-    //     const depProc = cp.spawn(python3, [`-m`, `pip`, `show`, dep]);
-
-    //     let depout: string;
-
-    //     depProc.stdout.on('data', (data) => {
-    //         depout += data.toString();
-    //     });
-
-    //     depProc.on('close', (depProcCode) => {
-    //         if (depProcCode !== 0) {
-    //             const newPyDeps = this.state.pyDeps;
-    //             newPyDeps[dep] = `N/A`;
-    //             if (this.mounted) message.error(`Dependency \`${dep}\` not found, please install missing dependencies`);
-    //             this._setState({ depError: true, pyDeps: newPyDeps })
-    //         }
-    //         else {
-    //             const vLine = depout
-    //                 .split(`\n`)
-    //                 .filter((s) => s.includes(`Version`))[0];
-    //             const vStr = vLine.substring(9);
-    //             const newPyDeps = this.state.pyDeps;
-    //             newPyDeps[dep] = vStr;
-    //             if (this.mounted) {
-    //                 this._setState({ pyDeps: newPyDeps })
-    //                 if (checkForDepErrorFalse) {
-    //                     const ok = Object.values(newPyDeps)
-    //                         .map((ver) => ver !== 'N/A')
-    //                         .reduce((a, b) => a && b)
-    //                     if (ok && this.mounted) {
-    //                         this._setState({ depError: false });
-    //                     }
-    //                 }
-    //             }
-    //         }
-    //     })
-    // }
-
-    // installMissingDependencies = async () => {
-    //     const { pyDeps } = this.state;
-    //     Object.entries(pyDeps).forEach(([dep, ver]) => {
-    //         if (ver === 'N/A') {
-    //             if (this.mounted) message.info(`Installing dependency: \`${dep}\``)
-    //             const proc = cp.spawn(python3, [`-m`, `pip`, `install`, dep]);
-
-    //             let errMsg: string;
-
-    //             proc.stderr.on('data', (data) => {
-    //                 errMsg += data.toString();
-    //             })
-
-    //             proc.on('close', (code) => {
-    //                 if (this.mounted) {
-    //                     if (code !== 0) {
-    //                         message.error(`Error installing dependency \`${dep}\`, please install it manually`);
-    //                         console.error(errMsg);
-
-    //                     }
-    //                     else {
-    //                         message.info(`Dependency \`${dep}\` installed successfully`);
-    //                         this.getDepVersion(dep, true);
-    //                     }
-    //                 }
-    //             })
-    //         }
-    //     })
-    // }
 
     renderVer = (ver: VerState) => {
         if (ver.status === "loading") {
@@ -304,20 +237,6 @@ export class Home extends React.Component<IProps, IState> {
         }
         return ver.ver;
     }
-
-    // renderPyDepInfo = (pyDeps: Record<string, string>) => {
-    //     if (Object.keys(pyDeps).length) {
-    //         return (Object.entries(pyDeps).map(([dep, status]) => {
-    //             return <p key={dep} style={{ margin: 0 }}>{dep}: {status === `N/A` ? <span style={{ color: 'red' }}>N/A</span> : status}</p>
-    //         }));
-    //     }
-
-    //     if (this.state.pyVer.status === "error") {
-    //         return <span style={{ color: 'red' }}>Python 3 error</span>
-    //     }
-
-    //     return <span>Loading...</span>
-    // }
 
     showChangePathsModal = () => {
         this._setState({ changePathsModalVisible: true })
@@ -339,14 +258,13 @@ export class Home extends React.Component<IProps, IState> {
         }
         if (shouldReload) {
             // dependencies are different now
-            deleteLocalStorage(LocalStorageKey.DependencyLastInstallTime);
             reloadApp();
         }
 
     }
 
     render() {
-        const { pyVer, binVer, dependencyLastInstalledTime, changePathsModalVisible, newBinPath, newPyPath } = this.state;
+        const { pyVer, binVer, dependencyStatus, cudaDependencyStatus, changePathsModalVisible, newBinPath, newPyPath } = this.state;
         return (
             <div style={{ textAlign: 'center', margin: 'auto' }}>
                 <div>
@@ -364,15 +282,25 @@ export class Home extends React.Component<IProps, IState> {
                     <Button style={{ marginBottom: 18 }} onClick={this.showChangePathsModal}>Change Python 3 / Interpolatory Backend Path</Button>
 
                     <h3>Python Dependencies Info</h3>
-                    <div>Last installed: {dependencyLastInstalledTime}</div>
+                    <div>Basic dependencies status: {dependencyStatus}</div>
                     <Popconfirm
-                        title="This will reinstall all dependencies. Are you sure you want to continue?"
-                        onConfirm={this.reinstallDependencies}
+                        title="This will reinstall basic dependencies. Are you sure you want to continue?"
+                        onConfirm={() => this.reinstallDependencies()}
                         okText='Yes'
                         cancelText='No'
                         disabled={binVer.status !== "done"}
                     >
-                        <Button danger disabled={binVer.status !== "done"}>Reinstall Dependencies</Button>
+                        <Button danger disabled={binVer.status !== "done"}>Reinstall Basic Dependencies</Button>
+                    </Popconfirm>
+                    <div>CUDA dependencies status: {cudaDependencyStatus}</div>
+                    <Popconfirm
+                        title="This will reinstall basic dependencies. Are you sure you want to continue?"
+                        onConfirm={() => this.reinstallDependencies(true)}
+                        okText='Yes'
+                        cancelText='No'
+                        disabled={binVer.status !== "done"}
+                    >
+                        <Button danger disabled={binVer.status !== "done"}>Reinstall CUDA Dependencies</Button>
                     </Popconfirm>
                 </div>
                 <Modal
