@@ -45,12 +45,8 @@ if mode_flag == '-h':
     print('Get this help.')
 
     print('')
-    print('- python3 main.py -if')
-    print('Get supported fully-featured interpolation-modes - these modes can support video interpolation, testing, and benchmarking')
-    
-    print('')
     print('- python3 main.py -il')
-    print('Get supported limited interpolation-modes - these modes can support testing, and benchmarking')
+    print('List all supported interpolation modes')
 
     print('')
     print('- python3 main.py -mv <video-path>')
@@ -87,12 +83,8 @@ if mode_flag == '-h':
     print('Check whether CUDA dependencies are met')
 
 
-elif mode_flag == '-if':
+elif mode_flag == '-il':
     print(json.dumps(interpolators))
-    
-
-# elif mode_flag == '-il':
-#     print(json.dumps(limited_interpolators))
 
 elif mode_flag == '-mv' and len(args) == 2:
     import imageio
