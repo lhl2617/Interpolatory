@@ -3,13 +3,13 @@ from imageio import imread, imwrite
 import sys
 import cProfile  
 import time
-from plot_mv import plot_vector_field
-from median_filter import median_filter
-from mean_filter import mean_filter
-from weighted_mean_filter import weighted_mean_filter
-from full_search import get_motion_vectors as mv_fs
-from tss import get_motion_vectors as mv_tss
-from hbma import get_motion_vectors as hbma
+from .ME.plot_mv import plot_vector_field
+# from median_filter import median_filter
+# from mean_filter import mean_filter
+# from weighted_mean_filter import weighted_mean_filter
+# from full_search import get_motion_vectors as mv_fs
+# from tss import get_motion_vectors as mv_tss
+# from hbma import get_motion_vectors as hbma
 
 filter_func_dict = {
     'median' : median_filter,
@@ -30,7 +30,7 @@ def smooth(filter_func, mv_field, block_size):
             out[row:row+block_size, col:col+block_size, 0] = r # replace out with mv_field maybe
             out[row:row+block_size, col:col+block_size, 1] = c 
     return out
-
+'''
 if __name__ == "__main__":
     filter_type = sys.argv[1]
     method = sys.argv[2]
@@ -51,6 +51,8 @@ if __name__ == "__main__":
     output = smooth(filter_func_dict[filter_type], output, block_size)
 
     plot_vector_field(output, block_size, out_path)
+'''
+
     
     # print('Starting vector intensity image...')
     # output_intensity = np.copy(output)
