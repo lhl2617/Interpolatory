@@ -127,4 +127,4 @@ if __name__ == "__main__":
     output = get_motion_vectors(block_size, region, sub_region, steps, min_block_size, im1, im2)
 
     print('Printing output...')
-    plot_vector_field(output, 4, out_path)
+    plot_vector_field(output, im1, 4, out_path)
