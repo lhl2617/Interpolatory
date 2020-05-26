@@ -13,8 +13,8 @@ def plot_vector_field(mv_field, block_size, out_path, method='vector_field'):
         X, Y = np.meshgrid(np.linspace(0, Down_sampled_MV.shape[1], Down_sampled_MV.shape[1]), \
                             np.linspace(0, Down_sampled_MV.shape[0], Down_sampled_MV.shape[0]))
 
-        U = np.flip(Down_sampled_MV[:,:,0], axis=0)
-        V = np.flip(Down_sampled_MV[:,:,1], axis=0) * -1.0
+        U = np.flip(Down_sampled_MV[:,:,1], axis=0)
+        V = np.flip(Down_sampled_MV[:,:,0], axis=0) * -1.0
 
         #Z=np.add(np.square(U),np.square(V))
         #plt.contourf(X,Y,Z)
