@@ -37,7 +37,7 @@ def benchmark(interpolation_mode, output_path=None):
         frame_2 = imageio.imread(path_2)
 
         im_true = imageio.imread(path_to_truth)
-            
+
         interpolator = InterpolatorDictionary[interpolation_mode](2)
         im_test = interpolator.get_benchmark_frame(frame_1, frame_2)
 
@@ -58,7 +58,7 @@ def benchmark(interpolation_mode, output_path=None):
         eta = getETA(elapsed_seconds, cnt_done, len(paths))
         progStr = f'PROGRESS::{pct}%::Frame {cnt_done}/{len(paths)} | Time elapsed: {elapsed} | Estimated Time Left: {eta}'
         signal_progress(progStr)
-        
+
         if debug_flags['debug_benchmark_progress']:
             print(progStr)
 
@@ -72,7 +72,7 @@ def benchmark(interpolation_mode, output_path=None):
     }
 
     res_json = json.dumps(res)
-    
+
     if (not (output_path is None)):
         output_pathname = path.join(output_path, 'results.txt')
         f = open(output_pathname, "w")
@@ -82,10 +82,10 @@ def benchmark(interpolation_mode, output_path=None):
     print(res_json)
 
 def get_middle_frame(interpolation_mode, frame_1_path, frame_2_path, output_file_path, ground_truth_path=None):
-    
+
     frame_1 = imageio.imread(frame_1_path)
     frame_2 = imageio.imread(frame_2_path)
-    
+
     interpolator = InterpolatorDictionary[interpolation_mode](2)
     im_test = interpolator.get_benchmark_frame(frame_1, frame_2)
 
@@ -95,7 +95,7 @@ def get_middle_frame(interpolation_mode, frame_1_path, frame_2_path, output_file
         im_true = imageio.imread(ground_truth_path)
         psnr = (skimage.metrics.peak_signal_noise_ratio(im_true, im_test, data_range=255))
         ssim = (skimage.metrics.structural_similarity(im_true, im_test, data_range=255, multichannel=True))
-            
+
         res = {
             'PSNR': psnr,
             'SSIM': ssim
@@ -103,9 +103,9 @@ def get_middle_frame(interpolation_mode, frame_1_path, frame_2_path, output_file
 
         if (res['PSNR'] == math.inf):
             res['PSNR'] = 'Infinity'
-            
+
     res_json = json.dumps(res)
-    
+
     if (not (output_file_path is None)):
         output_pathname = path.join(output_file_path, 'results.txt')
         f = open(output_pathname, "w")
@@ -132,12 +132,12 @@ def get_middle_frame(interpolation_mode, frame_1_path, frame_2_path, output_file
 #             frame_2 = imageio.imread(path_2)
 
 #             im_true = imageio.imread(path_to_truth)
-                
+
 #             interpolator = interpolator_obj(2)
 #             im_test = interpolator.get_benchmark_frame(frame_1, frame_2)
 
 #             imageio.imwrite(f'../../Output/middlebury_output/{interpolator_str}_{test_name}.png', im_test)
-            
+
 #             psnr[interpolator_str].append(skimage.metrics.peak_signal_noise_ratio(im_true, im_test, data_range=255))
 #             ssim[interpolator_str].append(skimage.metrics.structural_similarity(im_true, im_test, data_range=255, multichannel=True))
 #         print(interpolator_str)
