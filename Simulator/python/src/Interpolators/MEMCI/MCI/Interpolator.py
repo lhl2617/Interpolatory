@@ -60,7 +60,8 @@ class MEMCIInterpolator(BaseInterpolator):
         self.ME_method = ME_dict["tss"]#args["ME_method"]
         self.smoothing_filter = smoothing_dict["weighted"]#args["smoothing_filter"]#
         self.filterSize = 5 #args["filterSize"]
-
+        self.MV_field_idx= -1 #Index in source video that the current motion field is based on.
+        self.MV_field=[]
         for arg, value in args.items():
             setattr(self, arg, value)
         print("the block size used was:", self.blockSize)
