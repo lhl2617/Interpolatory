@@ -1,5 +1,6 @@
 # benches interpolators and saves to Interpolatory/Output
-interpolators = ["SoftSplat-Linear-Default", "SoftSplat-Linear-KITTI", "SoftSplat-Linear-Sintel", "SoftSplat-MidFrame-Default", "SoftSplat-MidFrame-KITTI", "SoftSplat-MidFrame-Sintel"]
+
+interpolators = ['Nearest', 'Oversample', 'Linear', 'SepConvL1-CUDA', 'SepConvLf-CUDA', 'RRIN-MidFrame-CUDA', 'RRIN-Linear-CUDA']
 
 # run from Interpolatory/Simulator/python/ 
 import os
