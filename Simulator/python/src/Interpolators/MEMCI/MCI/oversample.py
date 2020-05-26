@@ -3,8 +3,8 @@ import math
 from fractions import Fraction
 from decimal import Decimal
 
-from ..Globals import debug_flags
-from ..util import blend_frames
+from ....Globals import debug_flags
+from ....util import blend_frames
 
 from .base import BaseInterpolator
 '''

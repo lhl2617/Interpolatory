@@ -1,4 +1,4 @@
-from ..base import MidFrameBaseInterpolator
+from ..MEMCI.MCI.base import MidFrameBaseInterpolator
 from ...util import is_power_of_two
 import math
 

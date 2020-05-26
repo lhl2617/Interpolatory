@@ -1,8 +1,8 @@
-from .Interpolators import nearest, blur, speed, oversample, linear
+from .Interpolators.MEMCI.MCI import nearest, blur, speed, oversample, linear, Interpolator
 from .Interpolators.sepconv import sepconv
 from .Interpolators.rrin import rrin
 from .Interpolators.softsplat import softsplat
-from .Interpolators.MEMCI import Interpolator
+
 # supports all features
 InterpolatorDictionary = {
     'Nearest': nearest.NearestInterpolator,

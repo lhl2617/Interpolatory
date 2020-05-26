@@ -7,9 +7,9 @@ from copy import deepcopy
 from io import BytesIO
 from fractions import Fraction
 from decimal import Decimal
-from ..util import sToMMSS, getETA, signal_progress, is_power_of_two, blend_frames
-from ..Globals import debug_flags
-from ..VideoStream import BenchmarkVideoStream, VideoStream
+from ....util import sToMMSS, getETA, signal_progress, is_power_of_two, blend_frames
+from ....Globals import debug_flags
+from ....VideoStream import BenchmarkVideoStream, VideoStream
 
 
 '''

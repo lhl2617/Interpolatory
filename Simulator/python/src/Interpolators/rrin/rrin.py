@@ -1,4 +1,4 @@
-from ..base import BaseInterpolator, MidFrameBaseInterpolator
+from ..MEMCI.MCI.base import BaseInterpolator, MidFrameBaseInterpolator
 import math
 from collections import deque
 from ...util import get_first_frame_idx_and_ratio
