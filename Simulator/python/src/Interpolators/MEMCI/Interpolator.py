@@ -160,7 +160,17 @@ MCI with median filter for filling holes.
 
 
 '''
+ME_dict={
+    "full":get_motion_vectors_fs,
+    "tss":get_motion_vectors_tss,
+    "HBMA":hbma
+}
+smoothing_dict={
+    "mean":mean_filter,
+    "median":median_filter,
+    "weighted":weighted_mean_filter
 
+}
 class MEMCIInterpolator(BaseInterpolator):
     def __init___(self, target_fps,video_in_path=None, video_out_path=None, max_out_frames=math.inf, max_cache_size=2, **args):
 
@@ -273,8 +283,15 @@ class Bi(BaseInterpolator):
         super().__init__(target_fps, video_in_path,
                          video_out_path, max_out_frames, max_cache_size)
 
-    def get_interpolated_frame(self, idx):
+    def get_interpolated_frame(self, idx,**args):
+        self.blockSize = 8 #args["blockSize"]
+        self.target_region = 3 #args["target_region"]
+        self.ME_method = ME_dict["tss"]#args["ME_method"]
+        self.smoothing_filter = smoothing_dict["weighted"]#args["smoothing_filter"]#
+        self.filterSize = 5 #args["filterSize"]
 
+        for arg, value in args.items():
+            setattr(self, arg, value)
         source_frame_idx = math.floor(idx / self.rate_ratio)
         source_frame = self.video_stream.get_frame(source_frame_idx)
 
@@ -300,8 +317,8 @@ class Bi(BaseInterpolator):
 
             self.MV_field_idx = source_frame_idx
             '''
-            fwd = get_motion_vectors_tss(4, 3, source_frame, target_frame)
-            bwd = get_motion_vectors_tss(4, 3, target_frame, source_frame)
+            fwd = get_motion_vectors_tss(self.blockSize, self.target_region, source_frame, target_frame)
+            bwd = get_motion_vectors_tss(self.blockSize, self.target_region, target_frame, source_frame)
             self.MV_field = fwd
         Interpolated_Frame = np.ones(source_frame.shape, dtype='float64') * -1
         SAD_interpolated_frame = np.full([source_frame.shape[0], source_frame.shape[1]], np.inf)
