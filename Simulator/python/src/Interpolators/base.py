@@ -29,6 +29,11 @@ class BaseInterpolator(object):
         self.video_stream = None
         self.video_out_writer = None
 
+        self.MV_field_idx = -1
+        self.MV_field = []
+        self.fwr_MV_field = []
+        self.bwr_MV_field = []
+
         self.max_frames_possible = None
         self.rate_ratio = None
 
@@ -66,12 +71,12 @@ class BaseInterpolator(object):
             raise Exception('video output path not given')
 
 
-            ''' 
+            '''
             See bottom of file for options
             '''
         self.video_out_writer = imageio.get_writer(
             self.video_out_path, fps=self.target_fps, macro_block_size=0, quality=6)
-        
+
 
     def interpolate_video(self):
         if self.video_in_path is None or self.video_out_path is None:
@@ -97,7 +102,7 @@ class BaseInterpolator(object):
 
                 if (debug_flags['debug_progress']):
                     print(progStr)
-                    
+
             interpolated_frame = self.get_interpolated_frame(i)
             self.video_out_writer.append_data(interpolated_frame)
 
@@ -111,7 +116,7 @@ class BaseInterpolator(object):
         signal_progress(progStr)
         if (debug_flags['debug_progress']):
             print(progStr)
-        
+
 
     def get_interpolated_frame(self, idx):
         raise NotImplementedError('To be implemented by derived classes')
@@ -157,12 +162,12 @@ class MidFrameBaseInterpolator(BaseInterpolator):
 
         super().__init__(target_fps, video_in_path,
                          video_out_path, max_out_frames, max_cache_size)
-        
+
         # denominator is 2
         self.den2 = False
-        
+
         '''
-        Only supports upscaling by factor of 2 or 
+        Only supports upscaling by factor of 2 or
         if the factor has denominator 2
         by blurring the output
         (this is mainly to support 24->60 by doing 24->120->60)
@@ -170,16 +175,16 @@ class MidFrameBaseInterpolator(BaseInterpolator):
         if not (self.video_in_path is None):
             if self.rate_ratio < 1:
                 raise Exception(f'{self.__str__()} only supports upconversion, got conversion rate ratio {self.rate_ratio}')
-            
+
             from fractions import Fraction
             from decimal import Decimal
 
             frac = Fraction(Decimal(self.rate_ratio))
             denominator = frac.denominator
-            
+
             if (not is_power_of_two(self.rate_ratio)) and denominator != 2:
                 raise Exception(f'{self.__str__()} only supports upconversion ratio that is a power of 2 OR has denominator 2 (e.g. 2.5 = 5/2), got conversion rate ratio {self.rate_ratio}')
-            
+
             if denominator == 2:
                 self.den2 = True
                 # we now need to double the target fps
@@ -188,10 +193,10 @@ class MidFrameBaseInterpolator(BaseInterpolator):
                 self.rate_ratio = int(self.rate_ratio * 2)
 
         '''
-        we store rate_ratio interpolated frames in cache 
+        we store rate_ratio interpolated frames in cache
         '''
         self.cache = {}
-        
+
     def get_middle_frame(self, image_1, image_2):
         # get middle frame
         raise NotImplementedError('To be implemented by derived classes')
@@ -221,19 +226,19 @@ class MidFrameBaseInterpolator(BaseInterpolator):
         self.repopulate_cache(image_1_idx, mid_image_idx)
         # RHS
         self.repopulate_cache(mid_image_idx, image_2_idx)
-        
+
     def get_interpolated_frame(self, idx):
         if self.den2:
             # denominator 2 case
             true_idx = idx * 2
-            
+
             if not (true_idx in self.cache):
                 self.cache.clear()
-                
+
                 # repopulate cache
                 image_1_idx = int(idx // self.rate_ratio * self.rate_ratio)
                 image_2_idx = int(image_1_idx + self.rate_ratio)
-                
+
                 # put the relevant frames in cache first
                 frameA_idx = true_idx // self.rate_ratio
                 frameB_idx = frameA_idx + 1
@@ -256,11 +261,11 @@ class MidFrameBaseInterpolator(BaseInterpolator):
             # if not found in cache
             if not (idx in self.cache):
                 self.cache.clear()
-                
+
                 # repopulate cache
                 image_1_idx = int(idx // self.rate_ratio * self.rate_ratio)
                 image_2_idx = int(image_1_idx + self.rate_ratio)
-                
+
                 # put the relevant frames in cache first
                 frameA_idx = idx // self.rate_ratio
 
@@ -323,4 +328,3 @@ Parameters for saving
         can't decode videos that are odd in size and some codecs will produce
         poor results or fail. See https://en.wikipedia.org/wiki/Macroblock.
     '''
-    
