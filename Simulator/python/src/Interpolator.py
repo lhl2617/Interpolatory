@@ -2,7 +2,8 @@ from .Interpolators import nearest, blur, speed, oversample, linear
 from .Interpolators.sepconv import sepconv
 from .Interpolators.rrin import rrin
 from .Interpolators.softsplat import softsplat
-from .Interpolators.MEMCI import Interpolator
+from .Interpolators.MEMCI import Interpolator, Unidirectional_2
+
 # supports all features
 InterpolatorDictionary = {
     'Nearest': nearest.NearestInterpolator,
@@ -22,4 +23,5 @@ InterpolatorDictionary = {
     'SoftSplat-MidFrame-Sintel': softsplat.SoftSplatMidFrameSintel,
     'Unidirectional':Interpolator.MEMCIInterpolator,
     'Bidirectional':Interpolator.Bi,
+    'Unidirectional_2':Unidirectional_2.Uni_2
 }
