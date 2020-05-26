@@ -22,7 +22,7 @@ def plot_vector_field(mv_field, image, block_size, out_path, method='vector_fiel
         # print(self.MV_field.shape)
         fig, ax = plt.subplots(1,1)
         _ = ax.imshow(image)
-        vector_field = ax.quiver(X, Y, U, V , M, cmap='coolwarm', angles='xy', units='x', pivot='tip', width=1, scale=1 / 0.5)
+        vector_field = ax.quiver(X, Y, U, V , M, cmap='coolwarm', angles='xy', units='x', width=1, scale=1 / 0.5)
 
         cbar=fig.colorbar(vector_field)
         cbar.ax.set_ylabel('|MV| in pixels')
