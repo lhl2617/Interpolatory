@@ -162,12 +162,22 @@ MCI with median filter for filling holes.
 '''
 
 class MEMCIInterpolator(BaseInterpolator):
-    def __init___(self, target_fps, video_in_path=None, video_out_path=None, max_out_frames=math.inf, max_cache_size=2, **args):
+    def __init___(self, target_fps,video_in_path=None, video_out_path=None, max_out_frames=math.inf, max_cache_size=2, **args):
+
         super().__init__(target_fps, video_in_path,
                          video_out_path, max_out_frames, max_cache_size)
 
 
-    def get_interpolated_frame(self, idx, b, t):
+    def get_interpolated_frame(self, idx,**args):
+        self.blockSize = 8 #args["blockSize"]
+        self.target_region = 3 #args["target_region"]
+        self.ME_method = ME_dict["tss"]#args["ME_method"]
+        self.smoothing_filter = smoothing_dict["weighted"]#args["smoothing_filter"]#
+        self.filterSize = 5 #args["filterSize"]
+
+        for arg, value in args.items():
+            setattr(self, arg, value)
+        print("the block size used was:", self.blockSize)
     # def get_interpolated_frame(self, idx, b, t):
         #source_frame is the previous frame in the source vidoe.
         source_frame_idx = math.floor(idx/self.rate_ratio)
@@ -185,19 +195,16 @@ class MEMCIInterpolator(BaseInterpolator):
         #that the current motion field is estimated on.
         if not self.MV_field_idx < idx/self.rate_ratio < self.MV_field_idx+1:
             target_frame = self.video_stream.get_frame(source_frame_idx+1)
+            self.MV_field= self.ME_method(self.blockSize,self.target_region,source_frame,target_frame)
 
-            # self.MV_field = get_motion_vectors_fs(b, t, source_frame, target_frame)
-            # self.MV_field = smooth(mean_filter,self.MV_field,5)
-            # self.MV_field = get_motion_vectors_tss(b,t, source_frame, target_frame)
-            # self.MV_field=get_motion_vectors_tss(4,3,source_frame,target_frame)
             # block_size = 16
             # region = 7
             sub_region =1
             steps_HBMA = 1
             min_block_size = 2
-            self.MV_field = hbma(b,t,sub_region,steps_HBMA,min_block_size,source_frame,target_frame)
+            # self.MV_field = hbma(b,t,sub_region,steps_HBMA,min_block_size,source_frame,target_frame)
             # print("Begin smoothing")
-            self.MV_field = smooth(mean_filter,self.MV_field,5)
+            self.MV_field = smooth(self.smoothing_filter,self.MV_field,self.filterSize)
             self.MV_field_idx = source_frame_idx
 
 
@@ -246,33 +253,9 @@ class MEMCIInterpolator(BaseInterpolator):
                     New_Interpolated_Frame[u,v,2] = np.median(Interpolated_Frame[u_min:u_max,v_min:v_max,2])
 
         New_Interpolated_Frame = New_Interpolated_Frame.astype(source_frame.dtype)
+
+        # print(self.filterSize,self.smoothing_filter,self.ME_method,self.target_region,self.blockSize)
         return New_Interpolated_Frame
-
-
-    def plot_vector_field(self,block_size,steps,source_frame):
-        #Downsample so each vector represents one block.
-
-        Down_sampled_MV=self.MV_field[::block_size,::block_size,:]
-        X, Y = np.meshgrid(np.linspace(0,self.MV_field.shape[1]-1, Down_sampled_MV.shape[1]), \
-                            np.linspace(0,self.MV_field.shape[0]-1, Down_sampled_MV.shape[0]))
-
-        U = Down_sampled_MV[:,:,0]  #X-direction
-        V = Down_sampled_MV[:,:,1]  #Y-direction
-        M = np.hypot(U, V)          #Magnitude of vector.
-
-        fig, ax = plt.subplots(1,1)
-        source_image = ax.imshow(source_frame)
-        vector_field = ax.quiver(X, Y, U, V ,M,cmap='coolwarm', angles='uv',units='x', pivot='tip', width=1,
-                       scale=1 / 0.5)
-
-        cbar=fig.colorbar(vector_field)
-        cbar.ax.set_ylabel('|MV| in pixels')
-        plt.title("Block size="+str(block_size)+ "\nSteps="+str(steps))
-        plt.show()
-
-    def __str__(self):
-        return 'MEMCI'
-
 '''
 %
 %   e.g. 24->60
