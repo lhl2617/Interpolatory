@@ -17,6 +17,9 @@ Load an image and print height, width, and colour dimensions to stdout. If not s
 - python3 main.py -i <input-video-path> -m <interpolation-mode> -f <output-frame-rate> -o <output-file-path>
 Get in an input video source from <input-video-path> and, using <interpolation-mode> mode, interpolate to <output-frame-rate> fps and save to <output-file-path>
 
+- python3 main.py -b [Interpolation_Mode]
+Run testbench for different Interpolation_Mode except MEMCI
+
 - python3 main.py -b [-d]
 Run Middlebury benchmark to get results with previous setting. if previous setting is empty, using default setting:
 MCI: Unidirectional

@@ -5,7 +5,7 @@ import os
 sys.path.append('./src')
 from src import util, Interpolator, Benchmark, Globals
 from src.Interpolator import InterpolatorDictionary
-from src.Benchmark import benchmark, get_middle_frame
+from src.Benchmark import benchmark, benchmarkCNN, get_middle_frame
 
 mode_flag = None
 
@@ -38,7 +38,7 @@ version = 'Interpolatory Simulator 0.0.1'
 
 if mode_flag == '-h':
     manul = open("./txts/manul.txt","r") 
-    print(manul.readline())
+    print(manul.read())
     manul.close() 
 
 elif mode_flag == '-il':
@@ -81,20 +81,25 @@ elif mode_flag == '-i' and len(args) == 8 and '-m' == args[2] and '-f' == args[4
     # print('Run Middlebury benchmark to get results based on an <interpolation-mode>')
 
 elif mode_flag == '-b' and len(args) <= 2: #default
-# - python3 main.py -b [-d]
-    if (len(args) <= 2):
-        with open("./txts/default.txt","r") as default_case:
-            d_set=[word for line in default_case for word in line.split()]
-        print(d_set)
-        default_case.close() 
-        output_path = None
-        #benchmark(MCI_mode, block_size, target_region, ME_mode, filter.mode, filter_size)
-        benchmark(str(d_set[0]), int(d_set[1]), int(d_set[2]), str(d_set[3]), str(d_set[4]), int(d_set[5]), output_path)
-        save = open("./txts/previous.txt", "w")
-        for param in d_set:
-            save.write(param)
-            save.write("\n")
-        save.close()
+# - python3 main.py -b [-d]/[MCI]
+    if (len(args) == 2):
+        if args[1] == '-d' :
+            with open("./txts/default.txt","r") as default_case:
+                d_set=[word for line in default_case for word in line.split()]
+            print(d_set)
+            default_case.close() 
+            output_path = None
+            #benchmark(MCI_mode, block_size, target_region, ME_mode, filter.mode, filter_size)
+            benchmark(str(d_set[0]), int(d_set[1]), int(d_set[2]), str(d_set[3]), str(d_set[4]), int(d_set[5]), output_path)
+            save = open("./txts/previous.txt", "w")
+            for param in d_set:
+                save.write(param)
+                save.write("\n")
+            save.close()
+        else:
+            interpolation_mode = args[1]
+            output_path = None
+            benchmarkCNN(interpolation_mode, output_path)
     elif (os.stat("./txts/previous.txt").st_size == 0) :
         with open("./txts/default.txt","r") as default_case:
             d_set=[word for line in default_case for word in line.split()]
