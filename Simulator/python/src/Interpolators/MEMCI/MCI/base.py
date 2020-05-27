@@ -113,7 +113,7 @@ class BaseInterpolator(object):
             print(progStr)
         
 
-    def get_interpolated_frame(self, idx):
+    def get_interpolated_frame(self, idx ,block_size, target_region, ME_mode, filter_mode, filter_size):
         raise NotImplementedError('To be implemented by derived classes')
 
     def __str__(self):
@@ -131,7 +131,7 @@ class BaseInterpolator(object):
     this is used by interpolators that are not limited
     '''
 
-    def get_benchmark_frame(self, image_1, image_2):
+    def get_benchmark_frame(self, image_1, image_2, block_size, target_region, ME_mode, filter_mode, filter_size):
         # so that we can restore to defaults
         backup_interpolator = deepcopy(self)
 
@@ -142,7 +142,7 @@ class BaseInterpolator(object):
         self.rate_ratio = 2.
         self.max_frames_possible = 2
 
-        res = self.get_interpolated_frame(1)
+        res = self.get_interpolated_frame(1,block_size, target_region, ME_mode, filter_mode, filter_size)
 
         # restore
         self = backup_interpolator

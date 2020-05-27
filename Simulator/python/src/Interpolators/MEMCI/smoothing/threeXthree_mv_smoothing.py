@@ -20,7 +20,7 @@ filter_func_dict = {
 def smooth(filter_func, mv_field, block_size):
     out = np.copy(mv_field)
     for row in range(0, mv_field.shape[0], block_size):
-        print(row)
+        #print(row)
         for col in range(0, mv_field.shape[1], block_size):
             low_row = max(0, int(row - block_size))
             high_row = min(int(row + block_size), mv_field.shape[0]) + 1

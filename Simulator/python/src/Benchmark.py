@@ -15,13 +15,16 @@ from .Globals import debug_flags
 from .util import sToMMSS, getETA, signal_progress
 
 
-def benchmark(interpolation_mode, output_path=None):
+def benchmark(interpolation_mode, block_size, target_region, ME_mode, filter_mode, filter_size,output_path=None):
+
+    #benchmark(MCI_mode, block_size, target_region, ME_mode, filter.mode, filter_size)
+    
     psnr = []
     ssim = []
 
     basedir = pathlib.Path(__file__).parent.parent.absolute()
 
-    paths = sorted(glob.glob(f'{basedir}/benchmarks/middlebury/*/frame10i11.png'))
+    paths = sorted(glob.glob(f'{basedir}/benchmarks/middlebury/Urban3/frame10i11.png'))
 
     cnt_done = 0
     start = int(round(time.time() * 1000))
@@ -39,7 +42,8 @@ def benchmark(interpolation_mode, output_path=None):
         im_true = imageio.imread(path_to_truth)
             
         interpolator = InterpolatorDictionary[interpolation_mode](2)
-        im_test = interpolator.get_benchmark_frame(frame_1, frame_2)
+
+        im_test = interpolator.get_benchmark_frame(frame_1, frame_2, block_size, target_region, ME_mode, filter_mode, filter_size)
 
 
         if (not (output_path is None)):

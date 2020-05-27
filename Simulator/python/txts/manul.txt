@@ -1,0 +1,48 @@
+======
+Manual
+======
+
+- python3 main.py -h
+Get this help.
+
+- python3 main.py -il
+List all supported interpolation modes
+
+- python3 main.py -mv <video-path>
+Load a video and print metadata to stdout. If not supported, will return non-zero value
+
+- python3 main.py -mi <video-path>
+Load an image and print height, width, and colour dimensions to stdout. If not supported, will return non-zero value
+
+- python3 main.py -i <input-video-path> -m <interpolation-mode> -f <output-frame-rate> -o <output-file-path>
+Get in an input video source from <input-video-path> and, using <interpolation-mode> mode, interpolate to <output-frame-rate> fps and save to <output-file-path>
+
+- python3 main.py -b [<output-folder>]
+Run Middlebury benchmark to get results with previous setting. if previous setting is empty, using default setting:
+MCI: Unidirectional
+ME: tss
+Block size: 8                   
+target region: 3                                
+filter: weighted            
+filter size: 5  
+If provided, outputs interpolated images to <output-folder>
+
+- python3 main.py -b <ME-mode> <smoothing-mode> <interpolation-mode> [<output-folder>]
+Run Middlebury benchmark by choosen modes and parameters
+If provided, outputs interpolated images to <output-folder>
+
+- python3 main.py -clean
+Clean test history
+
+- python3 main.py -t <interpolation-mode> -f <frame1> <frame2> -o <output-file-path> [<ground-truth-path>]
+Using <interpolation mode, get the interpolated midpoint frame between <frame1> and <frame2>, saving the output to <output-file-path>
+If [<ground-truth-path>] provided, metrics (PSNR & SSIM) are returned
+
+- python3 main.py -ver
+Get version
+
+- python3 main.py -dep
+Check whether normal requirements are met
+
+- python3 main.py -depcuda
+Check whether CUDA dependencies are met

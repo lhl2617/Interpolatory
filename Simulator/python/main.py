@@ -1,5 +1,6 @@
 import sys
 import json
+import os
 
 sys.path.append('./src')
 from src import util, Interpolator, Benchmark, Globals
@@ -36,52 +37,9 @@ interpolators = list(InterpolatorDictionary.keys())
 version = 'Interpolatory Simulator 0.0.1'
 
 if mode_flag == '-h':
-    print('======')
-    print('Manual')
-    print('======')
-
-    print('')
-    print('- python3 main.py -h')
-    print('Get this help.')
-
-    print('')
-    print('- python3 main.py -il')
-    print('List all supported interpolation modes')
-
-    print('')
-    print('- python3 main.py -mv <video-path>')
-    print('Load a video and print metadata to stdout. If not supported, will return non-zero value')
-    
-    print('')
-    print('- python3 main.py -mi <video-path>')
-    print('Load an image and print height, width, and colour dimensions to stdout. If not supported, will return non-zero value')
-    
-    print('')
-    print('- python3 main.py -i <input-video-path> -m <interpolation-mode> -f <output-frame-rate> -o <output-file-path>')
-    print('Get in an input video source from <input-video-path> and, using <interpolation-mode> mode, interpolate to <output-frame-rate> fps and save to <output-file-path>')
-    
-    print('')
-    print('- python3 main.py -b <interpolation-mode> [<output-folder>]')
-    print('Run Middlebury benchmark to get results based on an <interpolation-mode>')
-    print('If provided, outputs interpolated images to <output-folder>')
-    
-    print('')
-    print('- python3 main.py -t <interpolation-mode> -f <frame1> <frame2> -o <output-file-path> [<ground-truth-path>]')
-    print('Using <interpolation mode, get the interpolated midpoint frame between <frame1> and <frame2>, saving the output to <output-file-path>')
-    print('If [<ground-truth-path>] provided, metrics (PSNR & SSIM) are returned')
-    
-    print('')
-    print('- python3 main.py -ver')
-    print('Get version')
-
-    print('')
-    print('- python3 main.py -dep')
-    print('Check whether normal requirements are met')
-
-    print('')
-    print('- python3 main.py -depcuda')
-    print('Check whether CUDA dependencies are met')
-
+    manul = open("./txts/manul.txt","r") 
+    print(manul.readline())
+    manul.close() 
 
 elif mode_flag == '-il':
     print(json.dumps(interpolators))
@@ -91,15 +49,15 @@ elif mode_flag == '-mv' and len(args) == 2:
     from io import BytesIO
     video_path = args[1]
     video_file = open(video_path, 'rb')
-    content = video_file.read()
-    video = imageio.get_reader(BytesIO(content), 'ffmpeg', loop=True)
+    content = video_file.readline()
+    video = imageio.get_readlineer(BytesIO(content), 'ffmpeg', loop=True)
     print(json.dumps(video.get_meta_data()))
 
 elif mode_flag == '-mi' and len(args) == 2:
     import imageio
     im_path = args[1]
     
-    im = imageio.imread(im_path)
+    im = imageio.imreadline(im_path)
     print(im.shape)
 
     # print('')
@@ -121,19 +79,68 @@ elif mode_flag == '-i' and len(args) == 8 and '-m' == args[2] and '-f' == args[4
     # print('')
     # print('- python3 main.py -b <interpolation-mode>')
     # print('Run Middlebury benchmark to get results based on an <interpolation-mode>')
-elif mode_flag == '-b' and len(args) >= 2:
-    interpolation_mode = args[1]
+
+elif mode_flag == '-b' and len(args) <= 2: #default
+# - python3 main.py -b [-d]
+    if (len(args) <= 2):
+        with open("./txts/default.txt","r") as default_case:
+            d_set=[word for line in default_case for word in line.split()]
+        print(d_set)
+        default_case.close() 
+        output_path = None
+        #benchmark(MCI_mode, block_size, target_region, ME_mode, filter.mode, filter_size)
+        benchmark(str(d_set[0]), int(d_set[1]), int(d_set[2]), str(d_set[3]), str(d_set[4]), int(d_set[5]), output_path)
+        save = open("./txts/previous.txt", "w")
+        for param in d_set:
+            save.write(param)
+            save.write("\n")
+        save.close()
+    elif (os.stat("./txts/previous.txt").st_size == 0) :
+        with open("./txts/default.txt","r") as default_case:
+            d_set=[word for line in default_case for word in line.split()]
+        print(d_set)
+        default_case.close() 
+        output_path = None
+        #benchmark(MCI_mode, block_size, target_region, ME_mode, filter.mode, filter_size)
+        benchmark(str(d_set[0]), int(d_set[1]), int(d_set[2]), str(d_set[3]), str(d_set[4]), int(d_set[5]), output_path)
+        save = open("./txts/previous.txt", "w")
+        for param in d_set:
+            save.write(param)
+            save.write("\n")
+        save.close()
+    else:
+        with open("./txts/previous.txt","r") as default_case:
+            d_set=[word for line in default_case for word in line.split()]
+        print(d_set)
+        default_case.close() 
+        output_path = None
+        if (len(args) == 2):
+            output_path = args[2]
+
+        #benchmark(MCI_mode, block_size, target_region, ME_mode, filter.mode, filter_size)
+        benchmark(str(d_set[0]), int(d_set[1]), int(d_set[2]), str(d_set[3]), str(d_set[4]), int(d_set[5]), output_path)
+
+# normal cases
+elif mode_flag == '-b' and len(args) == 7:
+    with open("./txts/default.txt","r") as default_case:
+            d_set=args
+            d_set.pop(0)
+    print(d_set)
+    default_case.close() 
     output_path = None
-    if (len(args) > 2):
-        output_path = args[2]
+    #benchmark(MCI_mode, block_size, target_region, ME_mode, filter.mode, filter_size)
+    benchmark(str(d_set[0]), int(d_set[1]), int(d_set[2]), str(d_set[3]), str(d_set[4]), int(d_set[5]), output_path)
+    save = open("./txts/previous.txt", "w")
+    for param in d_set:
+        save.write(param)
+        save.write("\n")
+    save.close()
 
-    benchmark(interpolation_mode, output_path)
-    
 
+elif mode_flag == '-clean' :
+    open('./txts/previous.txt', 'w').close()
+    print('History has been emptied')
 
-    # print('- python3 main.py -t <interpolation-mode> -f <frame1> <frame2> -o <output-file-path> [<ground-truth-path>]')
-    # print('Using <interpolation mode, get the interpolated midpoint frame between <frame1> and <frame2>, saving the output to <output-file-path>')
-    # print('If [<ground-truth-path>] provided, metrics (PSNR & SSIM) are returned')
 elif mode_flag == '-t' and len(args) >= 7 and '-f' == args[2] and '-o' == args[5] :
     interpolation_mode = args[1]
     frame_1_path = args[3]
@@ -161,9 +168,9 @@ elif mode_flag == '-dep':
     
     basedir = pathlib.Path(__file__).parent.absolute()
 
-    f = open(f'{basedir}{os.path.sep}requirements.txt', 'r')
+    f = open(f'{basedir}{os.path.sep}/txts/requirements.txt', 'r')
     
-    dependencies = f.read().split('\n')
+    dependencies = f.readline().split('\n')
 
     pkg_resources.require(dependencies)
     print('Success')
@@ -178,9 +185,9 @@ elif mode_flag == '-depcuda':
     
     basedir = pathlib.Path(__file__).parent.absolute()
 
-    f = open(f'{basedir}{os.path.sep}cuda-requirements.txt', 'r')
+    f = open(f'{basedir}{os.path.sep}/txts/cuda-requirements.txt', 'r')
 
-    dependencies = f.read().split('\n')
+    dependencies = f.readline().split('\n')
 
     pkg_resources.require(dependencies)
     print('Success')

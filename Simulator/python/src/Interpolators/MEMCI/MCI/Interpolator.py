@@ -54,22 +54,23 @@ class MEMCIInterpolator(BaseInterpolator):
                          video_out_path, max_out_frames, max_cache_size)
 
 
-    def get_interpolated_frame(self, idx,**args):
-        self.blockSize = 8 #args["blockSize"]
-        self.target_region = 3 #args["target_region"]
-        self.ME_method = ME_dict["tss"]#args["ME_method"]
-        self.smoothing_filter = smoothing_dict["weighted"]#args["smoothing_filter"]#
-        self.filterSize = 5 #args["filterSize"]
+    def get_interpolated_frame(self, idx, block_size, target_region, ME_mode, filter_mode, filter_size):
+        self.blockSize = block_size 
+        self.target_region = target_region
+        self.ME_method = ME_dict[ME_mode]
+        self.smoothing_filter = smoothing_dict[filter_mode]
+        self.filterSize = filter_size
+
         self.MV_field_idx= -1 #Index in source video that the current motion field is based on.
         self.MV_field=[]
-        for arg, value in args.items():
-            setattr(self, arg, value)
-        print("the block size used was:", self.blockSize)
+        #for arg, value in args.items():
+         #   setattr(self, arg, value)
+        #print("the block size used was:", self.blockSize)
     # def get_interpolated_frame(self, idx, b, t):
         #source_frame is the previous frame in the source vidoe.
         source_frame_idx = math.floor(idx/self.rate_ratio)
         source_frame = self.video_stream.get_frame(source_frame_idx)
-        print(source_frame_idx)
+        #print(source_frame_idx)
         #Normalized distance from current_frame to the source frame.
         dist = idx/self.rate_ratio - math.floor(idx/self.rate_ratio)
 
@@ -160,15 +161,18 @@ class Bi(BaseInterpolator):
         super().__init__(target_fps, video_in_path,
                          video_out_path, max_out_frames, max_cache_size)
 
-    def get_interpolated_frame(self, idx,**args):
-        self.blockSize = 8 #args["blockSize"]
-        self.target_region = 3 #args["target_region"]
-        self.ME_method = ME_dict["tss"]#args["ME_method"]
-        self.smoothing_filter = smoothing_dict["weighted"]#args["smoothing_filter"]#
-        self.filterSize = 5 #args["filterSize"]
+    def get_interpolated_frame(self, idx,block_size, target_region, ME_mode, filter_mode, filter_size):
+        self.blockSize = int(block_size) 
+        self.target_region = int(target_region)
+        self.ME_method = ME_dict[ME_mode]
+        self.smoothing_filter = smoothing_dict[filter_mode]
+        self.filterSize = int(filter_size)
 
-        for arg, value in args.items():
-            setattr(self, arg, value)
+
+        self.MV_field_idx= -1 #Index in source video that the current motion field is based on.
+        self.MV_field=[]
+        #for arg, value in args.items():
+        #    setattr(self, arg, value)
         source_frame_idx = math.floor(idx / self.rate_ratio)
         source_frame = self.video_stream.get_frame(source_frame_idx)
 
@@ -242,6 +246,9 @@ class bw(BaseInterpolator):
         self.ME_method = ME_dict["tss"]#args["ME_method"]
         self.smoothing_filter = smoothing_dict["weighted"]#args["smoothing_filter"]#
         self.filterSize = 5 #args["filterSize"]
+
+        self.MV_field_idx= -1 #Index in source video that the current motion field is based on.
+        self.MV_field=[]
 
         for arg, value in args.items():
             setattr(self, arg, value)
