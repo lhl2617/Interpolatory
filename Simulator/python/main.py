@@ -38,7 +38,7 @@ version = 'Interpolatory Simulator 0.0.1'
 
 if mode_flag == '-h':
     manul = open("./txts/manul.txt","r") 
-    print(manul.readline())
+    print(manul.read())
     manul.close() 
 
 elif mode_flag == '-il':
