@@ -1,0 +1,6 @@
+Unidirectional
+8
+5
+full
+weighted
+5

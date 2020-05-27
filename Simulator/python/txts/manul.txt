@@ -31,7 +31,7 @@ filter size: 5
 Without -d, test will use the last-time settings. -d is always using default settings. 
 
 - python3 main.py -b <MCI_mode> <block_size> <target_region> <ME_mode> <filter.mode> <filter_size>
-Run Middlebury benchmark by choosen modes and parameters
+Run Middlebury benchmark by choosing modes and parameters
 Valid options:
 <MCI_mode> Unidirectional Bidirectional
 <block_size> any int number
@@ -41,6 +41,17 @@ Valid options:
 <filter_size> any int number
 Note: Case sensitive
 
+- python3 main.py -c <index_arg>
+eg 0_Bidirectional,1_10 (for blocksize of 10)
+Run Middlebury benchmark by choosing part of the parameters
+Valid options:
+0<MCI_mode> Unidirectional Bidirectional
+1<block_size> any int number
+2<target_region> any int number
+3<ME_mode> full tss HBMA
+4<filter.mode> mean median weighted
+5<filter_size> any int number
+Note: Case sensitive
 
 - python3 main.py -clean
 Clean test history

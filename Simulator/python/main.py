@@ -127,11 +127,11 @@ elif mode_flag == '-b' and len(args) <= 2: #default
 
 # normal cases
 elif mode_flag == '-b' and len(args) == 7:
-    with open("./txts/default.txt","r") as default_case:
-            d_set=args
-            d_set.pop(0)
+    # with open("./txts/default.txt","r") as default_case:
+    d_set=args
+    d_set.pop(0)
     print(d_set)
-    default_case.close() 
+    # default_case.close()
     output_path = None
     #benchmark(MCI_mode, block_size, target_region, ME_mode, filter.mode, filter_size)
     benchmark(str(d_set[0]), int(d_set[1]), int(d_set[2]), str(d_set[3]), str(d_set[4]), int(d_set[5]), output_path)
@@ -141,6 +141,34 @@ elif mode_flag == '-b' and len(args) == 7:
         save.write("\n")
     save.close()
 
+#change individual arg
+elif mode_flag == '-c' and 2 <= len(args) <7:
+    print("change mode")
+
+    with open("./txts/default.txt", "r") as default_case:
+        d_set = [word for line in default_case for word in line.split()]
+    # print(d_set)
+    default_case.close()
+    output_path = None
+    d_change = args
+    d_change.pop(0)
+    for i in range (len(d_change)):
+        cur=str(d_change[i])
+        index=int(cur[0])
+        print(cur,index)
+        if index==0 or index==3 or index==4:
+            d_set[index]=cur[2:]
+        else:
+            d_set[index]=int(cur[2:])
+    print(d_set)
+
+    # benchmark(MCI_mode, block_size, target_region, ME_mode, filter.mode, filter_size)
+    benchmark(str(d_set[0]), int(d_set[1]), int(d_set[2]), str(d_set[3]), str(d_set[4]), int(d_set[5]), output_path)
+    save = open("./txts/previous.txt", "w")
+    for param in d_set:
+        save.write(str(param))
+        save.write("\n")
+    save.close()
 
 elif mode_flag == '-clean' :
     open('./txts/previous.txt', 'w').close()

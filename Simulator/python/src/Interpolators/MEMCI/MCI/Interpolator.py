@@ -144,6 +144,23 @@ class MEMCIInterpolator(BaseInterpolator):
 
         # print(self.filterSize,self.smoothing_filter,self.ME_method,self.target_region,self.blockSize)
         return New_Interpolated_Frame
+    # def get_benchmark_frame(self, image_1, image_2, block_size, target_region, ME_mode, filter_mode, filter_size):
+    #     # so that we can restore to defaults
+    #     backup_interpolator = deepcopy(self)
+    #
+    #     # replace with Benchmark video_stream
+    #     self.video_stream = BenchmarkVideoStream(image_1, image_2)
+    #     self.target_fps = 2
+    #     self.max_out_frames = 2
+    #     self.rate_ratio = 2.
+    #     self.max_frames_possible = 2
+    #
+    #     res = self.get_interpolated_frame(1,block_size, target_region, ME_mode, filter_mode, filter_size)
+    #
+    #     # restore
+    #     self = backup_interpolator
+    #
+    #     return res
 '''
 %
 %   e.g. 24->60
