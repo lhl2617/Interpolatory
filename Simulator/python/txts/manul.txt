@@ -17,7 +17,7 @@ Load an image and print height, width, and colour dimensions to stdout. If not s
 - python3 main.py -i <input-video-path> -m <interpolation-mode> -f <output-frame-rate> -o <output-file-path>
 Get in an input video source from <input-video-path> and, using <interpolation-mode> mode, interpolate to <output-frame-rate> fps and save to <output-file-path>
 
-- python3 main.py -b [<output-folder>]
+- python3 main.py -b [-d]
 Run Middlebury benchmark to get results with previous setting. if previous setting is empty, using default setting:
 MCI: Unidirectional
 ME: tss
@@ -25,11 +25,19 @@ Block size: 8
 target region: 3                                
 filter: weighted            
 filter size: 5  
-If provided, outputs interpolated images to <output-folder>
+Without -d, test will use the last-time settings. -d is always using default settings. 
 
-- python3 main.py -b <ME-mode> <smoothing-mode> <interpolation-mode> [<output-folder>]
+- python3 main.py -b <MCI_mode> <block_size> <target_region> <ME_mode> <filter.mode> <filter_size>
 Run Middlebury benchmark by choosen modes and parameters
-If provided, outputs interpolated images to <output-folder>
+Valid options:
+<MCI_mode> Unidirectional Bidirectional
+<block_size> any int number
+<target_region> any int number
+<ME_mode> full tss HBMA
+<filter.mode> mean median weighted
+<filter_size> any int number
+Note: Case sensitive
+
 
 - python3 main.py -clean
 Clean test history
