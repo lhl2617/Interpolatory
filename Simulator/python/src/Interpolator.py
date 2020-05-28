@@ -22,4 +22,5 @@ InterpolatorDictionary = {
     'SoftSplat-MidFrame-Sintel': softsplat.SoftSplatMidFrameSintel,
     'Unidirectional':Interpolator.MEMCIInterpolator,
     'Bidirectional':Interpolator.Bi,
+    'BackwardsUni':Interpolator.bw,
 }

@@ -1,6 +1,6 @@
-Unidirectional
+Bidirectional
 8
-5
-full
+3
+tss
 weighted
 5

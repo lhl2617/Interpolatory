@@ -24,7 +24,7 @@ def benchmark(interpolation_mode, block_size, target_region, ME_mode, filter_mod
 
     basedir = pathlib.Path(__file__).parent.parent.absolute()
 
-    paths = sorted(glob.glob(f'{basedir}/benchmarks/middlebury/Urban3/frame10i11.png'))
+    paths = sorted(glob.glob(f'{basedir}/benchmarks/middlebury/*/frame10i11.png'))
 
     cnt_done = 0
     start = int(round(time.time() * 1000))
