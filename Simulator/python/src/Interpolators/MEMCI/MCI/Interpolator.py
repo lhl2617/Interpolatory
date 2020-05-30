@@ -121,6 +121,9 @@ class MEMCIInterpolator(BaseInterpolator):
 
                         Interpolated_Frame[u_i, v_i] =  source_frame[u, v]
                         SAD_interpolated_frame[u_i, v_i] = self.MV_field[u,v,2]
+                else:
+                    Interpolated_Frame[u, v] = source_frame[u, v]
+                    SAD_interpolated_frame[u, v] = self.MV_field[u, v, 2]
 
         # New_Interpolated_Frame = smooth(mean_filter, self.MV_field, 10)
 
