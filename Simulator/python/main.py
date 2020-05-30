@@ -149,7 +149,7 @@ elif mode_flag == '-c' and 2 <= len(args) <7:
         d_set = [word for line in default_case for word in line.split()]
     # print(d_set)
     default_case.close()
-    output_path = None
+
     d_change = args
     d_change.pop(0)
     for i in range (len(d_change)):
@@ -161,6 +161,14 @@ elif mode_flag == '-c' and 2 <= len(args) <7:
         else:
             d_set[index]=int(cur[2:])
     print(d_set)
+    output_path = f"./middleBlurry_output./{d_set[0]}_{d_set[1]}_{d_set[2]}_{d_set[3]}_{d_set[4]}_{d_set[5]}"
+    try :
+        os.makedirs(output_path)
+    except OSError:
+        print("File to create directory %s" %output_path)
+    else:
+        print("Successfully created the directory %s" % output_path)
+
 
     # benchmark(MCI_mode, block_size, target_region, ME_mode, filter.mode, filter_size)
     benchmark(str(d_set[0]), int(d_set[1]), int(d_set[2]), str(d_set[3]), str(d_set[4]), int(d_set[5]), output_path)

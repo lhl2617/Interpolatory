@@ -83,14 +83,14 @@ class MEMCIInterpolator(BaseInterpolator):
         #that the current motion field is estimated on.
         if not self.MV_field_idx < idx/self.rate_ratio < self.MV_field_idx+1:
             target_frame = self.video_stream.get_frame(source_frame_idx+1)
-            self.MV_field= self.ME_method(self.blockSize,self.target_region,source_frame,target_frame)
+            if(self.ME_method!=hbma):
+                self.MV_field= self.ME_method(self.blockSize,self.target_region,source_frame,target_frame)
+            else:
+                sub_region = 1
+                steps_HBMA = 1
+                min_block_size = 2
+                self.MV_field= self.ME_method(self.blockSize,self.target_region,sub_region,steps_HBMA,min_block_size,source_frame,target_frame)
 
-            # block_size = 16
-            # region = 7
-            sub_region =1
-            steps_HBMA = 1
-            min_block_size = 2
-            # self.MV_field = hbma(b,t,sub_region,steps_HBMA,min_block_size,source_frame,target_frame)
             # print("Begin smoothing")
             self.MV_field = smooth(self.smoothing_filter,self.MV_field,self.filterSize)
             self.MV_field_idx = source_frame_idx
