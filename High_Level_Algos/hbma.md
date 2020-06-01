@@ -14,7 +14,7 @@
     - Increase motion vector density
         - Because the image size is halved when downscaled, with a consistent `block size`, a ("parent") block in the downscaled image is 4 ("child") blocks in the original image
         - For each of the 4 child blocks for every block in the previous iteration:
-            - Search areas in a (2*`sub_region`+1)x(2*`sub_region`+1) window (default value for `sub_region` is 1) around position pointed to by parent vector, and the 2 vectors associated with 2 blocks adjacent to the parent block
+            - Search areas in a (2*`sub_region`+1)x(2*`sub_region`+1) window (default value for `sub_region` is 1) around position pointed to by parent vector, and the 2 vectors associated with 2 blocks adjacent to the parent block (parent vectors need to be multiplied by 2 to account for change in image size)
             - Select vector corresponding to the smallest SAD
 - For `block size` -> `min block size` by halving:
     - Increase motion vector density
