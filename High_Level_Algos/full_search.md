@@ -5,4 +5,4 @@
         - For each block in the window in the second image (`target block`):
             - Calculate SAD of `source block` and `target block` and note corresponding vector
     - Take the vector corresponding to the lowest SAD and record in output with SAD (for occlusion in MCI)
-- Return block-wise vector field
+- Return block-wise motion vector field

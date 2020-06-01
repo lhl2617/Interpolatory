@@ -11,4 +11,4 @@
     - For each block in 3x3 around `center`, `space` pixels apart (`target block`):
         - Calculate SAD between `source block` and `target block` and note corresponding vector (no need for `center` block as it has been previously calculated)
     - Assign vector with lowest corresponding SAD to `source block`
-- Return block-wise vector field
+- Return block-wise motion vector field
