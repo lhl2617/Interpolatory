@@ -15,7 +15,7 @@ def full_search_ssd(block_size, size, im1, im2):
     im2_pad = np.pad(im2, ((0,block_size), (0,block_size), (0,0)))
     
     mvs = np.zeros_like(im1[::block_size, ::block_size], dtype='float32')
-    ssds = np.zeros((mvs.shape[0], mvs.shape[1], 2*size+1, 2*size+1))
+    ssds = np.full((mvs.shape[0], mvs.shape[1], 2*size+1, 2*size+1), math.inf, dtype='float32')
 
     for m_r in range(mvs.shape[0]):
         for m_c in range(mvs.shape[1]):
@@ -39,7 +39,7 @@ def full_search_ssd(block_size, size, im1, im2):
                 for t_c in range(max(0, s_c - size), min(target_max_col, s_c + size + 1)):
                     target_block = im2_pad[t_r : t_r+block_size, t_c : t_c+block_size, :]
                     ssd = np.sum(np.square(np.subtract(block, target_block)))
-                    ssds[m_r, m_c, t_r - max(0, s_r - size), t_c - max(0, s_c - size)] = ssd
+                    ssds[m_r, m_c, t_r - s_r, t_c - s_c] = ssd
                     distance = (s_r - t_r) *  (s_r - t_r) + (s_c - t_c) * (s_c - t_c)
                     if ssd < lowest_ssd or (ssd == lowest_ssd and distance < lowest_distance):
                         lowest_distance = distance
@@ -54,17 +54,89 @@ def full_search_ssd(block_size, size, im1, im2):
 '''
 MAP optimisation of mvs
 '''
-def MAP(mvs, ssds, Tm, Ta):
-    out_mvs = np.zeros_like(mvs)
+def MAP(mvs, ssds, im1, block_size, Tm, Ta):
 
     # for each mv, need to minimise the sum of SSD and 2*lowest_ssd*(sum of V_c)
-    # for each x_u, calculate (x_u - x_v)^2
-    # for each y_u, calculate (y_u - y_v)^2
+    # for each x_u, calculate .5 * (x_u - x_v)^2
+    # for each y_u, calculate .5 * (y_u - y_v)^2
     # for each u, calculate both sets of variances for above values (horizontal and vertical cliques)
-    # for each u, divide (x_u - x_v)^2 and (y_u - y_v)^2 by 2*(appropriate var)
+    # for each u, divide (x_u - x_v)^2 and (y_u - y_v)^2 by appropriate var
+    # find V_c by adding 2 tables together and multiplying by l(u,v)
     # find vector with overall smallest value (as you go)
 
-    
+    out_mvs = np.zeros_like(mvs)
+    size = int((ssds.shape[2] - 1) / 2)
+
+    for m_r in range(mvs.shape[0]):
+        for m_c in range(mvs.shape[1]):
+            h_vecs = []     # cliques split into 2 classes: horizontal and vertical
+            v_vecs = []     # var calculated seperately for both
+            if m_r > 0:
+                h_vecs.append((mvs[m_r - 1, m_c, :], np.mean(im1[(m_r-1)*block_size : m_r*block_size, m_c*block_size : (m_c+1)*block_size, :])))
+            if m_r < mvs.shape[0] - 1:
+                h_vecs.append((mvs[m_r + 1, m_c, :], np.mean(im1[(m_r+1)*block_size : (m_r+2)*block_size, m_c*block_size : (m_c+1)*block_size, :])))
+            if m_c > 0:
+                v_vecs.append((mvs[m_r, m_c - 1, :], np.mean(im1[m_r*block_size : (m_r+1)*block_size, (m_c-1)*block_size : m_c*block_size, :])))
+            if m_c < mvs.shape[1] - 1:
+                v_vecs.append((mvs[m_r, m_c + 1, :], np.mean(im1[m_r*block_size : (m_r+1)*block_size, (m_c+1)*block_size : (m_c+2)*block_size, :])))
+            g_h_r = {}
+            g_h_c = {}
+            g_v_r = {}
+            g_v_c = {}
+            lowest_score = math.inf
+            lowest_vec = (0,0)
+            lowest_distance = math.inf
+            for s_r in range(ssds[m_r, m_c].shape[0]):
+                s_r_act = s_r - size
+                g_h_r[s_r_act] = {}
+                g_v_r[s_r_act] = {}
+                for h_vec in h_vecs:
+                    g_h_r[s_r_act][h_vec[0][0]] = (s_r_act - h_vec[0][0]) * (s_r_act - h_vec[0][0]) / 2.0
+                for v_vec in v_vecs:
+                    g_v_r[s_r_act][v_vec[0][0]] = (s_r_act - v_vec[0][0]) * (s_r_act - v_vec[0][0]) / 2.0
+                h_var = np.var(np.fromiter(g_h_r[s_r_act].values(), dtype='float32')) 
+                v_var = np.var(np.fromiter(g_v_r[s_r_act].values(), dtype='float32'))
+                for key, val in g_h_r[s_r_act].items():
+                    g_h_r[s_r_act][key] = val / h_var
+                for key, val in g_v_r[s_r_act].items():
+                    g_v_r[s_r_act][key] = val / v_var
+                for s_c in range(ssds[m_r, m_c].shape[1]):
+                    s_c_act = s_c - size
+                    if s_r == 0:
+                        g_h_c[s_c_act] = {}
+                        g_v_c[s_c_act] = {}
+                        for h_vec in h_vecs:
+                            g_h_c[s_c_act][h_vec[0][1]] = (s_c_act - h_vec[0][1]) * (s_c_act - h_vec[0][1]) / 2.0
+                        for v_vec in v_vecs:
+                            g_v_c[s_c_act][v_vec[0][1]] = (s_c_act - v_vec[0][1]) * (s_c_act - v_vec[0][1]) / 2.0
+                        h_var = np.var(np.fromiter(g_h_c[s_c_act].values(), dtype='float32')) 
+                        v_var = np.var(np.fromiter(g_v_c[s_c_act].values(), dtype='float32'))
+                        for key, val in g_h_c[s_c_act].items():
+                            g_h_c[s_c_act][key] = val / h_var
+                        for key, val in g_v_c[s_c_act].items():
+                            g_v_c[s_c_act][key] = val / v_var
+                    intensity_u = np.mean(im1[m_r*block_size : (m_r+1)*block_size, m_c*block_size : (m_c+1)*block_size, :])
+                    V_c_total = 0
+                    for h_vec in h_vecs:
+                        if np.linalg.norm([s_r_act - h_vec[0][0], s_c_act - h_vec[0][1]]) <= Tm or abs(intensity_u - h_vec[1]) <= Ta:
+                            V_c_total += g_h_r[s_r_act][h_vec[0][0]] + g_h_c[s_c_act][h_vec[0][1]]
+                    for v_vec in v_vecs:
+                        if np.linalg.norm([s_r_act - v_vec[0][0], s_c_act - v_vec[0][1]]) <= Tm or abs(intensity_u - v_vec[1]) <= Ta:
+                            V_c_total += g_v_r[s_r_act][v_vec[0][0]] + g_v_c[s_c_act][v_vec[0][1]]
+                    score = ssds[m_r, m_c, s_r_act, s_c_act] + V_c_total
+                    if score < lowest_score:
+                        lowest_score = score
+                        lowest_vec = (s_r_act, s_c_act)
+                        lowest_distance = s_r_act * s_r_act + s_c_act * s_c_act
+                    elif score == lowest_score:
+                        distance = s_r_act * s_r_act + s_c_act * s_c_act
+                        if distance < lowest_distance:
+                            lowest_score = score
+                            lowest_vec = (s_r_act, s_c_act)
+                            lowest_distance = distance
+            out_mvs[m_r, m_c, 0] = lowest_vec[0]
+            out_mvs[m_r, m_c, 1] = lowest_vec[1]
+            out_mvs[m_r, m_c, 2] = lowest_score
 
     return out_mvs
 
@@ -84,7 +156,7 @@ def search_region(block, window, size):
                 lowest_vec = (row - size, col - size)
     return lowest_vec, lowest_ssd
 
-def get_motion_vectors(block_size, region, sub_region, steps, min_block_size, im1, im2, map_steps=0):
+def get_motion_vectors(block_size, region, sub_region, steps, min_block_size, im1, im2, Tm=1, Ta=1, map_steps=0):
     weightings = np.array([
         [0.0625, 0.125, 0.0625],
         [0.125, 0.25, 0.125],
@@ -106,7 +178,7 @@ def get_motion_vectors(block_size, region, sub_region, steps, min_block_size, im
 
     for i in range(map_steps):
         print('Applying MAP optimisation', i)
-        mvs = MAP(mvs, ssds, 1, 1)
+        mvs = MAP(mvs, ssds, im1_lst[-1], block_size, Tm, Ta)
 
     # convert back to image size for the next stage
     temp = np.zeros_like(im1_lst[-1])
@@ -193,10 +265,18 @@ if __name__ == "__main__":
     steps = int(sys.argv[4])
     min_block_size = int(sys.argv[5])
     map_steps = int(sys.argv[6])
-    im1 = imread(sys.argv[7])[:,:,:3]
-    im2 = imread(sys.argv[8])[:,:,:3]
-    out_path = sys.argv[9]
-    output = get_motion_vectors(block_size, region, sub_region, steps, min_block_size, im1, im2, map_steps)
+    # im1 = imread(sys.argv[7])[:,:,:3]
+    # im2 = imread(sys.argv[8])[:,:,:3]
+    # out_path = sys.argv[9]
+    Tm = int(sys.argv[7])
+    Ta = int(sys.argv[8])
+    path = sys.argv[9]
+    im1 = imread(path+'/frame1.png')[:,:,:3]
+    im2 = imread(path+'/frame2.png')[:,:,:3]
+
+    t = time.time()
+    output = get_motion_vectors(block_size, region, sub_region, steps, min_block_size, im1, im2, Tm=Tm, Ta=Ta, map_steps=map_steps)
+    print('Time taken:', time.time() - t)
 
     print('Printing output...')
-    plot_vector_field(output, im1, min_block_size, out_path)
+    plot_vector_field(output, im1, min_block_size, path+'/'+sys.argv[7]+'_'+sys.argv[8]+'_MAP_'+sys.argv[1]+'_'+sys.argv[2]+'_'+sys.argv[3]+'_'+sys.argv[4]+'_'+sys.argv[5]+'_'+sys.argv[6]+'.png')
