@@ -45,6 +45,7 @@ def benchmark(interpolator, output_path=None):
             output_pathname = path.join(output_path, f'{test_name}.png')
             imageio.imwrite(output_pathname, im_test)
 
+
         psnr.append(skimage.metrics.peak_signal_noise_ratio(im_true, im_test, data_range=255))
         ssim.append(skimage.metrics.structural_similarity(im_true, im_test, data_range=255, multichannel=True))
 

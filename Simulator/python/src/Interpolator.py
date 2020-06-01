@@ -50,7 +50,7 @@ InterpolatorDocs = {
             }
         }
     },
-    "RRIN": {
+    "RRIN-CUDA": {
         "description": "Residue Refinement method. Requires CUDA dependencies.",
         "options": {
             "flow_usage_method": {

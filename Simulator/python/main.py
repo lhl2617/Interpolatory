@@ -124,7 +124,6 @@ elif mode_flag == '-mi' and len(args) == 2:
     im_path = args[1]
     
     im = imageio.imread(im_path)
-    print(im.shape)
 
     # print('')
     # print('- python3 main.py -i <input-video-path> -m <interpolation-mode>[:<settings>] -f <output-frame-rate> -o <output-file-path>')
