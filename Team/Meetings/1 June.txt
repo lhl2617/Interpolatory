@@ -1,0 +1,59 @@
+MEMCI OK
+
+Deliverables deadline set out
+
+FOCUS
+how many pixels did we have to read and write from global arrays to produce a frame - 
+DDR COST w.r.t burst reads/writes
+REUSE SCHEMES 
+M20K
+soft logic
+
+local buffering/caching 
+
+30 bits/pixel 
+16 pixels in a word 
+
+worst case * 16
+
+ddr burst best case is when we use all pixels 
+
+model RW cache
+
+
+-
+onchip SRAM reuse data 
+- how many M20K blocks 
+- feasibility 
+
+-
+modules have not much value, but can go ahead
+modelling ddr has higher value 
+
+- gui ok 
+
+
+======
+
+i'll continue on the gui and the kwargs 
+work on the video
+
+talk to geroge this week
+
+======
+
+read up DDR
+touch a bit on caches 
+cache schemes?
+
+DRAM -> off chip memory
+ALU can be configured to storage/computation
+
+=======
+
+MAP has bugs but not implicating end results 
+vectors look fine
+
+=======
+MCI gang gang -> fine tuning 
+Friday feedback 11AM
