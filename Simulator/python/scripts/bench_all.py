@@ -1,5 +1,6 @@
 # benches interpolators and saves to Interpolatory/Output
-interpolators = ['Linear', 'Oversample', 'Nearest', 'SepConvL1-CUDA', 'SepConvLf-CUDA', 'RRIN-CUDA']
+
+interpolators = ['Nearest', 'Oversample', 'Linear', 'SepConvL1-CUDA', 'SepConvLf-CUDA', 'RRIN-MidFrame-CUDA', 'RRIN-Linear-CUDA']
 
 # run from Interpolatory/Simulator/python/ 
 import os

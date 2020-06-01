@@ -49,6 +49,10 @@ if mode_flag == '-h':
     print('List all supported interpolation modes')
 
     print('')
+    print('- python3 main.py -doc')
+    print('List all supported interpolation modes and their CLI usage guide')
+
+    print('')
     print('- python3 main.py -mv <video-path>')
     print('Load a video and print metadata to stdout. If not supported, will return non-zero value')
     
@@ -57,9 +61,11 @@ if mode_flag == '-h':
     print('Load an image and print height, width, and colour dimensions to stdout. If not supported, will return non-zero value')
     
     print('')
-    print('- python3 main.py -i <input-video-path> -m <interpolation-mode> -f <output-frame-rate> -o <output-file-path>')
+    print('- python3 main.py -i <input-video-path> -m <interpolation-mode> <settings> -f <output-frame-rate> -o <output-file-path>')
     print('Get in an input video source from <input-video-path> and, using <interpolation-mode> mode, interpolate to <output-frame-rate> fps and save to <output-file-path>')
-    
+    print('Extra configuration settings can be set in <settings> using semicolon separated key-value pairs, e.g. for MEMCI, "block_size=32;filter_size=8;"')
+    print('See interpolation mode usage guides in `python3 main.py -doc`')
+
     print('')
     print('- python3 main.py -b <interpolation-mode> [<output-folder>]')
     print('Run Middlebury benchmark to get results based on an <interpolation-mode>')

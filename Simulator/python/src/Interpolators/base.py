@@ -11,7 +11,6 @@ from ..util import sToMMSS, getETA, signal_progress, is_power_of_two, blend_fram
 from ..Globals import debug_flags
 from ..VideoStream import BenchmarkVideoStream, VideoStream
 
-
 '''
 Base Interpolator object for implemented interpolators to derive from.
 
@@ -236,9 +235,9 @@ class MidFrameBaseInterpolator(BaseInterpolator):
                 self.cache.clear()
 
                 # repopulate cache
-                image_1_idx = int(idx // self.rate_ratio * self.rate_ratio)
-                image_2_idx = int(image_1_idx + self.rate_ratio)
-
+                image_1_idx = int(true_idx)
+                image_2_idx = int(true_idx + self.rate_ratio)
+                
                 # put the relevant frames in cache first
                 frameA_idx = true_idx // self.rate_ratio
                 frameB_idx = frameA_idx + 1

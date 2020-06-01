@@ -174,6 +174,7 @@ export class Benchmark extends React.Component<{}, IState> {
 
         benchProc.stderr.on(`data`, (data) => {
             gotStderr += data.toString();
+            console.error(data.toString())
         })
 
         benchProc.on(`close`, (code) => {
