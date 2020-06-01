@@ -10,8 +10,7 @@ InterpolatorDictionary = {
     'Blur': blur.BlurInterpolator,
     'Speed': speed.SpeedInterpolator,
     'SepConv-CUDA': sepconv.SepConv,
-    'RRIN-MidFrame-CUDA': rrin.RRINMidFrameInterpolator,
-    'RRIN-Linear-CUDA': rrin.RRINLinearInterpolator,
+    'RRIN-CUDA': rrin.RRIN
     # 'Unidirectional':Interpolator.MEMCIInterpolator,
     # 'Bidirectional':Interpolator.Bi,
 }

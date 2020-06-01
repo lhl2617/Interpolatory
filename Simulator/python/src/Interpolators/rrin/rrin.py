@@ -145,7 +145,7 @@ class RRINLinearInterpolator(BaseInterpolator):
         return 'RRIN-Linear'
 
 # return object at runtime
-def RRIN(self, target_fps, video_in_path=None, video_out_path=None, max_out_frames=math.inf, max_cache_size=2, **args):
+def RRIN(target_fps, video_in_path=None, video_out_path=None, max_out_frames=math.inf, max_cache_size=2, **args):
     flow_usage_method = 'linear'
 
     if 'flow_usage_method' in args:
