@@ -15,7 +15,7 @@ from .Globals import debug_flags
 from .util import sToMMSS, getETA, signal_progress
 
 
-def benchmark(interpolation_mode, output_path=None):
+def benchmark(interpolator, output_path=None):
     psnr = []
     ssim = []
 
@@ -38,13 +38,13 @@ def benchmark(interpolation_mode, output_path=None):
 
         im_true = imageio.imread(path_to_truth)
 
-        interpolator = InterpolatorDictionary[interpolation_mode](2)
         im_test = interpolator.get_benchmark_frame(frame_1, frame_2)
 
 
         if (not (output_path is None)):
             output_pathname = path.join(output_path, f'{test_name}.png')
             imageio.imwrite(output_pathname, im_test)
+
 
         psnr.append(skimage.metrics.peak_signal_noise_ratio(im_true, im_test, data_range=255))
         ssim.append(skimage.metrics.structural_similarity(im_true, im_test, data_range=255, multichannel=True))
@@ -81,12 +81,11 @@ def benchmark(interpolation_mode, output_path=None):
 
     print(res_json)
 
-def get_middle_frame(interpolation_mode, frame_1_path, frame_2_path, output_file_path, ground_truth_path=None):
+def get_middle_frame(interpolator, frame_1_path, frame_2_path, output_file_path, ground_truth_path=None):
 
     frame_1 = imageio.imread(frame_1_path)
     frame_2 = imageio.imread(frame_2_path)
 
-    interpolator = InterpolatorDictionary[interpolation_mode](2)
     im_test = interpolator.get_benchmark_frame(frame_1, frame_2)
 
     imageio.imwrite(output_file_path, im_test)

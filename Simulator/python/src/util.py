@@ -80,3 +80,36 @@ def get_first_frame_idx_and_ratio(idx, rate_ratio):
     ratio = float(rate_ratio - distance_from_prev_rate_ratio_point) / rate_ratio
 
     return frameA_idx, ratio
+
+# deconstruct the string into a dict
+def deconstruct_settings(s):
+    ret = {}
+
+    pairs = s.split(';')
+
+    for pair in pairs:
+        unsplit = pair.split('=')
+        if len(unsplit) != 2:
+            eprint(f'Ignoring {pair}, malformed input')
+            continue
+    
+        [key, val] = unsplit
+        if len(key) > 0 and len(val) > 0:
+            ret[key] = val
+        else:
+            eprint(f'Ignoring {key} {val}, malformed input')
+
+    return ret
+
+# manage <interpolation-mode>[:<settings>]
+def deconstruct_interpolation_mode_and_settings(s):
+    pair = s.split(':')
+
+    if len(pair) == 1:
+        return pair[0], {}
+    elif len(pair) == 2:
+        settings = deconstruct_settings(pair[1])
+        return pair[0], settings
+    else:
+        eprint(f'Invalid interpolation-mode and settings config: {s}')
+        exit(1)

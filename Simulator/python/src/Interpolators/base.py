@@ -143,8 +143,12 @@ class BaseInterpolator(object):
         self.video_stream = BenchmarkVideoStream(image_1, image_2)
         self.target_fps = 2
         self.max_out_frames = 2
+        
         self.rate_ratio = 2.
         self.max_frames_possible = 2
+
+        # clear cache for MidFrame
+        self.clear_cache()
 
         res = self.get_interpolated_frame(1)
 
@@ -152,6 +156,10 @@ class BaseInterpolator(object):
         self = backup_interpolator
 
         return res
+
+    def clear_cache(self):
+        # used for MidFrameBaseInterpolator to inherit and clear cache
+        pass
 
 class MidFrameBaseInterpolator(BaseInterpolator):
     '''
@@ -278,7 +286,8 @@ class MidFrameBaseInterpolator(BaseInterpolator):
 
             return self.cache[idx]
 
-
+    def clear_cache(self):
+        self.cache.clear()
 
 '''
 Parameters for saving
