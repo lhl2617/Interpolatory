@@ -2,8 +2,7 @@ import numpy as np
 from imageio import imread, imwrite
 import sys
 import time
-from plot_mv import plot_vector_field
-from full_search import get_motion_vectors as full_search
+# from plot_mv import plot_vector_field
 from scipy.ndimage import convolve
 import math
 
@@ -258,25 +257,25 @@ def get_motion_vectors(block_size, region, sub_region, steps, min_block_size, im
                 
     return mvs
 
-if __name__ == "__main__":
-    block_size = int(sys.argv[1])
-    region = int(sys.argv[2])
-    sub_region = int(sys.argv[3])
-    steps = int(sys.argv[4])
-    min_block_size = int(sys.argv[5])
-    map_steps = int(sys.argv[6])
-    # im1 = imread(sys.argv[7])[:,:,:3]
-    # im2 = imread(sys.argv[8])[:,:,:3]
-    # out_path = sys.argv[9]
-    Tm = int(sys.argv[7])
-    Ta = int(sys.argv[8])
-    path = sys.argv[9]
-    im1 = imread(path+'/frame1.png')[:,:,:3]
-    im2 = imread(path+'/frame2.png')[:,:,:3]
+# if __name__ == "__main__":
+#     block_size = int(sys.argv[1])
+#     region = int(sys.argv[2])
+#     sub_region = int(sys.argv[3])
+#     steps = int(sys.argv[4])
+#     min_block_size = int(sys.argv[5])
+#     map_steps = int(sys.argv[6])
+#     # im1 = imread(sys.argv[7])[:,:,:3]
+#     # im2 = imread(sys.argv[8])[:,:,:3]
+#     # out_path = sys.argv[9]
+#     Tm = int(sys.argv[7])
+#     Ta = int(sys.argv[8])
+#     path = sys.argv[9]
+#     im1 = imread(path+'/frame1.png')[:,:,:3]
+#     im2 = imread(path+'/frame2.png')[:,:,:3]
 
-    t = time.time()
-    output = get_motion_vectors(block_size, region, sub_region, steps, min_block_size, im1, im2, Tm=Tm, Ta=Ta, map_steps=map_steps)
-    print('Time taken:', time.time() - t)
+#     t = time.time()
+#     output = get_motion_vectors(block_size, region, sub_region, steps, min_block_size, im1, im2, Tm=Tm, Ta=Ta, map_steps=map_steps)
+#     print('Time taken:', time.time() - t)
 
-    print('Printing output...')
-    plot_vector_field(output, im1, min_block_size, path+'/'+sys.argv[7]+'_'+sys.argv[8]+'_MAP_'+sys.argv[1]+'_'+sys.argv[2]+'_'+sys.argv[3]+'_'+sys.argv[4]+'_'+sys.argv[5]+'_'+sys.argv[6]+'.png')
+#     print('Printing output...')
+#     plot_vector_field(output, im1, min_block_size, path+'/'+sys.argv[7]+'_'+sys.argv[8]+'_MAP_'+sys.argv[1]+'_'+sys.argv[2]+'_'+sys.argv[3]+'_'+sys.argv[4]+'_'+sys.argv[5]+'_'+sys.argv[6]+'.png')
