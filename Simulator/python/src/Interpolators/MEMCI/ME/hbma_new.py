@@ -52,8 +52,6 @@ def block_wise_fs(cost, block1, im, idx, win_size, im_shape):
     if im_c - win_size < 0:
         min_c_off += win_size - im_c
 
-    # print(im_shape, idx, min_r_off, max_r_off, min_c_off, max_c_off)
-
     for r_off in range(min_r_off, max_r_off):
         im_r_off = im_r + r_off
         for c_off in range(min_c_off, max_c_off):
@@ -90,7 +88,6 @@ def increase_vec_density(cost, mvs, block_size, sub_win_size, im1, im2, vec_scal
 
     for row in range(mvs.shape[0]):
         for col in range(mvs.shape[1]):
-            # print(row, col)
             vecs = []
             vecs.append(mvs[row, col])  # parent vector (and sad but ignore)
             if col >= 1:
@@ -102,21 +99,11 @@ def increase_vec_density(cost, mvs, block_size, sub_win_size, im1, im2, vec_scal
             else:
                 vecs.append(mvs[row + 1, col] * vec_scale)
 
-            if (row+1)*2*block_size >= im1.shape[0]:
-                r_max = row*2+1
-            else:
-                r_max = (row+1)*2
-            if (col+1)*2*block_size >= im1.shape[1]:
-                c_max = col*2+1
-            else:
-                c_max = (col+1)*2
-
-            for o_r in range(row*2, r_max):
+            for o_r in range(row*2, (row+1)*2):
                 im_r = o_r * block_size
-                for o_c in range(col*2, c_max):
+                for o_c in range(col*2, (col+1)*2):
                     im_c = o_c * block_size
                     block = im1_pad[im_r : im_r + block_size, im_c : im_c + block_size, :]
-                    # print(im1.shape, im1_pad.shape, im_r, im_c, block.shape)
                     lowest_cost = math.inf
                     for vec in vecs:
                         res = block_wise_fs(cost, block, im2_pad, (im_r+vec[0], im_c+vec[1]), sub_win_size, im1.shape)
