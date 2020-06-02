@@ -13,13 +13,13 @@
 - Apply MAP optimisation to motion vector field (can be applied multiple times)
     - For each block in first smallest image, return vector that minimises the SSD + 2*(lowest SSD in search window)*(sum of V_c)
         - SSD values available from full search
-        - Calculate V_c for each pair of blocks (center block paired with surrounding blocks)
+        - Calculate V_c for each pair of blocks (centre block paired with surrounding blocks)
             - Calculate (x_u - x_v)^2
             - Calculate (y_u - y_v)^2
-            - Calculate variance `var_x` of (x_u - x_v)^2 for horizontal and verticle vectors seperately
-            - Calculate variance `var_y` of (y_u - y_v)^2 for horizontal and verticle vectors seperately
+            - Calculate variance `var_x` of (x_u - x_v)^2 for horizontal and vertical vectors separately
+            - Calculate variance `var_y` of (y_u - y_v)^2 for horizontal and vertical vectors separately
             - Calculate 1/(2*`var_x`) * (x_u - x_v)^2 + 1/(2*`var_y`) * (y_u - y_v)^2
-            - Multiply by l(u, v) (where u is the center vector and v is the neighbour)
+            - Multiply by l(u, v) (where u is the centre vector and v is the neighbour)
                 - l(u, v) = 0 if ||u-v|| > `T_m` and |A_u - A_v| > `T_a`
                     - A_u and A_v are the average intensities of the blocks for the vectors u and v respectively
         - Return vector with smallest SSD + 2*(lowest SSD)*(sum of all V_c)
