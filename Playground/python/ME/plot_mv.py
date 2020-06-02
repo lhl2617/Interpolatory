@@ -7,22 +7,28 @@ import math
 def hsv2rgb(h,s,v):
     return tuple(round(i * 255) for i in hsv_to_rgb(h,s,v))
 
-def plot_vector_field(mv_field, block_size, out_path, method='vector_field'):
+def plot_vector_field(mv_field, image, block_size, out_path, method='vector_field'):
     if method == 'vector_field':
-        Down_sampled_MV= mv_field[::int(block_size),::int(block_size),:]
-        X, Y = np.meshgrid(np.linspace(0, Down_sampled_MV.shape[1], Down_sampled_MV.shape[1]), \
-                            np.linspace(0, Down_sampled_MV.shape[0], Down_sampled_MV.shape[0]))
 
-        U = np.flip(Down_sampled_MV[:,:,0], axis=0)
-        V = np.flip(Down_sampled_MV[:,:,1], axis=0) * -1.0
+        Down_sampled_MV=mv_field[::block_size,::block_size,:]
+        X, Y = np.meshgrid(np.linspace(0,mv_field.shape[1]-1, Down_sampled_MV.shape[1]), \
+                            np.linspace(0,mv_field.shape[0]-1, Down_sampled_MV.shape[0]))
 
-        #Z=np.add(np.square(U),np.square(V))
-        #plt.contourf(X,Y,Z)
+        U = Down_sampled_MV[:,:,1]
+        V = Down_sampled_MV[:,:,0]
 
-        M = np.hypot(U, V)
-        plt.quiver(X, Y, U, V, M, units='x', pivot='tip', width=0.15,
-                scale=1 / 0.15)
+        M = np.hypot(U, V)          #Magnitude of vector.
+
+        # print(self.MV_field.shape)
+        fig, ax = plt.subplots(1,1)
+        _ = ax.imshow(image)
+        vector_field = ax.quiver(X, Y, U, V , M, cmap='coolwarm', angles='xy', units='x', width=1, scale=1 / 0.5)
+
+        cbar=fig.colorbar(vector_field)
+        cbar.ax.set_ylabel('|MV| in pixels')
+
         plt.savefig(out_path, dpi=1000)
+
     elif method == 'intensity':
         output_intensity = np.copy(mv_field)
         max_intensity = 0
@@ -46,4 +52,4 @@ def plot_vector_field(mv_field, block_size, out_path, method='vector_field'):
                 output[row, col, 2] = rgb[2]
         imwrite(out_path, output)
     else:
-        raise Exception('Can only print using \'vector_field\' or \'intensity\' methods.')
+        raise Exception('Can only print using \'vector_field\', \'intensity\' or \'colour_dir\' methods.')

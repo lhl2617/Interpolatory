@@ -37,9 +37,9 @@ interpolators = list(InterpolatorDictionary.keys())
 version = 'Interpolatory Simulator 0.0.1'
 
 if mode_flag == '-h':
-    manul = open("./txts/manul.txt","r") 
-    print(manul.read())
-    manul.close() 
+    manual = open("./txts/manual.txt","r") 
+    print(manual.read())
+    manual.close() 
 
 elif mode_flag == '-il':
     print(json.dumps(interpolators))

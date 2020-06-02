@@ -4,7 +4,7 @@
 
 # run from Interpolatory/Simulator/python/ 
 
-interpolators = ['Linear', 'Oversample', 'Nearest', 'SepConvL1-CUDA', 'SepConvLf-CUDA', 'RRIN-CUDA']
+interpolators = ['Nearest', 'Oversample', 'Linear', 'SepConvL1-CUDA', 'SepConvLf-CUDA', 'RRIN-MidFrame-CUDA', 'RRIN-Linear-CUDA']
 
 import os
 import sys
