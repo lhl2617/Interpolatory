@@ -6,7 +6,7 @@ import * as path from 'path';
 import { message, Button, Popconfirm, Modal, Form, Input } from 'antd';
 import * as commandExists from 'command-exists';
 import { remote } from 'electron';
-import { getPython3, getInterpolatory, reloadApp } from '../../../util';
+import { getPython3, getInterpolatory, reloadApp, getInterpolationModeSchema } from '../../../util';
 import { LocalStorageKey, setLocalStorage, deleteLocalStorage } from '../../../store';
 
 const { Search } = Input;
@@ -65,7 +65,8 @@ export class Home extends React.Component<IProps, IState> {
 
     componentDidMount = () => {
         this.mounted = true;
-        this.getPyVer();
+
+        setTimeout(this.getPyVer, 1000);
     }
 
     componentWillUnmount = () => {
@@ -267,19 +268,14 @@ export class Home extends React.Component<IProps, IState> {
     }
 
     changePaths = (newPyPath: string, newBinName: string) => {
-        let shouldReload = false;
         if (newPyPath !== python3) {
-            shouldReload = true;
             setLocalStorage(LocalStorageKey.PythonPath, newPyPath);
         }
         if (newBinName !== binName) {
-            shouldReload = true;
             setLocalStorage(LocalStorageKey.InterpolatoryPath, newBinName);
         }
-        if (shouldReload) {
-            // dependencies are different now
-            reloadApp();
-        }
+        /// reload anyway
+        reloadApp();
 
     }
 

@@ -1,7 +1,7 @@
 from ..MEMCI.MCI.base import BaseInterpolator, MidFrameBaseInterpolator
 import math
 from collections import deque
-from ...util import get_first_frame_idx_and_ratio
+from ...util import get_first_frame_idx_and_ratio, eprint
 
 class RRINMidFrameInterpolator(MidFrameBaseInterpolator):
     def __init__(self, target_fps, video_in_path=None, video_out_path=None, max_out_frames=math.inf, max_cache_size=2, **args):
@@ -143,3 +143,18 @@ class RRINLinearInterpolator(BaseInterpolator):
 
     def __str__(self):
         return 'RRIN-Linear'
+
+# return object at runtime
+def RRIN(target_fps, video_in_path=None, video_out_path=None, max_out_frames=math.inf, max_cache_size=2, **args):
+    flow_usage_method = 'linear'
+
+    if 'flow_usage_method' in args:
+        flow_usage_method = args['flow_usage_method']
+
+    if (flow_usage_method == 'linear'):
+        return RRINLinearInterpolator(target_fps, video_in_path, video_out_path, max_out_frames, max_cache_size)
+    elif (flow_usage_method == 'midframe'):
+        return RRINMidFrameInterpolator(target_fps, video_in_path, video_out_path, max_out_frames, max_cache_size)
+    else:
+        eprint(f'Unknown RRIN flow_usage_method argument: {flow_usage_method}')
+        exit(1)
