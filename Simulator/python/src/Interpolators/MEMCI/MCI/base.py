@@ -29,6 +29,7 @@ class BaseInterpolator(object):
         self.video_stream = None
         self.video_out_writer = None
 
+
         self.max_frames_possible = None
         self.rate_ratio = None
 
