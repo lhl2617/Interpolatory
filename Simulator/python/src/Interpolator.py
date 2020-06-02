@@ -1,4 +1,4 @@
-from .Interpolators.MEMCI.MCI import nearest, blur, speed, oversample, linear, Interpolator
+from .Interpolators.MEMCI.MCI import nearest, blur, speed, oversample, linear, Interpolator, Unidirectional_2
 from .Interpolators.sepconv import sepconv
 from .Interpolators.rrin import rrin
 from .Interpolators.softsplat import softsplat
@@ -22,5 +22,6 @@ InterpolatorDictionary = {
     'SoftSplat-MidFrame-Sintel': softsplat.SoftSplatMidFrameSintel,
     'Unidirectional':Interpolator.MEMCIInterpolator,
     'Bidirectional':Interpolator.Bi,
+    'Unidirectional_2': Unidirectional_2.Uni_2,
     'BackwardsUni':Interpolator.bw,
 }
