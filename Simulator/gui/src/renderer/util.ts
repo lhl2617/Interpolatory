@@ -104,7 +104,7 @@ export const getProgressFilePath = (args: string[]) => {
 }
 
 export const processProgressFile = async (progressFilePath: string): Promise<string | undefined> => {
-    
+
     if (fs.existsSync(progressFilePath)) {
         const progString = fs.readFileSync(progressFilePath).toString();
         if (progString.substr(0, 8) === `PROGRESS`) {
@@ -116,4 +116,79 @@ export const processProgressFile = async (progressFilePath: string): Promise<str
 
 export const getPercentageFromProgressString = (s: string) => {
     return parseInt(s.substr(0, 3), 10);
+}
+
+export type IModeEnumType = { type: "enum", description: string, value: string, enum: string[], enumDescriptions: [] }
+export type IModeNumberType = { type: "number", description: string, value: number }
+export type InterpolationModeOptions = Record<string, IModeEnumType | IModeNumberType>
+export type InterpolationMode = { name: string, description: string, options?: InterpolationModeOptions }
+export type InterpolationModeSchema = Record<string, InterpolationMode>
+
+/// from the py get the JSON binary
+export const getInterpolationModeSchema = () => {
+    return new Promise<InterpolationModeSchema>((resolve, reject) => {
+
+        const python3 = getPython3();
+        const binName = getInterpolatory();
+
+        const args = [binName, `-schema`];
+        const proc = cp.spawn(python3, args)
+
+
+        let stdoutData = ``;
+
+        proc.stdout.on('data', (data) => {
+            // console.log(`Gotten stdout: ${data}`);
+            stdoutData = data;
+        })
+
+        proc.stdout.on(`end`, () => {
+            const ret: InterpolationModeSchema = JSON.parse(stdoutData);
+            resolve(ret);
+        });
+
+        proc.on('close', (code) => {
+            if (code !== 0) {
+                reject(new Error('Unable to get available interpolation modes'));
+                console.error(`Can't get interpolation modes... exited with ${code}`)
+            }
+        })
+    })
+}
+
+
+export const snakeCaseToFirstWordCapitalised = (s: string) => {
+    return s.split(`_`).map(
+        w => {
+            /// special words
+            if (w === 'me' || w === 'mci') return w.toUpperCase();
+            return w.substring(0, 1).toUpperCase() + w.substring(1)
+        }
+    ).join(` `);
+}
+
+export const iModeToString = (iMode: InterpolationMode) => {
+    let ret = iMode.name;
+
+    if (iMode.options) {
+        ret += `:`;
+        ret += (
+            Object.entries(iMode.options).map(([key, val]) => `${key}=${val.value}`)
+        ).join(`;`)
+    }
+
+    return ret;
+}
+
+export const iModeToPrettyString = (iMode: InterpolationMode) => {
+    let ret = iMode.name;
+
+    if (iMode.options) {
+        ret += `: `
+        ret += (
+            Object.entries(iMode.options).map(([key, val]) => `${snakeCaseToFirstWordCapitalised(key)}=${val.value}`)
+        ).join(`; `)
+    }
+
+    return ret
 }
