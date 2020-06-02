@@ -5,19 +5,19 @@ import numpy as np
 from io import BytesIO
 from scipy import signal
 from fractions import Fraction
-from Simulator.python.src.Interpolators.MEMCI.ME.full_search import get_motion_vectors as get_motion_vectors_fs
-from Simulator.python.src.Interpolators.MEMCI.ME.tss import get_motion_vectors as get_motion_vectors_tss
+from ..ME.full_search import get_motion_vectors as get_motion_vectors_fs
+from ..ME.tss import get_motion_vectors as get_motion_vectors_tss
 from decimal import Decimal
 from copy import deepcopy
 # from Globals import debug_flags
 # from VideoStream import BenchmarkVideoStream, VideoStream
 import matplotlib.pyplot as plt
-from Simulator.python.src.Interpolators.MEMCI.smoothing.threeXthree_mv_smoothing import smooth
-from Simulator.python.src.Interpolators.MEMCI.smoothing.median_filter import median_filter
-from Simulator.python.src.Interpolators.MEMCI.smoothing.mean_filter import mean_filter
-from Simulator.python.src.Interpolators.MEMCI.smoothing.weighted_mean_filter import weighted_mean_filter
-from Simulator.python.src.Interpolators.MEMCI.ME.hbma import get_motion_vectors as hbma
-from ..base import BaseInterpolator
+from ..smoothing.threeXthree_mv_smoothing import smooth
+from ..smoothing.median_filter import median_filter
+from ..smoothing.mean_filter import mean_filter
+from ..smoothing.weighted_mean_filter import weighted_mean_filter
+from ..ME.hbma import get_motion_vectors as hbma
+from .base import BaseInterpolator
 
 
 def gkern(kernlen=8, std=0.5):
