@@ -52,7 +52,9 @@
         "from": "../python/",
         "to": "python",
         "filter": [
+          "*.txt",
           "*.py",
+          "src/**/*.py",
           "benchmarks/**/*"
         ]
       }

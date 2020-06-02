@@ -18,27 +18,33 @@ InterpolatorDictionary = {
 
 InterpolatorDocs = {
     "Nearest": {
+        "name": "Nearest",
         "description": "Known as drop/repeat. Nearest frame in point of time is used"
     },
     "Oversample": {
+        "name": "Oversample",
         "description": "Similar to nearest except frames at boundaries are blended (oversampled)"
     },
     "Linear": {
+        "name": "Linear",
         "description": "Bilinear interpolation in which new frames are created by blending frames by their weights w.r.t. time"
     },
     "Blur": {
+        "name": "Blur",
         "description": "Downconverts frame rate and blends frames, supports only downconversion by 2 to the n where n is an integer"
     },
     "Speed": {
+        "name": "Speed",
         "description": "Converts frame rate by simply changing the speed of the video. No frame is created nor dropped."
     },
     "SepConv-CUDA": {
+        "name": "SepConv-CUDA",
         "description": "SepConv kernel-based method. Requires CUDA dependencies. Supports only upconversion by a factor of 2 or if the factor has denominator 2 (e.g. 2.5 = 5/2). For the latter case, upconversion is done at a doubled factor and a pair of frames are blended to create one output frame.",
         "options": {
             "model": {
                 "type": "enum",
                 "description": "Specify which model to use",
-                "default": "L1",
+                "value": "l1",
                 "enum": [
                     "l1",
                     "lf"
@@ -51,12 +57,13 @@ InterpolatorDocs = {
         }
     },
     "RRIN-CUDA": {
+        "name": "RRIN-CUDA",
         "description": "Residue Refinement method. Requires CUDA dependencies.",
         "options": {
             "flow_usage_method": {
                 "type": "enum",
                 "description": "How the flow between two images is used.",
-                "default": "linear",
+                "value": "linear",
                 "enum": [
                     "midframe",
                     "linear"
@@ -69,12 +76,13 @@ InterpolatorDocs = {
         }
     },
     "MEMCI": {
+        "name": "MEMCI",
         "description": "Motion Estimation & Motion Compensated Interpolation method.",
         "options": {
-            "ME_Method": {
+            "me_method": {
                 "type": "enum",
                 "description": "Which Motion Estimation method to use.",
-                "default": "hbma",
+                "value": "hbma",
                 "enum": [
                     "hbma",
                     "fs",
@@ -88,13 +96,13 @@ InterpolatorDocs = {
             },
             "block_size": {
                 "type": "number",
-                "default": 16,
+                "value": 16,
                 "description": "Block size (positive integer) used by ME"
             },
-            "MCI_Method": {
+            "mci_method": {
                 "type": "enum",
                 "description": "Which Motion Compensated Interpolation method to use.",
-                "default": "bidir",
+                "value": "bidir",
                 "enum": [
                     "unidir",
                     "bidir",
@@ -109,7 +117,7 @@ InterpolatorDocs = {
             "filter_method": {
                 "type": "enum",
                 "description": "Which filtering method to use.",
-                "default": "weighted_mean",
+                "value": "weighted_mean",
                 "enum": [
                     "mean",
                     "median",
@@ -123,7 +131,7 @@ InterpolatorDocs = {
             },
             "filter_size": {
                 "type": "number",
-                "default": 4,
+                "value": 4,
                 "description": "Filter size (positive integer) used by MCI filter method"
             }
         }
