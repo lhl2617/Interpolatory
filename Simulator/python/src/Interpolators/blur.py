@@ -1,9 +1,9 @@
 import sys
 import math
-from ....Globals import debug_flags
+from ..Globals import debug_flags
 import numpy as np
 from .base import BaseInterpolator
-from ....util import blend_frames
+from ..util import blend_frames
 
 # blur the video by taking a window
 # taken from https://github.com/laomao0/BIN/blob/master/data_scripts/adobe240fps/create_dataset_blur_N_frames_average.py

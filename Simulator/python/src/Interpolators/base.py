@@ -7,9 +7,9 @@ from copy import deepcopy
 from io import BytesIO
 from fractions import Fraction
 from decimal import Decimal
-from ....util import sToMMSS, getETA, signal_progress, is_power_of_two, blend_frames
-from ....Globals import debug_flags
-from ....VideoStream import BenchmarkVideoStream, VideoStream
+from ..util import sToMMSS, getETA, signal_progress, is_power_of_two, blend_frames
+from ..Globals import debug_flags
+from ..VideoStream import BenchmarkVideoStream, VideoStream
 
 '''
 Base Interpolator object for implemented interpolators to derive from.
@@ -113,7 +113,7 @@ class BaseInterpolator(object):
             print(progStr)
 
 
-    def get_interpolated_frame(self, idx ,block_size, target_region, ME_mode, filter_mode, filter_size):
+    def get_interpolated_frame(self, idx):
         raise NotImplementedError('To be implemented by derived classes')
 
     def __str__(self):
@@ -131,7 +131,7 @@ class BaseInterpolator(object):
     this is used by interpolators that are not limited
     '''
 
-    def get_benchmark_frame(self, image_1, image_2, block_size, target_region, ME_mode, filter_mode, filter_size):
+    def get_benchmark_frame(self, image_1, image_2):
         # so that we can restore to defaults
         backup_interpolator = deepcopy(self)
 

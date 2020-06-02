@@ -53,8 +53,18 @@ class MEMCIInterpolator(BaseInterpolator):
         super().__init__(target_fps, video_in_path,
                          video_out_path, max_out_frames, max_cache_size)
 
+        ### TODO:- charles etc., here, you will need to specify the default args
+        ### then, following rrin/sepconv, assign new args
+        ### i'll do block_size for now
+        self.block_size = 8
 
+        if hasattr(args, 'block_size'):
+            self.block_size = args['block_size']
+
+
+    ### this function should be only self, idx, like in BaseInterpolator
     def get_interpolated_frame(self, idx, block_size, target_region, ME_mode, filter_mode, filter_size):
+        ### here blockSize is not snake case :(, please fix
         self.blockSize = block_size 
         self.target_region = target_region
         self.ME_method = ME_dict[ME_mode]

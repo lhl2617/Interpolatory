@@ -7,8 +7,8 @@ from io import BytesIO
 from fractions import Fraction
 from decimal import Decimal
 
-from ....Globals import debug_flags
-from ....util import blend_frames, get_first_frame_idx_and_ratio
+from ..Globals import debug_flags
+from ..util import blend_frames, get_first_frame_idx_and_ratio
 
 from .base import BaseInterpolator
 '''

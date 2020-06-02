@@ -1,6 +1,7 @@
-from .Interpolators.MEMCI.MCI import nearest, blur, speed, oversample, linear, Interpolator, Unidirectional_2
+# from .Interpolators.MEMCI.MCI import Interpolator, Unidirectional_2
 from .Interpolators.sepconv import sepconv
 from .Interpolators.rrin import rrin
+from .Interpolators import nearest, blur, speed, oversample, linear
 # from .Interpolators.MEMCI import Interpolator
 # supports all features
 InterpolatorDictionary = {
@@ -79,7 +80,7 @@ InterpolatorDocs = {
         "name": "MEMCI",
         "description": "Motion Estimation & Motion Compensated Interpolation method.",
         "options": {
-            "me_method": {
+            "me_mode": {
                 "type": "enum",
                 "description": "Which Motion Estimation method to use.",
                 "value": "hbma",
@@ -96,10 +97,15 @@ InterpolatorDocs = {
             },
             "block_size": {
                 "type": "number",
-                "value": 16,
+                "value": 8,
                 "description": "Block size (positive integer) used by ME"
             },
-            "mci_method": {
+            "target_region": {
+                "type": "number",
+                "value": 3,
+                "description": "TODO"
+            },
+            "mci_mode": {
                 "type": "enum",
                 "description": "Which Motion Compensated Interpolation method to use.",
                 "value": "bidir",
@@ -114,14 +120,14 @@ InterpolatorDocs = {
                     "Improved Unidirectional Method"
                 ]
             },
-            "filter_method": {
+            "filter_mode": {
                 "type": "enum",
                 "description": "Which filtering method to use.",
                 "value": "weighted_mean",
                 "enum": [
                     "mean",
                     "median",
-                    "weighted_mean"
+                    "weighted"
                 ],
                 "enumDescriptions": [
                     "Mean",
@@ -131,7 +137,7 @@ InterpolatorDocs = {
             },
             "filter_size": {
                 "type": "number",
-                "value": 4,
+                "value": 5,
                 "description": "Filter size (positive integer) used by MCI filter method"
             }
         }

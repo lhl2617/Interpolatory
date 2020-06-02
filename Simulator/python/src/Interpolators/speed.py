@@ -1,6 +1,6 @@
 import sys
 import math
-from ....Globals import debug_flags
+from ..Globals import debug_flags
 
 from .base import BaseInterpolator
 
