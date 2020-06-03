@@ -113,7 +113,7 @@ InterpolatorDocs = {
                 "enum": [
                     "unidir",
                     "bidir",
-                    "uidir2"
+                    "unidir2"
                 ],
                 "enumDescriptions": [
                     "Unidirectional Method",

@@ -24,6 +24,7 @@ from ..smoothing.mean_filter import mean_filter
 from ..smoothing.weighted_mean_filter import weighted_mean_filter
 from ..ME.hbma import get_motion_vectors as hbma
 from ...base import BaseInterpolator
+from .Unidirectional_2 import UniDir2Interpolator
 '''
 blends frames
 '''
@@ -381,7 +382,7 @@ class BiDirInterpolator(BaseInterpolator):
 
 def MEMCI (target_fps, video_in_path=None, video_out_path=None, max_out_frames=math.inf, max_cache_size=2, **args):
     mci_mode = 'unidir'
-
+    print(args)
     if 'mci_mode' in args:
         mci_mode = args['mci_mode']
 
@@ -389,6 +390,8 @@ def MEMCI (target_fps, video_in_path=None, video_out_path=None, max_out_frames=m
         return UniDirInterpolator(target_fps, video_in_path, video_out_path, max_out_frames, max_cache_size,**args)
     elif (mci_mode == 'bidir'):
         return BiDirInterpolator(target_fps, video_in_path, video_out_path, max_out_frames, max_cache_size,**args)
+    elif (mci_mode == 'unidir2'):
+        return UniDir2Interpolator(target_fps, video_in_path, video_out_path, max_out_frames, max_cache_size,**args)
     else:
         eprint(f'Unknown RRIN flow_usage_method argument: {mci_mode}')
         exit(1)
