@@ -79,10 +79,24 @@ class UniDir2Interpolator(BaseInterpolator):
             self.region = int(args['target_region'])
         if 'me_mode' in args.keys():
             self.me_mode = ME_dict[ args['me_mode']]
-            if self.me_mode == tss:
-                self.region = self.steps
 
         self.pad_size = 4*self.block_size
+
+        if self.me_mode == full:
+            self.ME_args = (self.large_block_size, self.region)
+
+        elif self.me_mode == tss:
+            self.ME_args = (self.large_block_size, self.steps)
+
+        elif self.me_mode == hbma:
+            self.ME_args = (self.large_block_size,
+                            self.region, self.sub_region,
+                            self.steps, self.block_size)
+
+        elif self.me_mode == hbma_new:
+            self.ME_args = (self.cost, self.large_block_size,
+                            self.region, self.sub_region,
+                            self.steps, self.block_size)
 
 
     def get_interpolated_frame(self, idx):
@@ -105,39 +119,9 @@ class UniDir2Interpolator(BaseInterpolator):
         #that the current motion field is estimated on.
         if not self.MV_field_idx < idx/self.rate_ratio < self.MV_field_idx+1:
             self.MV_field_idx = source_frame_idx
-            if (self.me_mode == full) or (self.me_mode == tss):
-                self.fwr_MV_field = self.me_mode(self.large_block_size, self.region, source_frame, target_frame)
-                self.bwr_MV_field = self.me_mode(self.large_block_size, self.region, target_frame, source_frame)
-            elif self.me_mode == hbma :
-                self.fwr_MV_field = self.me_mode(self.large_block_size,
-                                        self.region,
-                                        self.sub_region,
-                                        self.steps,
-                                        self.block_size,
-                                        source_frame, target_frame)
 
-                self.bwr_MV_field = self.me_mode(self.large_block_size,
-                                        self.region,
-                                        self.sub_region,
-                                        self.steps,
-                                        self.block_size,
-                                        target_frame, source_frame)
-            elif self.me_mode == hbma_new :
-                self.fwr_MV_field = self.me_mode(self.cost,
-                                        self.large_block_size,
-                                        self.region,
-                                        self.sub_region,
-                                        self.steps,
-                                        self.block_size,
-                                        source_frame, target_frame)
-
-                self.bwr_MV_field = self.me_mode(self.large_block_size,
-                                        self.cost,
-                                        self.region,
-                                        self.sub_region,
-                                        self.steps,
-                                        self.block_size,
-                                        target_frame, source_frame)
+            self.fwr_MV_field = self.me_mode(*self.ME_args, source_frame, target_frame)
+            self.bwr_MV_field = self.me_mode(*self.ME_args, target_frame, source_frame)
 
         #Uncomment if you want to plot vector field when running benchmark.py
         self.MV_field = self.fwr_MV_field
