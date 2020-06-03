@@ -33,21 +33,21 @@ Using <interpolation mode, get the interpolated midpoint frame between <frame1> 
 If [<ground-truth-path>] provided, metrics (PSNR & SSIM) are returned
 Extra configuration settings can be set in <settings> using semicolon separated key-value pairs, e.g. for MEMCI, "block_size=32;filter_size=8;"
 See interpolation mode usage guides in `python3 main.py -doc`
-    
+
 - python3 main.py -b [-d]
 Run Middlebury benchmark to get results with previous setting. if previous setting is empty, using default setting:
 MCI: Unidirectional
 ME: tss
-Block size: 8                   
-target region: 3                                
-filter: weighted            
-filter size: 5  
-Without -d, test will use the last-time settings. -d is always using default settings. 
+Block size: 8
+target region: 3
+filter: weighted
+filter size: 5
+Without -d, test will use the last-time settings. -d is always using default settings.
 
 - python3 main.py -b <MCI_mode> <block_size> <target_region> <ME_mode> <filter.mode> <filter_size>
 Run Middlebury benchmark by choosing modes and parameters
 Valid options:
-<MCI_mode> Unidirectional Bidirectional
+<MCI_mode> unidir bidir unidir2
 <block_size> any int number
 <target_region> any int number
 <ME_mode> full tss HBMA

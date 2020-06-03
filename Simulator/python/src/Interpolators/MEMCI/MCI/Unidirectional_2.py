@@ -29,6 +29,11 @@ Algorithms for Frame Interpolation".
 Link: https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=5440975
 '''
 
+ME_dict={
+    "full":full,
+    "tss":tss,
+    "HBMA":hbma
+}
 
 def get_weight_kern(kernlen=8):
 #Returns a 3D  kernel of size (kernlen x kernlen x 3).
@@ -55,12 +60,14 @@ class UniDir2Interpolator(BaseInterpolator):
         super().__init__(target_fps, video_in_path,
                          video_out_path, max_out_frames, max_cache_size)
 
-
+        self.MV_field_idx = -1
+        self.fwr_MV_field = []
+        self.bwr_MV_field = []
         self.large_block_size = 8
         self.region = 7
         self.me_mode = ME_dict["HBMA"]
-        self.sub_region = 1
-        self.steps = 3
+        self.sub_region = 5
+        self.steps = 1
         self.block_size = 4
 
         if hasattr(args, 'block_size'):
