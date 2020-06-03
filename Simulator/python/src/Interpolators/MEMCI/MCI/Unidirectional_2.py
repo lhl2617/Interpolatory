@@ -74,7 +74,7 @@ class Uni_2(BaseInterpolator):
 
         #Uncomment if you want to plot vector field when running benchmark.py
         self.MV_field = self.fwr_MV_field
-        self.plot_vector_field(min_block_size,steps, source_frame)
+        # self.plot_vector_field(min_block_size,steps, source_frame)
 
         Intrpol_fwr = self.IEWMC(source_frame,target_frame,dist)
         Intrpol_bwr = self.IEWMC(target_frame,source_frame,1-dist)

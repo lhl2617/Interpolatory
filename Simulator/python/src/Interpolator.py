@@ -2,7 +2,7 @@
 from .Interpolators.sepconv import sepconv
 from .Interpolators.rrin import rrin
 from .Interpolators import nearest, blur, speed, oversample, linear
-# from .Interpolators.MEMCI import Interpolator
+from .Interpolators.MEMCI.MCI import Interpolator
 # supports all features
 InterpolatorDictionary = {
     'Nearest': nearest.NearestInterpolator,
@@ -11,7 +11,8 @@ InterpolatorDictionary = {
     'Blur': blur.BlurInterpolator,
     'Speed': speed.SpeedInterpolator,
     'SepConv-CUDA': sepconv.SepConv,
-    'RRIN-CUDA': rrin.RRIN
+    'RRIN-CUDA': rrin.RRIN,
+    'MEMCI': Interpolator.MEMCI
     # 'Unidirectional':Interpolator.MEMCIInterpolator,
     # 'Bidirectional':Interpolator.Bi,
 }

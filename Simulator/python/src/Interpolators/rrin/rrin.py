@@ -32,7 +32,7 @@ class RRINMidFrameInterpolator(MidFrameBaseInterpolator):
         self.model = model
 
 
-    def get_middle_frame(self, image_1, image_2):
+    def get_middle_frame(self, image_1, image_2, torchvision=None):
         import torch
         import torchvision
         from torchvision import transforms

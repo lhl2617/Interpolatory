@@ -3,7 +3,7 @@ from imageio import imread, imwrite
 import sys
 import cProfile  
 import time
-from ..ME.plot_mv import plot_vector_field
+# from ..ME.plot_mv import plot_vector_field
 from .median_filter import median_filter
 from .mean_filter import mean_filter
 from .weighted_mean_filter import weighted_mean_filter

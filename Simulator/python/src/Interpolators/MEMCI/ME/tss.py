@@ -4,7 +4,7 @@ from imageio import imread, imwrite
 import sys
 import cProfile  
 import time
-from .plot_mv import plot_vector_field
+# from .plot_mv import plot_vector_field
 
 def get_motion_vectors(block_size, steps, source_frame, target_frame):
     prec_dic = [1, 2, 1, 2, 3, 2, 1, 2, 1]
