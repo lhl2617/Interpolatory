@@ -99,9 +99,18 @@ def increase_vec_density(cost, mvs, block_size, sub_win_size, im1, im2, vec_scal
             else:
                 vecs.append(mvs[row + 1, col] * vec_scale)
 
-            for o_r in range(row*2, (row+1)*2):
+            if (row+1)*2*block_size >= im1.shape[0]:
+                r_max = row*2+1
+            else:
+                r_max = (row+1)*2
+            if (col+1)*2*block_size >= im1.shape[1]:
+                c_max = col*2+1
+            else:
+                c_max = (col+1)*2
+
+            for o_r in range(row*2, r_max):
                 im_r = o_r * block_size
-                for o_c in range(col*2, (col+1)*2):
+                for o_c in range(col*2, c_max):
                     im_c = o_c * block_size
                     block = im1_pad[im_r : im_r + block_size, im_c : im_c + block_size, :]
                     lowest_cost = math.inf
@@ -120,6 +129,8 @@ def get_motion_vectors(cost, block_size, win_size, sub_win_size, steps, min_bloc
         [0.125, 0.25, 0.125],
         [0.0625, 0.125, 0.0625]
     ])[:,:,None]
+
+    cost = cost_func(cost)
 
     im_lst = []
     im_lst.append((im1,im2))
@@ -164,7 +175,7 @@ def upscale(mvs, block_size, out_shape):
 #     im2 = imread(path+'/frame2.png')[:,:,:3]
 
 #     t = time.time()
-#     output = get_motion_vectors(cost_func(cost), block_size, win_size, sub_win_size, steps, min_block_size, im1, im2)
+#     output = get_motion_vectors(cost, block_size, win_size, sub_win_size, steps, min_block_size, im1, im2)
 #     print('Time taken:', time.time() - t)
 
 #     print('Printing output...')
