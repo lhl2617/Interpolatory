@@ -23,6 +23,7 @@ from ..smoothing.median_filter import median_filter
 from ..smoothing.mean_filter import mean_filter
 from ..smoothing.weighted_mean_filter import weighted_mean_filter
 from ..ME.hbma import get_motion_vectors as hbma
+from ..ME.hbma_new import get_motion_vectors as hbma_new
 from ...base import BaseInterpolator
 from .Unidirectional_2 import UniDir2Interpolator
 '''
@@ -43,7 +44,8 @@ MCI with median filter for filling holes.
 ME_dict={
     "full":get_motion_vectors_fs,
     "tss":get_motion_vectors_tss,
-    "HBMA":hbma
+    "HBMA":hbma,
+    "HBMA_new":hbma_new
 }
 smoothing_dict={
     "mean":mean_filter,
@@ -73,13 +75,13 @@ class UniDirInterpolator(BaseInterpolator):
         self.min_block_size = 4
 
         print(self.block_size)
-        if hasattr(args, 'block_size'):
-            self.block_size = args['block_size']
-        if hasattr(args, 'target_region'):
-            self.target_region = args['target_region']
-        if hasattr(args, 'me_mode'):
+        if 'block_size' in args.keys():
+            self.block_size = int(args['block_size'])
+        if 'target_region' in args.keys():
+            self.target_region = int(args['target_region'])
+        if 'me_mode' in args.keys():
             self.me_mode = ME_dict[ args['me_mode']]
-        if hasattr(args, 'filter_mode'):
+        if 'filter_mode' in args.keys():
             self.filter_mode = smoothing_dict[args['filter_mode']]
 
 

@@ -88,7 +88,8 @@ InterpolatorDocs = {
                 "enum": [
                     "hbma",
                     "fs",
-                    "tss"
+                    "tss",
+                    "hbma_new"
                 ],
                 "enumDescriptions": [
                     "Hierarchical Block Matching Algorithm",
