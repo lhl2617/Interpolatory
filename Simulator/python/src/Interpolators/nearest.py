@@ -4,6 +4,7 @@ from ..Globals import debug_flags
 
 from .base import BaseInterpolator
 
+
 '''
 %
 %   e.g. 24->60

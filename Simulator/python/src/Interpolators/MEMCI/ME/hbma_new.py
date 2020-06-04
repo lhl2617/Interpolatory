@@ -42,7 +42,7 @@ def block_wise_fs(cost, block1, im, idx, win_size, im_shape):
     min_r_off = -win_size
     max_c_off = win_size + 1
     min_c_off = -win_size
-    
+
     if im_r + win_size + block_size >= im_shape[0]:
         max_r_off = max(1, im_shape[0] - im_r - block_size)
     if im_r - win_size < 0:
@@ -91,7 +91,11 @@ def increase_vec_density(cost, mvs, block_size, sub_win_size, im1, im2, vec_scal
             vecs = []
             vecs.append(mvs[row, col])  # parent vector (and sad but ignore)
             if col >= 1:
-                vecs.append(mvs[row, col - 1] * vec_scale) 
+# <<<<<<< MCI_new
+                vecs.append(mvs[row, col - 1] * vec_scale)
+# =======
+#                 vecs.append(mvs[row, col - 1] * vec_scale) 
+# >>>>>>> master
             else:
                 vecs.append(mvs[row, col + 1] * vec_scale)
             if row >= 1:
@@ -99,18 +103,24 @@ def increase_vec_density(cost, mvs, block_size, sub_win_size, im1, im2, vec_scal
             else:
                 vecs.append(mvs[row + 1, col] * vec_scale)
 
-            if (row+1)*2*block_size >= im1.shape[0]:
-                r_max = row*2+1
-            else:
-                r_max = (row+1)*2
-            if (col+1)*2*block_size >= im1.shape[1]:
-                c_max = col*2+1
-            else:
-                c_max = (col+1)*2
-
-            for o_r in range(row*2, r_max):
+# <<<<<<< MCI_new
+            for o_r in range(row*2, (row+1)*2):
                 im_r = o_r * block_size
-                for o_c in range(col*2, c_max):
+                for o_c in range(col*2, (col+1)*2):
+# =======
+#             if (row+1)*2*block_size >= im1.shape[0]:
+#                 r_max = row*2+1
+#             else:
+#                 r_max = (row+1)*2
+#             if (col+1)*2*block_size >= im1.shape[1]:
+#                 c_max = col*2+1
+#             else:
+#                 c_max = (col+1)*2
+
+#             for o_r in range(row*2, r_max):
+#                 im_r = o_r * block_size
+#                 for o_c in range(col*2, c_max):
+# >>>>>>> master
                     im_c = o_c * block_size
                     block = im1_pad[im_r : im_r + block_size, im_c : im_c + block_size, :]
                     lowest_cost = math.inf
@@ -130,8 +140,11 @@ def get_motion_vectors(cost, block_size, win_size, sub_win_size, steps, min_bloc
         [0.0625, 0.125, 0.0625]
     ])[:,:,None]
 
-    cost = cost_func(cost)
+# <<<<<<< MCI_new
+# =======
+#     cost = cost_func(cost)
 
+# >>>>>>> master
     im_lst = []
     im_lst.append((im1,im2))
     for i in range(1, steps+1):
@@ -142,7 +155,11 @@ def get_motion_vectors(cost, block_size, win_size, sub_win_size, steps, min_bloc
 
     print("Calculating initial motion vectors")
     mvs = full_search(cost, block_size, win_size, im_lst[-1][0], im_lst[-1][1])
+# <<<<<<< MCI_new
+
+# =======
     
+# >>>>>>> master
     for (curr_im1, curr_im2) in (im_lst[-2 :: -1]):
         print('Propagating back to previous level')
         mvs = increase_vec_density(cost, mvs, block_size, sub_win_size, curr_im1, curr_im2, vec_scale=2)
@@ -162,21 +179,24 @@ def upscale(mvs, block_size, out_shape):
             o_c = col * block_size
             out[o_r : o_r + block_size, o_c : o_c + block_size, :] = mvs[row, col, :]
     return out
+# <<<<<<< MCI_new
+# =======
 
-# if __name__ == "__main__":
-#     cost = sys.argv[1]
-#     block_size = int(sys.argv[2])
-#     win_size = int(sys.argv[3])
-#     sub_win_size = int(sys.argv[4])
-#     steps = int(sys.argv[5])
-#     min_block_size = int(sys.argv[6])
-#     path = sys.argv[7]
-#     im1 = imread(path+'/frame1.png')[:,:,:3]
-#     im2 = imread(path+'/frame2.png')[:,:,:3]
+# # if __name__ == "__main__":
+# #     cost = sys.argv[1]
+# #     block_size = int(sys.argv[2])
+# #     win_size = int(sys.argv[3])
+# #     sub_win_size = int(sys.argv[4])
+# #     steps = int(sys.argv[5])
+# #     min_block_size = int(sys.argv[6])
+# #     path = sys.argv[7]
+# #     im1 = imread(path+'/frame1.png')[:,:,:3]
+# #     im2 = imread(path+'/frame2.png')[:,:,:3]
 
-#     t = time.time()
-#     output = get_motion_vectors(cost, block_size, win_size, sub_win_size, steps, min_block_size, im1, im2)
-#     print('Time taken:', time.time() - t)
+# #     t = time.time()
+# #     output = get_motion_vectors(cost, block_size, win_size, sub_win_size, steps, min_block_size, im1, im2)
+# #     print('Time taken:', time.time() - t)
 
-#     print('Printing output...')
-#     plot_vector_field(upscale(output, min_block_size, im1.shape), im1, min_block_size, path+'/HBMA_'+sys.argv[1]+'_'+sys.argv[2]+'_'+sys.argv[3]+'_'+sys.argv[4]+'_'+sys.argv[5]+'_'+sys.argv[6]+'.png')
+# #     print('Printing output...')
+# #     plot_vector_field(upscale(output, min_block_size, im1.shape), im1, min_block_size, path+'/HBMA_'+sys.argv[1]+'_'+sys.argv[2]+'_'+sys.argv[3]+'_'+sys.argv[4]+'_'+sys.argv[5]+'_'+sys.argv[6]+'.png')
+# >>>>>>> master

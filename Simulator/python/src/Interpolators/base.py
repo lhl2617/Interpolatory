@@ -28,10 +28,6 @@ class BaseInterpolator(object):
         self.video_stream = None
         self.video_out_writer = None
 
-        self.MV_field_idx = -1
-        self.MV_field = []
-        self.fwr_MV_field = []
-        self.bwr_MV_field = []
 
         self.max_frames_possible = None
         self.rate_ratio = None
@@ -140,10 +136,11 @@ class BaseInterpolator(object):
         backup_interpolator = deepcopy(self)
 
         # replace with Benchmark video_stream
+        self.MV_field_idx = -1
         self.video_stream = BenchmarkVideoStream(image_1, image_2)
         self.target_fps = 2
         self.max_out_frames = 2
-        
+
         self.rate_ratio = 2.
         self.max_frames_possible = 2
 
@@ -245,7 +242,7 @@ class MidFrameBaseInterpolator(BaseInterpolator):
                 # repopulate cache
                 image_1_idx = int(true_idx)
                 image_2_idx = int(true_idx + self.rate_ratio)
-                
+
                 # put the relevant frames in cache first
                 frameA_idx = true_idx // self.rate_ratio
                 frameB_idx = frameA_idx + 1

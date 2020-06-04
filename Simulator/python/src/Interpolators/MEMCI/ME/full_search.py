@@ -4,7 +4,7 @@ from imageio import imread, imwrite
 import time
 import sys
 import cProfile    
-from .plot_mv import plot_vector_field
+# from .plot_mv import plot_vector_field
 
 '''
 block_size = size of block used in source and target frame

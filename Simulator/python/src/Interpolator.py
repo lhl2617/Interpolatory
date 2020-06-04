@@ -1,7 +1,8 @@
-from .Interpolators import nearest, blur, speed, oversample, linear
+# from .Interpolators.MEMCI.MCI import Interpolator, Unidirectional_2
 from .Interpolators.sepconv import sepconv
 from .Interpolators.rrin import rrin
-# from .Interpolators.MEMCI import Interpolator
+from .Interpolators import nearest, blur, speed, oversample, linear
+from .Interpolators.MEMCI.MCI import Interpolator
 # supports all features
 InterpolatorDictionary = {
     'Nearest': nearest.NearestInterpolator,
@@ -10,7 +11,8 @@ InterpolatorDictionary = {
     'Blur': blur.BlurInterpolator,
     'Speed': speed.SpeedInterpolator,
     'SepConv-CUDA': sepconv.SepConv,
-    'RRIN-CUDA': rrin.RRIN
+    'RRIN-CUDA': rrin.RRIN,
+    'MEMCI': Interpolator.MEMCI
     # 'Unidirectional':Interpolator.MEMCIInterpolator,
     # 'Bidirectional':Interpolator.Bi,
 }
@@ -79,14 +81,15 @@ InterpolatorDocs = {
         "name": "MEMCI",
         "description": "Motion Estimation & Motion Compensated Interpolation method.",
         "options": {
-            "me_method": {
+            "me_mode": {
                 "type": "enum",
                 "description": "Which Motion Estimation method to use.",
                 "value": "hbma",
                 "enum": [
                     "hbma",
                     "fs",
-                    "tss"
+                    "tss",
+                    "hbma_new"
                 ],
                 "enumDescriptions": [
                     "Hierarchical Block Matching Algorithm",
@@ -96,17 +99,22 @@ InterpolatorDocs = {
             },
             "block_size": {
                 "type": "number",
-                "value": 16,
+                "value": 8,
                 "description": "Block size (positive integer) used by ME"
             },
-            "mci_method": {
+            "target_region": {
+                "type": "number",
+                "value": 3,
+                "description": "TODO"
+            },
+            "mci_mode": {
                 "type": "enum",
                 "description": "Which Motion Compensated Interpolation method to use.",
                 "value": "bidir",
                 "enum": [
                     "unidir",
                     "bidir",
-                    "uidir2"
+                    "unidir2"
                 ],
                 "enumDescriptions": [
                     "Unidirectional Method",
@@ -114,14 +122,14 @@ InterpolatorDocs = {
                     "Improved Unidirectional Method"
                 ]
             },
-            "filter_method": {
+            "filter_mode": {
                 "type": "enum",
                 "description": "Which filtering method to use.",
                 "value": "weighted_mean",
                 "enum": [
                     "mean",
                     "median",
-                    "weighted_mean"
+                    "weighted"
                 ],
                 "enumDescriptions": [
                     "Mean",
@@ -131,7 +139,7 @@ InterpolatorDocs = {
             },
             "filter_size": {
                 "type": "number",
-                "value": 4,
+                "value": 5,
                 "description": "Filter size (positive integer) used by MCI filter method"
             }
         }
