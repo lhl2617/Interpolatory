@@ -8,6 +8,7 @@ from fractions import Fraction
 from ..ME.full_search import get_motion_vectors as full
 from ..ME.tss import get_motion_vectors as tss
 from ..ME.hbma import get_motion_vectors as hbma
+from ..ME.hbma_new import get_motion_vectors as hbma_new
 from decimal import Decimal
 from copy import deepcopy
 # from Globals import debug_flags
@@ -32,7 +33,8 @@ Link: https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=5440975
 ME_dict={
     "full":full,
     "tss":tss,
-    "HBMA":hbma
+    "HBMA":hbma,
+    "HBMA_new":hbma_new
 }
 
 def get_weight_kern(kernlen=8):
@@ -66,20 +68,35 @@ class UniDir2Interpolator(BaseInterpolator):
         self.large_block_size = 8
         self.region = 7
         self.me_mode = ME_dict["HBMA"]
-        self.sub_region = 5
+        self.sub_region = 1
         self.steps = 1
         self.block_size = 4
+        self.cost = 'sad'
 
-        if hasattr(args, 'block_size'):
-            self.large_block_size = args['block_size']
-        if hasattr(args, 'target_region'):
-            self.region = args['target_region']
-        if hasattr(args, 'me_mode'):
+        if 'block_size' in args.keys():
+            self.large_block_size = int(args['block_size'])
+        if 'target_region' in args.keys():
+            self.region = int(args['target_region'])
+        if 'me_mode' in args.keys():
             self.me_mode = ME_dict[ args['me_mode']]
-            if self.me_mode == tss:
-                self.region = self.steps
 
         self.pad_size = 4*self.block_size
+
+        if self.me_mode == full:
+            self.ME_args = (self.large_block_size, self.region)
+
+        elif self.me_mode == tss:
+            self.ME_args = (self.large_block_size, self.steps)
+
+        elif self.me_mode == hbma:
+            self.ME_args = (self.large_block_size,
+                            self.region, self.sub_region,
+                            self.steps, self.block_size)
+
+        elif self.me_mode == hbma_new:
+            self.ME_args = (self.cost, self.large_block_size,
+                            self.region, self.sub_region,
+                            self.steps, self.block_size)
 
 
     def get_interpolated_frame(self, idx):
@@ -102,27 +119,13 @@ class UniDir2Interpolator(BaseInterpolator):
         #that the current motion field is estimated on.
         if not self.MV_field_idx < idx/self.rate_ratio < self.MV_field_idx+1:
             self.MV_field_idx = source_frame_idx
-            if (self.me_mode!=hbma):
-                self.fwr_MV_field = self.me_mode(self.large_block_size, self.region, source_frame, target_frame)
-                self.bwr_MV_field = self.me_mode(self.large_block_size, self.region, target_frame, source_frame)
-            else :
-                self.fwr_MV_field = hbma(self.large_block_size,
-                                        self.region,
-                                        self.sub_region,
-                                        self.steps,
-                                        self.block_size,
-                                        source_frame, target_frame)
 
-                self.bwr_MV_field = hbma(self.large_block_size,
-                                        self.region,
-                                        self.sub_region,
-                                        self.steps,
-                                        self.block_size,
-                                        target_frame, source_frame)
+            self.fwr_MV_field = self.me_mode(*self.ME_args, source_frame, target_frame)
+            self.bwr_MV_field = self.me_mode(*self.ME_args, target_frame, source_frame)
 
         #Uncomment if you want to plot vector field when running benchmark.py
-        #self.MV_field = self.fwr_MV_field
-        #self.plot_vector_field(source_frame)
+        self.MV_field = self.fwr_MV_field
+        self.plot_vector_field(source_frame)
 
         #Get forward and backward intermidiate
 
