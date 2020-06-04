@@ -124,7 +124,7 @@ def increase_vec_density(cost, mvs, block_size, sub_win_size, im1, im2, vec_scal
 
     return out
 
-def get_motion_vectors(block_size, win_size, sub_win_size, steps, min_block_size, im1, im2, cost='sad'):
+def get_motion_vectors(block_size, win_size, sub_win_size, steps, min_block_size, im1, im2, cost='sad', upscale=True):
     weightings = np.array([
         [0.0625, 0.125, 0.0625],
         [0.125, 0.25, 0.125],
@@ -153,16 +153,16 @@ def get_motion_vectors(block_size, win_size, sub_win_size, steps, min_block_size
         print('Increasing density with block size', block_size)
         mvs = increase_vec_density(cost, mvs, block_size, sub_win_size, im1, im2)
 
-    return mvs
+    if upscale:
+        out = np.zeros_like(im1, dtype='float32')
+        for row in range(mvs.shape[0]):
+            o_r = row * block_size
+            for col in range(mvs.shape[1]):
+                o_c = col * block_size
+                out[o_r : o_r + block_size, o_c : o_c + block_size, :] = mvs[row, col, :]
+        return out
 
-def upscale(mvs, block_size, out_shape):
-    out = np.zeros(out_shape, dtype='float32')
-    for row in range(mvs.shape[0]):
-        o_r = row * block_size
-        for col in range(mvs.shape[1]):
-            o_c = col * block_size
-            out[o_r : o_r + block_size, o_c : o_c + block_size, :] = mvs[row, col, :]
-    return out
+    return mvs
 
 # if __name__ == "__main__":
 #     cost = sys.argv[1]
@@ -176,8 +176,8 @@ def upscale(mvs, block_size, out_shape):
 #     im2 = imread(path+'/frame2.png')[:,:,:3]
 
 #     t = time.time()
-#     output = get_motion_vectors(block_size, win_size, sub_win_size, steps, min_block_size, im1, im2, cost)
+#     output = get_motion_vectors(block_size, win_size, sub_win_size, steps, min_block_size, im1, im2, cost=cost)
 #     print('Time taken:', time.time() - t)
 
 #     print('Printing output...')
-#     plot_vector_field(upscale(output, min_block_size, im1.shape), im1, min_block_size, path+'/HBMA_'+sys.argv[1]+'_'+sys.argv[2]+'_'+sys.argv[3]+'_'+sys.argv[4]+'_'+sys.argv[5]+'_'+sys.argv[6]+'.png')
+#     plot_vector_field(output, im1, min_block_size, path+'/HBMA_'+sys.argv[1]+'_'+sys.argv[2]+'_'+sys.argv[3]+'_'+sys.argv[4]+'_'+sys.argv[5]+'_'+sys.argv[6]+'.png')
