@@ -8,7 +8,6 @@ from fractions import Fraction
 from ..ME.full_search import get_motion_vectors as full
 from ..ME.tss import get_motion_vectors as tss
 from ..ME.hbma import get_motion_vectors as hbma
-from ..ME.hbma_new import get_motion_vectors as hbma_new
 from decimal import Decimal
 from copy import deepcopy
 # from Globals import debug_flags
@@ -34,7 +33,6 @@ ME_dict={
     "full":full,
     "tss":tss,
     "HBMA":hbma,
-    "HBMA_new":hbma_new
 }
 
 def get_weight_kern(kernlen=8):
@@ -71,8 +69,7 @@ class UniDir2Interpolator(BaseInterpolator):
         self.sub_region = 1
         self.steps = 1
         self.block_size = 4
-        self.cost = 'sad'
-
+        self.upscale_MV = True
         if 'block_size' in args.keys():
             self.large_block_size = int(args['block_size'])
         if 'target_region' in args.keys():
@@ -83,21 +80,17 @@ class UniDir2Interpolator(BaseInterpolator):
         self.pad_size = 4*self.block_size
 
         if self.me_mode == full:
-            self.ME_args = (self.large_block_size, self.region)
+            self.ME_args = {"block_size":self.large_block_size, "target_region":self.region}
 
         elif self.me_mode == tss:
-            self.ME_args = (self.large_block_size, self.steps)
+            self.ME_args = {"block_size":self.large_block_size, "steps":self.steps}
 
         elif self.me_mode == hbma:
-            self.ME_args = (self.large_block_size,
-                            self.region, self.sub_region,
-                            self.steps, self.block_size)
-
-        elif self.me_mode == hbma_new:
-            self.ME_args = (self.cost, self.large_block_size,
-                            self.region, self.sub_region,
-                            self.steps, self.block_size)
-
+            self.upscale_MV = False
+            self.ME_args = {"block_size":self.large_block_size,"win_size":self.region,
+                            "sub_win_size":self.sub_region, "steps":self.steps,
+                            "min_block_size":self.block_size,
+                            "cost":"sad", "upscale":self.upscale_MV}
 
     def get_interpolated_frame(self, idx):
 
@@ -120,8 +113,8 @@ class UniDir2Interpolator(BaseInterpolator):
         if not self.MV_field_idx < idx/self.rate_ratio < self.MV_field_idx+1:
             self.MV_field_idx = source_frame_idx
 
-            self.fwr_MV_field = self.me_mode(*self.ME_args, source_frame, target_frame)
-            self.bwr_MV_field = self.me_mode(*self.ME_args, target_frame, source_frame)
+            self.fwr_MV_field = self.me_mode(**self.ME_args, im1=source_frame, im2=target_frame)
+            self.bwr_MV_field = self.me_mode(**self.ME_args, im1=target_frame, im2=source_frame)
 
         #Uncomment if you want to plot vector field when running benchmark.py
         self.MV_field = self.fwr_MV_field
@@ -138,7 +131,7 @@ class UniDir2Interpolator(BaseInterpolator):
         #Fill holes in the combined frame
         Fc_filled = self.BDHI(Fc)
 
-        #self.show_images(Ff,Fb,Fc,Fc_filled)
+        self.show_images(Ff,Fb,Fc,Fc_filled)
 
 
         #Remove padding
@@ -150,9 +143,8 @@ class UniDir2Interpolator(BaseInterpolator):
     #Irregular-Grid Expanded-Block
     #Weighted Motion-Compensation
     def IEWMC(self, MV_field, F1, F2, dist):
-        dist=dist
-
-        thresh = 150 # SAD threshold to determine occluded blocks.
+        frame_shape = F1.shape
+        thresh = 250 # SAD threshold to determine occluded blocks.
 
         ##Initialization##
         #Pad input images to deal with expanded blocks.
@@ -175,11 +167,20 @@ class UniDir2Interpolator(BaseInterpolator):
         #Iterate trough all blocks.
         ##Accumulations##
 
-        for block_row_index in range(0, MV_field.shape[0], self.block_size):
-            for block_col_index in range(0, MV_field.shape[1], self.block_size):
-                MV_i = MV_field[block_row_index, block_col_index, 0:2]
-                Xb = int(dist*MV_i[0])  #Scaled motion vector within current block.
-                Yb = int(dist*MV_i[1])
+        for block_row_index in range(0, frame_shape[0], self.block_size):
+            for block_col_index in range(0, frame_shape[1], self.block_size):
+
+
+                if self.upscale_MV == False:
+                    MV_i = MV_field[int(block_row_index/self.block_size), int(block_col_index/self.block_size), 0:3]
+
+                else:
+                    MV_i = MV_field[block_row_index, block_col_index, 0:3]
+                Xb = int(MV_i[0])  #Scaled motion vector within current block.
+                Yb = int(MV_i[1])
+                TXb = int(dist*Xb)
+                TYb = int(dist*Yb)
+                SAD = MV_i[2]/SAD_norm
 
                 i = block_row_index + self.pad_size
                 j = block_col_index + self.pad_size
@@ -349,11 +350,14 @@ class UniDir2Interpolator(BaseInterpolator):
 
     def plot_vector_field(self,source_frame):
         #Downsample so each vector represents one block.
-
-
-        Down_sampled_MV=self.MV_field[::self.block_size,::self.block_size,:]
-        X, Y = np.meshgrid(np.linspace(0,self.MV_field.shape[1]-1, Down_sampled_MV.shape[1]), \
-                            np.linspace(0,self.MV_field.shape[0]-1, Down_sampled_MV.shape[0]))
+        if self.upscale_MV == False:
+            Down_sampled_MV = self.MV_field
+            X, Y = np.meshgrid(np.linspace(0,(self.MV_field.shape[1]*self.block_size)-1, Down_sampled_MV.shape[1]), \
+                                np.linspace(0,(self.MV_field.shape[0]*self.block_size) -1, Down_sampled_MV.shape[0]))
+        else :
+            Down_sampled_MV=self.MV_field[::self.block_size,::self.block_size,:]
+            X, Y = np.meshgrid(np.linspace(0,self.MV_field.shape[1]-1, Down_sampled_MV.shape[1]), \
+                                np.linspace(0,self.MV_field.shape[0]-1, Down_sampled_MV.shape[0]))
 
         U = Down_sampled_MV[:,:,0]*-1
         V = Down_sampled_MV[:,:,1]

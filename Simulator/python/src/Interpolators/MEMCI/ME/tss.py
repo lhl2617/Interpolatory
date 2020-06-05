@@ -2,16 +2,18 @@ import numpy as np
 import math
 from imageio import imread, imwrite
 import sys
-import cProfile  
+import cProfile
 import time
 # from .plot_mv import plot_vector_field
 
-def get_motion_vectors(block_size, steps, source_frame, target_frame):
+def get_motion_vectors(block_size, steps, im1, im2):
+    source_frame=im1
+    target_frame=im2
     prec_dic = [1, 2, 1, 2, 3, 2, 1, 2, 1]
 
     source_frame_pad = np.pad(source_frame, ((0,block_size), (0,block_size), (0,0)))  # to allow for non divisible block sizes
     target_frame_pad = np.pad(target_frame, ((0,block_size), (0,block_size), (0,0)))
-    
+
     output = np.zeros_like(source_frame, dtype='float32')
 
     prev_time = time.time()
@@ -29,7 +31,7 @@ def get_motion_vectors(block_size, steps, source_frame, target_frame):
             for step in range(steps, 0, -1):
                 S = 2 ** (step - 1)
                 i = -1
-                
+
                 if s_row + block_size >= source_frame.shape[0]:
                     target_max_row = s_row + 1
                 else:
@@ -55,7 +57,7 @@ def get_motion_vectors(block_size, steps, source_frame, target_frame):
             output[s_row:s_row+block_size, s_col:s_col+block_size, 0] = lowest_idx[0] - s_row
             output[s_row:s_row+block_size, s_col:s_col+block_size, 1] = lowest_idx[1] - s_col
             output[s_row:s_row+block_size, s_col:s_col+block_size, 2] = lowest_sad
-            
+
     return output
 
 if __name__ == "__main__":

@@ -3,20 +3,22 @@ import math
 from imageio import imread, imwrite
 import time
 import sys
-import cProfile    
+import cProfile
 # from .plot_mv import plot_vector_field
 
 '''
 block_size = size of block used in source and target frame
 target_region = number of pixels padding the block to be searched
 '''
-def get_motion_vectors(block_size, target_region, source_frame, target_frame):
+def get_motion_vectors(block_size, target_region, im1, im2):
+    source_frame=im1
+    target_frame=im2
     lowest_sad_const = math.inf    # maximum sad score for a block
     lowest_distance_const = math.inf
 
     source_frame_pad = np.pad(source_frame, ((0,block_size), (0,block_size), (0,0)))  # to allow for non divisible block sizes
     target_frame_pad = np.pad(target_frame, ((0,block_size), (0,block_size), (0,0)))
-    
+
     output = np.zeros_like(source_frame, dtype='float32')
 
     for s_row in range(0, source_frame.shape[0], block_size):
@@ -26,7 +28,7 @@ def get_motion_vectors(block_size, target_region, source_frame, target_frame):
             lowest_sad = lowest_sad_const
             lowest_distance = lowest_distance_const
             target_index = (0, 0)
-            
+
             if s_row + block_size >= source_frame.shape[0]:
                 target_max_row = s_row + 1
             else:
@@ -48,7 +50,7 @@ def get_motion_vectors(block_size, target_region, source_frame, target_frame):
             output[s_row:s_row+block_size, s_col:s_col+block_size, 0] = target_index[0] - s_row
             output[s_row:s_row+block_size, s_col:s_col+block_size, 1] = target_index[1] - s_col
             output[s_row:s_row+block_size, s_col:s_col+block_size, 2] = lowest_sad
-    
+
     return output
 
 if __name__ == "__main__":
