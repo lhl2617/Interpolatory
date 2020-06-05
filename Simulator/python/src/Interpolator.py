@@ -39,44 +39,6 @@ InterpolatorDocs = {
         "name": "Speed",
         "description": "Converts frame rate by simply changing the speed of the video. No frame is created nor dropped."
     },
-    "SepConv-CUDA": {
-        "name": "SepConv-CUDA",
-        "description": "SepConv kernel-based method. Requires CUDA dependencies. Supports only upconversion by a factor of 2 or if the factor has denominator 2 (e.g. 2.5 = 5/2). For the latter case, upconversion is done at a doubled factor and a pair of frames are blended to create one output frame.",
-        "options": {
-            "model": {
-                "type": "enum",
-                "description": "Specify which model to use",
-                "value": "l1",
-                "enum": [
-                    "l1",
-                    "lf"
-                ],
-                "enumDescriptions": [
-                    "Using the L1 model (benchmark optimised)",
-                    "Using the Lf model (qualitative results optimised)"
-                ]
-            }
-        }
-    },
-    "RRIN-CUDA": {
-        "name": "RRIN-CUDA",
-        "description": "Residue Refinement method. Requires CUDA dependencies.",
-        "options": {
-            "flow_usage_method": {
-                "type": "enum",
-                "description": "How the flow between two images is used.",
-                "value": "linear",
-                "enum": [
-                    "midframe",
-                    "linear"
-                ],
-                "enumDescriptions": [
-                    "Uses only midpoint of flow to interpolate output flow. Supports only upconversion by a factor of 2 or if the factor has denominator 2 (e.g. 2.5 = 5/2). For the latter case, upconversion is done at a doubled factor and a pair of frames are blended to create one output frame.",
-                    "Uses bilinear interpolation based on the flow between two consecutive original frames."
-                ]
-            }
-        }
-    },
     "MEMCI": {
         "name": "MEMCI",
         "description": "Motion Estimation & Motion Compensated Interpolation method.",
@@ -89,12 +51,11 @@ InterpolatorDocs = {
                     "hbma",
                     "fs",
                     "tss",
-                    "hbma_new"
                 ],
                 "enumDescriptions": [
                     "Hierarchical Block Matching Algorithm",
                     "Full Search",
-                    "Three Step Search"
+                    "Three Step Search",
                 ]
             },
             "block_size": {
@@ -105,7 +66,7 @@ InterpolatorDocs = {
             "target_region": {
                 "type": "number",
                 "value": 3,
-                "description": "TODO"
+                "description": "The distance in pixels that the algorithm searches for motion"
             },
             "mci_mode": {
                 "type": "enum",
@@ -143,5 +104,76 @@ InterpolatorDocs = {
                 "description": "Filter size (positive integer) used by MCI filter method"
             }
         }
+    },
+    "SepConv-CUDA": {
+        "name": "SepConv-CUDA",
+        "description": "SepConv kernel-based method. Requires CUDA dependencies. Supports only upconversion by a factor of 2 or if the factor has denominator 2 (e.g. 2.5 = 5/2). For the latter case, upconversion is done at a doubled factor and a pair of frames are blended to create one output frame.",
+        "options": {
+            "model": {
+                "type": "enum",
+                "description": "Specify which model to use",
+                "value": "l1",
+                "enum": [
+                    "l1",
+                    "lf"
+                ],
+                "enumDescriptions": [
+                    "Using the L1 model (benchmark optimised)",
+                    "Using the Lf model (qualitative results optimised)"
+                ]
+            }
+        }
+    },
+    "RRIN-CUDA": {
+        "name": "RRIN-CUDA",
+        "description": "Residue Refinement method. Requires CUDA dependencies.",
+        "options": {
+            "flow_usage_method": {
+                "type": "enum",
+                "description": "How the flow between two images is used.",
+                "value": "linear",
+                "enum": [
+                    "midframe",
+                    "linear"
+                ],
+                "enumDescriptions": [
+                    "Uses only midpoint of flow to interpolate output flow. Supports only upconversion by a factor of 2 or if the factor has denominator 2 (e.g. 2.5 = 5/2). For the latter case, upconversion is done at a doubled factor and a pair of frames are blended to create one output frame.",
+                    "Uses bilinear interpolation based on the flow between two consecutive original frames."
+                ]
+            }
+        }
     }
 }
+
+def getIDocs():
+    def getOptions(iDocOptions):
+        for key, optionObj in iDocOptions.items():
+            print(f'- {key}')
+            desc = optionObj['description']
+            print(f'  {desc}')
+            defaultVal = optionObj['value']
+            print(f'  Default: {defaultVal}')
+            if optionObj['type'] == 'enum':
+                print(f'  Possible values: ')
+                for i in range(len(optionObj['enum'])):
+                    enumChoice = optionObj['enum'][i]
+                    enumDesc = optionObj['enumDescriptions'][i]
+                    print(f'\t* {enumChoice}: {enumDesc}')
+
+    for key, iDocObj in InterpolatorDocs.items():
+        equalString = '=' * len(key)
+        print(equalString)
+        print(key)
+        print(equalString)
+        name = iDocObj['name']
+        desc = iDocObj['description']
+        print(f'Name          : {name}')
+        print(f'Description   : {desc}')
+        if 'options' in iDocObj:
+            print(f'-------')
+            print(f'OPTIONS')
+            print(f'-------')
+            getOptions(iDocObj['options'])
+        print('')
+    
+

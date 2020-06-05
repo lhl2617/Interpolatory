@@ -1,3 +1,11 @@
+'''
+Model source
+
+H. Li, Y. Yuan and Q. Wang, "Video Frame Interpolation Via Residue Refinement," ICASSP 2020 - 2020 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP), Barcelona, Spain, 2020, pp. 2613-2617, doi: 10.1109/ICASSP40776.2020.9053987
+
+https://github.com/HopLee6/RRIN
+'''
+
 from ..base import BaseInterpolator, MidFrameBaseInterpolator
 import math
 from collections import deque

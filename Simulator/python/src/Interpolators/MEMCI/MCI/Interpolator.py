@@ -56,10 +56,6 @@ class UniDirInterpolator(BaseInterpolator):
         super().__init__(target_fps, video_in_path,
                          video_out_path, max_out_frames, max_cache_size)
 
-        ### TODO:- charles etc., here, you will need to specify the default args
-        ### then, following rrin/sepconv, assign new args
-        ### i'll do block_size for now
-
         self.block_size = 8
         # print('sup bro set block_size here')
         # self.blockSize = block_size
