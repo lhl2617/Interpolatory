@@ -74,7 +74,7 @@ class UniDirInterpolator(BaseInterpolator):
         self.steps_HBMA = 4
         self.min_block_size = 4
 
-        #print(self.block_size)
+        print(self.block_size)
         if hasattr(args, 'block_size'):
             self.block_size = args['block_size']
         if hasattr(args, 'target_region'):
@@ -212,7 +212,7 @@ class BiDirInterpolator(BaseInterpolator):
             self.me_mode = args['me_mode']
         if hasattr(args, 'filter_mode'):
             self.filter_mode = args['filter_mode']
-        
+        print("its working")
     
     def get_interpolated_frame(self, idx):
 
@@ -233,12 +233,12 @@ class BiDirInterpolator(BaseInterpolator):
             # first fill holes
             # second smooth it
 
-            #h = gaussian_filter_2d(1)
+            h = gaussian_filter_2d(1)
             #h = [[1/9, 1/9,1/9],[1/9, 1/9,1/9],[1/9, 1/9,1/9]]
-            #image[:,:,0] = scipy.signal.convolve2d(image[:,:,0], h ,mode='same', boundary='fill', fillvalue=0)
-            #image[:,:,1] = scipy.signal.convolve2d(image[:,:,1], h ,mode='same', boundary='fill', fillvalue=0)
-            #image[:,:,2] = scipy.signal.convolve2d(image[:,:,2], h ,mode='same', boundary='fill', fillvalue=0)
-            
+            image[:,:,0] = scipy.signal.convolve2d(image[:,:,0], h ,mode='same', boundary='fill', fillvalue=0)
+            image[:,:,1] = scipy.signal.convolve2d(image[:,:,1], h ,mode='same', boundary='fill', fillvalue=0)
+            image[:,:,2] = scipy.signal.convolve2d(image[:,:,2], h ,mode='same', boundary='fill', fillvalue=0)
+            '''
             h_sobel_x = [[1, 0,-1],[2,0,-2],[1,0,-1]]
             h_sobel_y = [[1,2,1],[0,0,0],[-1,-2,-1]]
             for i in range(3):
@@ -246,7 +246,7 @@ class BiDirInterpolator(BaseInterpolator):
                 y_axis = scipy.signal.convolve2d(image[:,:,i], h_sobel_y ,mode='same', boundary='fill', fillvalue=0)
                 # Calculate the gradient magnitude
                 image[:,:,i] = np.sqrt(x_axis*x_axis+y_axis*y_axis)
-            
+            '''
             return image
 
         #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -315,8 +315,8 @@ class BiDirInterpolator(BaseInterpolator):
             for v in range(0, Interpolated_Frame.shape[1]):
                 if Interpolated_Frame[u,v,0] == -1:
                     #to make sure the hole is not empty
-                    Interpolated_Frame[u, v] = target_frame[u, v]
-                    SAD_interpolated_frame[u, v] = self.MV_field[u, v, 2]
+                    #Interpolated_Frame[u, v] = target_frame[u, v]
+                    #SAD_interpolated_frame[u, v] = self.MV_field[u, v, 2]
 
                     u_min=max(0,u-k)
                     u_max=min(Interpolated_Frame.shape[0],u+k+1)
@@ -325,11 +325,12 @@ class BiDirInterpolator(BaseInterpolator):
                     for i in range(3):
                         block = Interpolated_Frame[u_min:u_max,v_min:v_max,i]
                         block = block[block != -1]
+                        #New_Interpolated_Frame[u,v,i] = np.mean(block)
                         New_Interpolated_Frame[u,v,i] = np.median(block)
         
         New_Interpolated_Frame = New_Interpolated_Frame.astype(source_frame.dtype)
         #New_Interpolated_Frame = Interpolated_Frame.astype(source_frame.dtype)
-        #outframe = convol(New_Interpolated_Frame)
+        #New_Interpolated_Frame = convol(New_Interpolated_Frame)
         return New_Interpolated_Frame
 
     def __str__(self):
