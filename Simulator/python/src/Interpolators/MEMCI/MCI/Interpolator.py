@@ -112,7 +112,7 @@ class UniDirInterpolator(BaseInterpolator):
             # print(self.me_mode)
             if(self.me_mode!=hbma):
 
-                self.me_mode = ME_dict[self.me_mode]
+                # self.me_mode = ME_dict[self.me_mode]
                 self.MV_field= self.me_mode(self.block_size,self.target_region,source_frame,target_frame)
             else:
 
@@ -362,7 +362,7 @@ class BiDirInterpolator(BaseInterpolator):
             target_frame = self.video_stream.get_frame(source_frame_idx+1)
 
             if(self.me_mode!=hbma):
-                self.me_mode = ME_dict[self.me_mode]
+                # self.me_mode = ME_dict[self.me_mode]
                 self.MV_field= self.me_mode(self.block_size,self.target_region,source_frame,target_frame)
                 bwd = self.me_mode(self.block_size, self.target_region, target_frame, source_frame)
             else:
@@ -431,7 +431,7 @@ class BiDirInterpolator(BaseInterpolator):
         return 'bwMEMCI'
 
 def MEMCI (target_fps, video_in_path=None, video_out_path=None, max_out_frames=math.inf, max_cache_size=2, **args):
-    mci_mode = 'unidir2'
+    mci_mode = 'unidir'
 
     if 'mci_mode' in args:
         mci_mode = args['mci_mode']
