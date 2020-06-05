@@ -69,21 +69,17 @@ class UniDirInterpolator(BaseInterpolator):
         self.filter_mode = smoothing_dict["weighted"]
         self.filterSize = 4
         self.sub_region = 1
-        self.steps_HBMA = 4
+        self.steps = 4
         self.min_block_size = 4
 
-        #print(self.block_size)
-        if hasattr(args, 'block_size'):
-            self.block_size = args['block_size']
-        if hasattr(args, 'target_region'):
-            self.target_region = args['target_region']
-        if hasattr(args, 'me_mode'):
+        if 'block_size' in args.keys():
+            self.block_size = int(args['block_size'])
+        if 'target_region' in args.keys():
+            self.region = int(args['target_region'])
+        if 'me_mode' in args.keys():
             self.me_mode = ME_dict[ args['me_mode']]
             if self.me_mode == tss:
                 self.region = self.steps
-
-
-
     ### this function should be only self, idx, like in BaseInterpolator
     def get_interpolated_frame(self, idx):
 
@@ -117,7 +113,7 @@ class UniDirInterpolator(BaseInterpolator):
             else:
 
                 #print("here")
-                self.MV_field= self.me_mode(self.block_size,self.target_region,self.sub_region,self.steps_HBMA,self.min_block_size,source_frame,target_frame)
+                self.MV_field= self.me_mode(self.block_size,self.target_region,self.sub_region,self.steps,self.min_block_size,source_frame,target_frame)
 
             # print("Begin smoothing")
             self.MV_field = smooth(self.filter_mode,self.MV_field,self.filterSize)
@@ -295,15 +291,15 @@ class BiDirInterpolator(BaseInterpolator):
         self.filter_mode = smoothing_dict["weighted"]
         self.filterSize = 4
         self.sub_region = 1
-        self.steps_HBMA = 4
+        self.steps = 4
         self.min_block_size = 4
 
 
-        if hasattr(args, 'block_size'):
-            self.block_size = args['block_size']
-        if hasattr(args, 'target_region'):
-            self.region = args['target_region']
-        if hasattr(args, 'me_mode'):
+        if 'block_size' in args.keys():
+            self.block_size = int(args['block_size'])
+        if 'target_region' in args.keys():
+            self.region = int(args['target_region'])
+        if 'me_mode' in args.keys():
             self.me_mode = ME_dict[ args['me_mode']]
             if self.me_mode == tss:
                 self.region = self.steps
@@ -366,8 +362,8 @@ class BiDirInterpolator(BaseInterpolator):
                 self.MV_field= self.me_mode(self.block_size,self.target_region,source_frame,target_frame)
                 bwd = self.me_mode(self.block_size, self.target_region, target_frame, source_frame)
             else:
-                self.MV_field= self.me_mode(self.block_size,self.target_region,self.sub_region,self.steps_HBMA,self.min_block_size,source_frame,target_frame)
-                bwd = self.me_mode(self.block_size,self.target_region,self.sub_region,self.steps_HBMA,self.min_block_size,target_frame,source_frame)
+                self.MV_field= self.me_mode(self.block_size,self.target_region,self.sub_region,self.steps,self.min_block_size,source_frame,target_frame)
+                bwd = self.me_mode(self.block_size,self.target_region,self.sub_region,self.steps,self.min_block_size,target_frame,source_frame)
 
             self.MV_field = smooth(self.filter_mode,self.MV_field,self.filterSize)
             self.MV_field_idx = source_frame_idx
@@ -437,8 +433,11 @@ def MEMCI (target_fps, video_in_path=None, video_out_path=None, max_out_frames=m
         mci_mode = args['mci_mode']
 
     if (mci_mode == 'unidir'):
+        # print("unidir")
+        # print(args['me_mode'])
         return UniDirInterpolator(target_fps, video_in_path, video_out_path, max_out_frames, max_cache_size,**args)
     elif (mci_mode == 'bidir'):
+        # print("bidir")
         return BiDirInterpolator(target_fps, video_in_path, video_out_path, max_out_frames, max_cache_size,**args)
     elif (mci_mode == 'unidir2'):
         return UniDir2Interpolator(target_fps, video_in_path, video_out_path, max_out_frames, max_cache_size,**args)

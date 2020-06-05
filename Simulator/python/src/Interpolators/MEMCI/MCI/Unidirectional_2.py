@@ -59,7 +59,6 @@ class UniDir2Interpolator(BaseInterpolator):
 
         super().__init__(target_fps, video_in_path,
                          video_out_path, max_out_frames, max_cache_size)
-
         self.MV_field_idx = -1
         self.fwr_MV_field = []
         self.bwr_MV_field = []

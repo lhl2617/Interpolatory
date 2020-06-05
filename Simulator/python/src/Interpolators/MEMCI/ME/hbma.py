@@ -132,7 +132,7 @@ def get_motion_vectors(block_size, win_size, sub_win_size, steps, min_block_size
     ])[:,:,None]
 
     cost = cost_func(cost)
-
+    print('HBMA')
     im_lst = []
     im_lst.append((im1,im2))
     for i in range(1, steps+1):
