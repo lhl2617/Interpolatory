@@ -1,13 +1,14 @@
 # Interpolatory Software Simulator GUI
 
 ## Usage
-A pre-built 64-bit Windows Installer and binary is available upon request.
+A pre-built 64-bit Windows Installer and executable is available upon request.
 
 ## Development
 
 ### Requirements
 * Node (v12 and above)
 * Python 3 (tested on 3.8.2 Windows & 3.6.2 Ubuntu 18.04)
+* Python source code for Interpolatory CLI
 
 ### Getting started
 Install dependencies
