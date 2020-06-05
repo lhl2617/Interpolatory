@@ -5,7 +5,7 @@ import { remote } from 'electron';
 import * as cp from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
-import { getInterpolationModesFromProcess, ValidatorObj, getPython3, getInterpolatory, defaultValidatorStatus, getPercentageFromProgressString, getProgressFilePath, processProgressFile, InterpolationModeSchema, getInterpolationModeSchema, InterpolationMode, iModeToString, iModeToPrettyString } from '../../../util';
+import { ValidatorObj, getPython3, getInterpolatory, defaultValidatorStatus, getPercentageFromProgressString, getProgressFilePath, processProgressFile, InterpolationModeSchema, getInterpolationModeSchema, InterpolationMode, iModeToString, iModeToPrettyString } from '../../../util';
 import IMode from '../../IMode/IMode';
 
 const { Search } = Input;
@@ -100,7 +100,7 @@ export class Benchmark extends React.Component<{}, IState> {
     startBenchmark = async () => {
         this._setState({ benchmarkState: `benchmarking` });
         const { iMode, outputPath } = this.state;
-        
+
         if (!iMode) {
             message.error(`Interpolation Mode not set!`)
             return;
@@ -154,10 +154,12 @@ export class Benchmark extends React.Component<{}, IState> {
             }
 
             // one second delay
-            setTimeout(() => this._setState({
-                benchmarkResult: bRes,
-                benchmarkState: `done`
-            }), 1000);
+            setTimeout(() => {
+                if (benchProc) this._setState({
+                    benchmarkResult: bRes,
+                    benchmarkState: `done`
+                }), 1000
+            });
         });
 
         benchProc.stderr.on(`data`, (data) => {
@@ -178,6 +180,7 @@ export class Benchmark extends React.Component<{}, IState> {
     }
 
     resetBenchmark = async () => {
+        this._setState({ overrideDisable: true, benchmarkState: `idle` });
         const updateState = () => {
             this._setState({
                 benchmarkState: `idle`,
@@ -189,11 +192,8 @@ export class Benchmark extends React.Component<{}, IState> {
             this._setState({ overrideDisable: true, benchmarkState: `idle` });
             benchProc.kill(`SIGKILL`);
             benchProc = undefined;
-            setTimeout(() => updateState(), 3000);
         }
-        else {
-            updateState();
-        }
+        setTimeout(() => updateState(), 3000);
 
     }
 
@@ -206,6 +206,7 @@ export class Benchmark extends React.Component<{}, IState> {
         return (
 
             <div>
+                <h2>Run interpolation modes against benchmarks</h2>
                 <Form layout="vertical" >
                     <Form.Item
                         label={<h3>Benchmark</h3>}>
@@ -217,7 +218,7 @@ export class Benchmark extends React.Component<{}, IState> {
                     </Form.Item>
 
 
-                    <IMode setIMode={this.setIMode} iMode={iMode} disabled={false}/>
+                    <IMode setIMode={this.setIMode} iMode={iMode} disabled={false} />
 
 
                     <Form.Item
@@ -244,7 +245,7 @@ export class Benchmark extends React.Component<{}, IState> {
 
                 </Form>
 
-                <div style={{ margin: 'auto', textAlign: 'center', marginTop: 48, marginBottom: 48  }}>
+                <div style={{ margin: 'auto', textAlign: 'center', marginTop: 48, marginBottom: 48 }}>
                     <Button onClick={this.startBenchmark} size="large" disabled={startDisabled} type="primary">Start Benchmark</Button>
                 </div>
 
