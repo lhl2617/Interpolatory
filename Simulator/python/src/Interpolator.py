@@ -66,7 +66,7 @@ InterpolatorDocs = {
             "target_region": {
                 "type": "number",
                 "value": 3,
-                "description": "The distance in pixels that the algorithm searches for motion"
+                "description": "The distance in pixels (positive integer) that the algorithm searches for motion"
             },
             "mci_mode": {
                 "type": "enum",
@@ -146,33 +146,30 @@ InterpolatorDocs = {
 }
 
 def getIDocs():
+    print('# Interpolator Documentation')
+
     def getOptions(iDocOptions):
         for key, optionObj in iDocOptions.items():
-            print(f'- {key}')
+            print(f'- `{key}`')
             desc = optionObj['description']
-            print(f'  {desc}')
+            print(f'    - {desc}')
             defaultVal = optionObj['value']
-            print(f'  Default: {defaultVal}')
+            print(f'    - Default: `{defaultVal}`')
             if optionObj['type'] == 'enum':
-                print(f'  Possible values: ')
+                print(f'    - Possible values: ')
                 for i in range(len(optionObj['enum'])):
                     enumChoice = optionObj['enum'][i]
                     enumDesc = optionObj['enumDescriptions'][i]
-                    print(f'\t* {enumChoice}: {enumDesc}')
+                    print(f'        * `{enumChoice}`: {enumDesc}')
 
     for key, iDocObj in InterpolatorDocs.items():
-        equalString = '=' * len(key)
-        print(equalString)
-        print(key)
-        print(equalString)
+        print(f'## {key}')
         name = iDocObj['name']
         desc = iDocObj['description']
-        print(f'Name          : {name}')
-        print(f'Description   : {desc}')
+        print(f'- Name: `{name}`')
+        print(f'- Description: {desc}')
         if 'options' in iDocObj:
-            print(f'-------')
-            print(f'OPTIONS')
-            print(f'-------')
+            print(f'### Options')
             getOptions(iDocObj['options'])
         print('')
     
