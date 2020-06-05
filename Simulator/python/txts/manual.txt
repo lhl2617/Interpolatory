@@ -17,7 +17,7 @@ Load a video and print metadata to stdout. If not supported, will return non-zer
 - python3 main.py -mi <video-path>
 Load an image and print height, width, and colour dimensions to stdout. If not supported, will return non-zero value
 
-- python3 main.py -i <input-video-path> -m <interpolation-mode>[:<settings>] -f <output-frame-rate> -o <output-file-path>
+- python3 main.py -i <input-video-path> -m <interpolation-mode>:[<settings>] -f <output-frame-rate> -o <output-file-path>
 Get in an input video source from <input-video-path> and, using <interpolation-mode> mode, interpolate to <output-frame-rate> fps and save to <output-file-path>
 Extra configuration settings can be set in <settings> using semicolon separated key-value pairs, e.g. for MEMCI, "block_size=32;filter_size=8;"
 See interpolation mode usage guides in `python3 main.py -doc`

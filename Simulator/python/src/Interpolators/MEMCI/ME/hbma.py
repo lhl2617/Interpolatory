@@ -63,7 +63,7 @@ def block_wise_fs(cost, block1, im, idx, win_size, im_shape):
                 lowest_cost = cost_val
                 lowest_distance = distance
                 lowest_vec = [r_off, c_off]
-                
+
     return [lowest_vec[0], lowest_vec[1], lowest_cost]
 
 def full_search(cost, block_size, win_size, im1, im2):
