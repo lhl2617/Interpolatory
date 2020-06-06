@@ -90,6 +90,7 @@ elif mode_flag == '-i' and len(args) == 8 and '-m' == args[2] and '-f' == args[4
 
 
 elif mode_flag == '-b' and len(args) >= 2:
+    print(args[1])
     interpolation_mode, settings = util.deconstruct_interpolation_mode_and_settings(args[1])
 
     output_path = None
@@ -98,6 +99,7 @@ elif mode_flag == '-b' and len(args) >= 2:
 
     interpolator_obj = InterpolatorDictionary[interpolation_mode]
     interpolator = interpolator_obj(2, **settings)
+    # print(settings)
     benchmark(interpolator, output_path)
     
 
