@@ -138,9 +138,10 @@ def get_motion_vectors(block_size, win_size, sub_win_size, steps, min_block_size
     for i in range(1, steps+1):
         print('Downscaling level',i)
         down_im1 = convolve(im_lst[-1][0] / 255.0, weightings, mode='constant')[::2, ::2] * 255.0
+        # print(down_im1.shape)
         down_im2 = convolve(im_lst[-1][1] / 255.0, weightings, mode='constant')[::2, ::2] * 255.0
         im_lst.append((down_im1, down_im2))
-
+        # print(down_im2.shape)
     print("Calculating initial motion vectors")
     mvs = full_search(cost, block_size, win_size, im_lst[-1][0], im_lst[-1][1])
 
