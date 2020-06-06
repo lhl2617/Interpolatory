@@ -95,7 +95,7 @@ export class Test extends React.Component<{}, IState> {
     componentDidMount = () => {
         this.mounted = true;
     };
-    
+
 
     componentWillUnmount = () => {
         this.mounted = false;
@@ -280,7 +280,7 @@ export class Test extends React.Component<{}, IState> {
             message.error(`Invalid Interpolation mode`)
             return;
         }
-    
+
         const interpolationMode = iModeToString(iMode)
 
         // eslint-disable-next-line prefer-const
@@ -333,19 +333,14 @@ export class Test extends React.Component<{}, IState> {
             this._setState({
                 testState: `idle`,
                 overrideDisable: false,
-            })   
+            })
         }
         if (testProc) {
-            this._setState({ testState: `idle`, overrideDisable: true })
-
+            this._setState({ overrideDisable: true, testState: `idle` });
             testProc.kill(`SIGKILL`);
             testProc = undefined;
-
-            setTimeout(() => updateState(), 3000);
         }
-        else {
-            updateState();
-        }
+        setTimeout(() => updateState(), 3000);
     }
 
     render() {
@@ -366,7 +361,7 @@ export class Test extends React.Component<{}, IState> {
         return (
 
             <div>
-                <h2>Testing produces middle frame when given two frames</h2>
+                <h2>Testing produces the interpolated middle frame of given two frames</h2>
                 <Form layout="vertical" >
 
                     <Form.Item
@@ -459,7 +454,7 @@ export class Test extends React.Component<{}, IState> {
 
 
 
-                    <IMode setIMode={this.setIMode} iMode={iMode} disabled={testDisabled}/>
+                    <IMode setIMode={this.setIMode} iMode={iMode} disabled={testDisabled} />
 
 
                     <div style={{ margin: 'auto', textAlign: 'center', marginTop: 48, marginBottom: 48 }}>

@@ -1,4 +1,11 @@
-#!/usr/bin/env python
+# Model source
+
+# S. Niklaus, L. Mai, and F. Liu, “Video frame interpolation via
+# adaptive separable convolution,” in IEEE International Conference
+# on Computer Vision, 2017
+
+# https://github.com/sniklaus/sepconv-slomo
+
 
 import torch
 

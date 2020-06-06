@@ -295,7 +295,7 @@ export class Convert extends React.Component<{}, IState> {
         }
 
         const interpolationMode = iModeToString(iMode)
-        
+
         let gotStderr = ``;
 
         const args = [binName, `-i`, inputVideoPath, `-m`, interpolationMode, `-f`, targetFPS.toString(), `-o`, outputVideoPath]
@@ -372,11 +372,8 @@ export class Convert extends React.Component<{}, IState> {
             this._setState({ overrideDisable: true, convertState: `idle` });
             convProc.kill(`SIGKILL`);
             convProc = undefined;
-            setTimeout(() => updateState(), 3000);
         }
-        else {
-            updateState();
-        }
+        setTimeout(() => updateState(), 3000);
     }
 
     render() {
@@ -389,6 +386,7 @@ export class Convert extends React.Component<{}, IState> {
 
         return (
             <div>
+                <h2>Convert video frame rates</h2>
                 <Form layout="vertical" >
                     <Form.Item
                         label={<h3>Source Video Path</h3>}
@@ -449,7 +447,7 @@ export class Convert extends React.Component<{}, IState> {
                     </Form.Item>
 
 
-                    <IMode setIMode={this.setIMode} iMode={iMode} disabled={conversionDisabled}/>
+                    <IMode setIMode={this.setIMode} iMode={iMode} disabled={conversionDisabled} />
 
                 </Form>
 

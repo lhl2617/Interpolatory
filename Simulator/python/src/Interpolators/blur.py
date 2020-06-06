@@ -5,9 +5,6 @@ import numpy as np
 from .base import BaseInterpolator
 from ..util import blend_frames
 
-# blur the video by taking a window
-# taken from https://github.com/laomao0/BIN/blob/master/data_scripts/adobe240fps/create_dataset_blur_N_frames_average.py
-
 class BlurInterpolator(BaseInterpolator):
     def __init__(self, target_fps, video_in_path=None, video_out_path=None, max_out_frames=math.inf, max_cache_size=2, **args):
         super().__init__(target_fps, video_in_path,

@@ -7,6 +7,7 @@ import Test from '../Pages/Test/Test';
 import Info from '../Pages/Info/Info';
 import Home from '../Pages/Home/Home';
 import { minApp, closeApp, maxApp } from '../../util';
+import Estimate from '../Pages/Estimate/Estimate';
 ;
 const { Header, Content, Sider } = Layout;
 
@@ -17,6 +18,7 @@ const convertIcon = require('../../../../assets/img/convert.png').default;
 const benchmarkIcon = require('../../../../assets/img/benchmark.png').default;
 const testIcon = require('../../../../assets/img/test.png').default;
 const infoIcon = require('../../../../assets/img/info.png').default;
+const estIcon = require('../../../../assets/img/estimate.png').default;
 
 
 const minIcon = require('../../../../assets/img/window/min.png').default;
@@ -24,7 +26,7 @@ const maxIcon = require('../../../../assets/img/window/max.png').default;
 const closeIcon = require('../../../../assets/img/window/close.png').default;
 
 
-type CurrentPage = 'home' | 'convert' | 'benchmark' | 'test' | 'info';
+type CurrentPage = 'home' | 'convert' | 'benchmark' | 'test' | 'info' | 'estimate';
 
 type IState = {
     currentPage: CurrentPage;
@@ -60,6 +62,7 @@ export class AppLayout extends React.Component<{}, IState> {
         if (currentPage === "benchmark") return <Benchmark />;
         if (currentPage === "convert") return <Convert />;
         if (currentPage === "test") return <Test />;
+        if (currentPage === "estimate") return <Estimate />;
         if (currentPage === "info") return <Info />;
         console.error('Invalid currentPage');
     }
@@ -130,6 +133,13 @@ export class AppLayout extends React.Component<{}, IState> {
                             </Menu.Item>
                             <Menu.Item
                                 key="4"
+                                icon={<img className="menu-icon" src={estIcon} alt='Estimate' />}
+                                onClick={() => this.gotoPage('estimate')}
+                                disabled={!featuresEnabled}>
+                                Estimate
+                            </Menu.Item>
+                            <Menu.Item
+                                key="5"
                                 icon={<img className="menu-icon" src={infoIcon} alt='Info' />}
                                 onClick={() => this.gotoPage('info')}>
                                 About

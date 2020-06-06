@@ -39,6 +39,72 @@ InterpolatorDocs = {
         "name": "Speed",
         "description": "Converts frame rate by simply changing the speed of the video. No frame is created nor dropped."
     },
+    "MEMCI": {
+        "name": "MEMCI",
+        "description": "Motion Estimation & Motion Compensated Interpolation method.",
+        "options": {
+            "me_mode": {
+                "type": "enum",
+                "description": "Which Motion Estimation method to use.",
+                "value": "hbma",
+                "enum": [
+                    "hbma",
+                    "fs",
+                    "tss",
+                ],
+                "enumDescriptions": [
+                    "Hierarchical Block Matching Algorithm",
+                    "Full Search",
+                    "Three Step Search",
+                ]
+            },
+            "block_size": {
+                "type": "number",
+                "value": 8,
+                "description": "Block size (positive integer) used by ME"
+            },
+            "target_region": {
+                "type": "number",
+                "value": 3,
+                "description": "The distance in pixels (positive integer) that the algorithm searches for motion"
+            },
+            "mci_mode": {
+                "type": "enum",
+                "description": "Which Motion Compensated Interpolation method to use.",
+                "value": "unidir2",
+                "enum": [
+                    "unidir",
+                    "bidir",
+                    "unidir2"
+                ],
+                "enumDescriptions": [
+                    "Unidirectional Method",
+                    "Bidirectional Method",
+                    "Improved Unidirectional Method"
+                ]
+            },
+            "filter_mode": {
+                "type": "enum",
+                "description": "Which filtering method to use.",
+                "value": "weighted_mean",
+                "enum": [
+                    "mean",
+                    "median",
+                    "weighted"
+                ],
+                "enumDescriptions": [
+                    "Mean",
+                    "Median",
+                    "Weighted Mean"
+                ]
+            },
+            "filter_size": {
+                "type": "number",
+                "value": 5,
+                "description": "Filter size (positive integer) used by MCI filter method"
+            }
+        }
+    },
     "SepConv-CUDA": {
         "name": "SepConv-CUDA",
         "description": "SepConv kernel-based method. Requires CUDA dependencies. Supports only upconversion by a factor of 2 or if the factor has denominator 2 (e.g. 2.5 = 5/2). For the latter case, upconversion is done at a doubled factor and a pair of frames are blended to create one output frame.",
@@ -76,72 +142,35 @@ InterpolatorDocs = {
                 ]
             }
         }
-    },
-    "MEMCI": {
-        "name": "MEMCI",
-        "description": "Motion Estimation & Motion Compensated Interpolation method.",
-        "options": {
-            "me_mode": {
-                "type": "enum",
-                "description": "Which Motion Estimation method to use.",
-                "value": "hbma",
-                "enum": [
-                    "hbma",
-                    "fs",
-                    "tss",
-                    "hbma_new"
-                ],
-                "enumDescriptions": [
-                    "Hierarchical Block Matching Algorithm",
-                    "Full Search",
-                    "Three Step Search"
-                ]
-            },
-            "block_size": {
-                "type": "number",
-                "value": 8,
-                "description": "Block size (positive integer) used by ME"
-            },
-            "target_region": {
-                "type": "number",
-                "value": 3,
-                "description": "TODO"
-            },
-            "mci_mode": {
-                "type": "enum",
-                "description": "Which Motion Compensated Interpolation method to use.",
-                "value": "bidir",
-                "enum": [
-                    "unidir",
-                    "bidir",
-                    "unidir2"
-                ],
-                "enumDescriptions": [
-                    "Unidirectional Method",
-                    "Bidirectional Method",
-                    "Improved Unidirectional Method"
-                ]
-            },
-            "filter_mode": {
-                "type": "enum",
-                "description": "Which filtering method to use.",
-                "value": "weighted_mean",
-                "enum": [
-                    "mean",
-                    "median",
-                    "weighted"
-                ],
-                "enumDescriptions": [
-                    "Mean",
-                    "Median",
-                    "Weighted Mean"
-                ]
-            },
-            "filter_size": {
-                "type": "number",
-                "value": 5,
-                "description": "Filter size (positive integer) used by MCI filter method"
-            }
-        }
     }
 }
+
+def getIDocs():
+    print('# Interpolator Documentation')
+
+    def getOptions(iDocOptions):
+        for key, optionObj in iDocOptions.items():
+            print(f'- `{key}`')
+            desc = optionObj['description']
+            print(f'    - {desc}')
+            defaultVal = optionObj['value']
+            print(f'    - Default: `{defaultVal}`')
+            if optionObj['type'] == 'enum':
+                print(f'    - Possible values: ')
+                for i in range(len(optionObj['enum'])):
+                    enumChoice = optionObj['enum'][i]
+                    enumDesc = optionObj['enumDescriptions'][i]
+                    print(f'        * `{enumChoice}`: {enumDesc}')
+
+    for key, iDocObj in InterpolatorDocs.items():
+        print(f'## {key}')
+        name = iDocObj['name']
+        desc = iDocObj['description']
+        print(f'- Name: `{name}`')
+        print(f'- Description: {desc}')
+        if 'options' in iDocObj:
+            print(f'### Options')
+            getOptions(iDocObj['options'])
+        print('')
+    
+

@@ -5,7 +5,7 @@ import pathlib
 
 sys.path.append('./src')
 from src import util, Interpolator, Benchmark, Globals
-from src.Interpolator import InterpolatorDictionary, InterpolatorDocs
+from src.Interpolator import InterpolatorDictionary, InterpolatorDocs, getIDocs
 from src.Benchmark import benchmark, get_middle_frame
 
 mode_flag = None
@@ -38,8 +38,9 @@ interpolators = list(InterpolatorDictionary.keys())
 version = 'Interpolatory Simulator 0.0.1'
 
 if mode_flag == '-h':
+    import markdown
     basedir = pathlib.Path(__file__).parent.absolute()
-    manual = open(f'{basedir}/txts/manual.txt', "r") 
+    manual = open(f'{basedir}/docs/USAGEGUIDE.md', "r") 
     print(manual.read())
     manual.close() 
 
@@ -51,7 +52,7 @@ elif mode_flag == '-il':
     print(json.dumps(interpolators))
 
 elif mode_flag == '-doc':
-    print('TODO')
+    getIDocs()
 
 # this schema is for gui
 elif mode_flag == '-schema':
@@ -159,123 +160,5 @@ elif mode_flag == '-depcuda':
 else:
     print(f'Unknown command. Run `python3 main.py -h` for a usage guide')
 
-# print('')
 
 exit(0)
-
-# Charles + Bruce: Old, i changed the API for benchmark
-'''
-elif mode_flag == '-b' and len(args) <= 2: #default
-# - python3 main.py -b [-d]/[MCI]
-    if (len(args) == 2):
-        if args[1] == '-d' :
-            with open("./txts/default.txt","r") as default_case:
-                d_set=[word for line in default_case for word in line.split()]
-            print(d_set)
-            default_case.close() 
-            output_path = None
-            #benchmark(MCI_mode, block_size, target_region, ME_mode, filter.mode, filter_size)
-            benchmark(str(d_set[0]), int(d_set[1]), int(d_set[2]), str(d_set[3]), str(d_set[4]), int(d_set[5]), output_path)
-            save = open("./txts/previous.txt", "w")
-            for param in d_set:
-                save.write(param)
-                save.write("\n")
-            save.close()
-        else:
-            interpolation_mode = args[1]
-            output_path = None
-            benchmarkCNN(interpolation_mode, output_path)
-    elif (os.stat("./txts/previous.txt").st_size == 0) :
-        with open("./txts/default.txt","r") as default_case:
-            d_set=[word for line in default_case for word in line.split()]
-        print(d_set)
-        default_case.close() 
-        output_path = None
-        #benchmark(MCI_mode, block_size, target_region, ME_mode, filter.mode, filter_size)
-        benchmark(str(d_set[0]), int(d_set[1]), int(d_set[2]), str(d_set[3]), str(d_set[4]), int(d_set[5]), output_path)
-        save = open("./txts/previous.txt", "w")
-        for param in d_set:
-            save.write(param)
-            save.write("\n")
-        save.close()
-    else:
-        with open("./txts/previous.txt","r") as default_case:
-            d_set=[word for line in default_case for word in line.split()]
-        print(d_set)
-        default_case.close() 
-        output_path = None
-        if (len(args) == 2):
-            output_path = args[2]
-
-        #benchmark(MCI_mode, block_size, target_region, ME_mode, filter.mode, filter_size)
-        benchmark(str(d_set[0]), int(d_set[1]), int(d_set[2]), str(d_set[3]), str(d_set[4]), int(d_set[5]), output_path)
-
-# normal cases
-elif mode_flag == '-b' and len(args) == 7:
-    # with open("./txts/default.txt","r") as default_case:
-    d_set=args
-    d_set.pop(0)
-    print(d_set)
-    # default_case.close()
-    output_path = None
-    #benchmark(MCI_mode, block_size, target_region, ME_mode, filter.mode, filter_size)
-    benchmark(str(d_set[0]), int(d_set[1]), int(d_set[2]), str(d_set[3]), str(d_set[4]), int(d_set[5]), output_path)
-    save = open("./txts/previous.txt", "w")
-    for param in d_set:
-        save.write(param)
-        save.write("\n")
-    save.close()
-
-#change individual arg
-elif mode_flag == '-c' and 2 <= len(args) <7:
-    print("change mode")
-
-    with open("./txts/default.txt", "r") as default_case:
-        d_set = [word for line in default_case for word in line.split()]
-    # print(d_set)
-    default_case.close()
-
-    d_change = args
-    d_change.pop(0)
-    for i in range (len(d_change)):
-        cur=str(d_change[i])
-        index=int(cur[0])
-        print(cur,index)
-        if index==0 or index==3 or index==4:
-            d_set[index]=cur[2:]
-        else:
-            d_set[index]=int(cur[2:])
-    print(d_set)
-    output_path = f"./middleBlurry_output./{d_set[0]}_{d_set[1]}_{d_set[2]}_{d_set[3]}_{d_set[4]}_{d_set[5]}"
-    try :
-        os.makedirs(output_path)
-    except OSError:
-        print("File to create directory %s" %output_path)
-    else:
-        print("Successfully created the directory %s" % output_path)
-
-
-    # benchmark(MCI_mode, block_size, target_region, ME_mode, filter.mode, filter_size)
-    benchmark(str(d_set[0]), int(d_set[1]), int(d_set[2]), str(d_set[3]), str(d_set[4]), int(d_set[5]), output_path)
-    save = open("./txts/previous.txt", "w")
-    for param in d_set:
-        save.write(str(param))
-        save.write("\n")
-    save.close()
-
-elif mode_flag == '-clean' :
-    open('./txts/previous.txt', 'w').close()
-    print('History has been emptied')
-
-elif mode_flag == '-t' and len(args) >= 7 and '-f' == args[2] and '-o' == args[5] :
-    interpolation_mode = args[1]
-    frame_1_path = args[3]
-    frame_2_path = args[4]
-    output_file_path = args[6]
-    ground_truth_path = None
-    
-    if (len(args) > 7):
-        ground_truth_path = args[7]        
-
-    get_middle_frame(interpolation_mode, frame_1_path, frame_2_path, output_file_path, ground_truth_path)
-'''
