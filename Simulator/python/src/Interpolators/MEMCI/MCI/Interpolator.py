@@ -116,11 +116,7 @@ class UniDirInterpolator(BaseInterpolator):
                 while(min_side>255):
                     min_side/=2
                     step_size+=1
-                # print(step_size)
                 self.steps=step_size
-                # {"PSNR": 26.65073320871687, "SSIM": 0.8210745519246592}
-                # if(source_frame.shape):
-                #print("here")
                 self.MV_field= self.me_mode(self.block_size,self.target_region,self.sub_region,self.steps,self.min_block_size,source_frame,target_frame)
 
             # print("Begin smoothing")
@@ -370,6 +366,12 @@ class BiDirInterpolator(BaseInterpolator):
                 self.MV_field= self.me_mode(self.block_size,self.target_region,source_frame,target_frame)
                 bwd = self.me_mode(self.block_size, self.target_region, target_frame, source_frame)
             else:
+                min_side = min(source_frame.shape[0],source_frame.shape[1])
+                step_size=1
+                while(min_side>255):
+                    min_side/=2
+                    step_size+=1
+                self.steps=step_size
                 self.MV_field= self.me_mode(self.block_size,self.target_region,self.sub_region,self.steps,self.min_block_size,source_frame,target_frame)
                 bwd = self.me_mode(self.block_size,self.target_region,self.sub_region,self.steps,self.min_block_size,target_frame,source_frame)
 
