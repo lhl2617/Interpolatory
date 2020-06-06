@@ -454,7 +454,7 @@ export class Test extends React.Component<{}, IState> {
 
 
 
-                    <IMode setIMode={this.setIMode} iMode={iMode} disabled={testDisabled} />
+                    <IMode setIMode={this.setIMode} iMode={iMode} disabled={testDisabled} disabledIModeKeys={[`Blur`, `Speed`]} />
 
 
                     <div style={{ margin: 'auto', textAlign: 'center', marginTop: 48, marginBottom: 48 }}>
