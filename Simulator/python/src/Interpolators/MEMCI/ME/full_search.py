@@ -7,6 +7,13 @@ from numba import jit, uint32, float32, int8, int32, uint8, int64, types
 # from .plot_mv import plot_vector_field
 
 
+@jit(uint32(uint8[:,:,:], uint8[:,:,:]), nopython=True)
+def get_sad(source_block, target_block):
+    # we need to chagne it to int8 so that it's correct
+    source_block = np.asarray(source_block, dtype=np.int8)
+    target_block = np.asarray(source_block, dtype=np.int8)
+    return np.sum(np.abs(np.subtract(source_block, target_block)))
+
 @jit(float32[:,:,:](int32, int32, types.UniTuple(uint32, 3), uint8[:,:,:], uint8[:,:,:]), nopython=True)
 def helper(block_size, target_region, frame_shape, source_frame_pad, target_frame_pad):
     output = np.zeros(frame_shape, dtype=np.float32)
@@ -33,7 +40,7 @@ def helper(block_size, target_region, frame_shape, source_frame_pad, target_fram
             for t_row in range(max(0, s_row - target_region), min(target_max_row, s_row + target_region + 1)):
                 for t_col in range(max(0, s_col - target_region), min(target_max_col, s_col + target_region + 1)):
                     target_block = target_frame_pad[t_row:t_row+block_size, t_col:t_col+block_size, :]
-                    sad = np.sum(np.abs(np.subtract(source_block, target_block)))
+                    sad = get_sad(source_block, target_block)
                     distance = (s_row - t_row) *  (s_row - t_row) + (s_col - t_col) * (s_col - t_col)
                     if sad < lowest_sad or (sad == lowest_sad and distance < lowest_distance):
                         lowest_distance = distance

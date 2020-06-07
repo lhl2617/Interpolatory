@@ -9,6 +9,9 @@ from numba import jit, uint32, float32, int8, int32, uint8, int64, types, config
 
 @jit(uint32(uint8[:,:,:], uint8[:,:,:]), nopython=True)
 def get_sad(source_block, target_block):
+    # we need to chagne it to int8 so that it's correct
+    source_block = np.asarray(source_block, dtype=np.int8)
+    target_block = np.asarray(source_block, dtype=np.int8)
     return np.sum(np.abs(np.subtract(source_block, target_block)))
 
 @jit(float32[:,:,:](int32, int32, types.UniTuple(int32, 3), uint8[:,:,:], uint8[:,:,:]), nopython=True)

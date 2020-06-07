@@ -71,7 +71,7 @@ InterpolatorDocs = {
             "mci_mode": {
                 "type": "enum",
                 "description": "Which Motion Compensated Interpolation method to use.",
-                "value": "unidir2",
+                "value": "unidir",
                 "enum": [
                     "unidir",
                     "bidir",
