@@ -39,7 +39,7 @@ class MEMCIBaseInterpolator(BaseInterpolator):
 
         self.upscale_MV = True
         # self.large_block_size = 8
-        print(args)
+        # print(args)
 
         if 'block_size' in args:
             self.block_size = int(args['block_size'])

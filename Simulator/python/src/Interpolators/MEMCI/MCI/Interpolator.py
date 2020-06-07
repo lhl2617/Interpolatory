@@ -56,7 +56,7 @@ class UniDirInterpolator(MEMCIBaseInterpolator):
         super().__init__(target_fps, video_in_path,
                          video_out_path, max_out_frames, max_cache_size,**args)
 
-        print(args)
+        # print(args)
         # self.block_size = 8
         # # print('sup bro set block_size here')
         # # self.blockSize = block_size

@@ -119,7 +119,7 @@ class UniDir2Interpolator(MEMCIBaseInterpolator):
                     min_side /= 2
                     step_size += 1
                 self.ME_args["steps"] = step_size
-                print(self.ME_args)
+                # print(self.ME_args)
             self.fwr_MV_field = self.me_mode(**self.ME_args, im1=source_frame, im2=target_frame)
             self.bwr_MV_field = self.me_mode(**self.ME_args, im1=target_frame, im2=source_frame)
 
