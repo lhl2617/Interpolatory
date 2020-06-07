@@ -28,7 +28,9 @@
 
 ### Caching source block only:
 
-Cache size = `b`^2 * 24 bits
+The block from the first frame is placed into cache and reused for every comparison for that block - the first frame should no longer have repeated pixel accesses.
+
+**Cache size = `b`^2 * 3 bytes**
 
 - Number of blocks in image = `h` * `w` / (`b`^2)  
 - Number of comparisons needed per block = (2 * `win` + 1)^2
@@ -38,7 +40,9 @@ Cache size = `b`^2 * 24 bits
 
 ### Caching source block and target window:
 
-Cache size = (`b`^2 * 24 bits) + ((2 * `win` + `b`)^2 * 24 bits)
+The block from the previous frame is cached (as in previous) and now also the target window in the second frame. Pull the target window into cache before doing comparisons for source block.
+
+**Cache size = (`b`^2 * 3 bytes) + ((2 * `win` + `b`)^2 * 3 bytes)**
 
 - Number of blocks in image = `h` * `w` / (`b`^2)
 - Number of pixels per block = `b`^2
@@ -48,7 +52,9 @@ Cache size = (`b`^2 * 24 bits) + ((2 * `win` + `b`)^2 * 24 bits)
 
 ### Caching source block and rolling target window:
 
-Cache size = (`b`^2 * 24 bits) + ((2 * `win` + `b`)^2 * 24 bits)
+By only removing the first column (or row) and then reading the next column (or row) when the source block moves, a lot of the target window in cache can be reused.
+
+**Cache size = (`b`^2 * 24 bits) + ((2 * `win` + `b`)^2 * 24 bits)**
 
 - Number of blocks in image = `h` * `w` / (`b`^2)
 - Number of pixels per block = `b`^2
