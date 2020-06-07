@@ -12,3 +12,4 @@ def helper(block_flat):
 
 def median_filter(block):
     block_flat = block.reshape(-1, block.shape[-1])
+    return helper(block_flat)
