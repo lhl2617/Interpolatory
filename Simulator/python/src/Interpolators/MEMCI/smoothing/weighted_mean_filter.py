@@ -1,7 +1,7 @@
 import numpy as np
 from numba import njit, int32, float32, types
 
-@njit(types.UniTuple(int32, 2)(float32[:,:]))
+@njit(types.UniTuple(int32, 2)(float32[:,:]), cache=True)
 def helper(block_flat):
     total_row = 0.
     total_col = 0.

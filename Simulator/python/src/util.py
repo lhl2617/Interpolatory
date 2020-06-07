@@ -46,7 +46,7 @@ def is_power_of_two(n):
 
 
 
-@njit(types.Tuple((int32, float32))(int32, float32))
+@njit(types.Tuple((int32, float32))(int32, float32), cache=True)
 def get_first_frame_idx_and_ratio(idx, rate_ratio):
     '''
     used in linear, rrin and other ML methods that support multiplying the flow

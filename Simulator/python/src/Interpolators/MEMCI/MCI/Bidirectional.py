@@ -79,9 +79,9 @@ class BiDirInterpolator(MEMCIBaseInterpolator):
                 self.MV_field= self.me_mode(self.block_size,self.region,self.sub_region,self.steps,self.min_block_size,source_frame,target_frame)
                 bwd = self.me_mode(self.block_size,self.region,self.sub_region,self.steps,self.min_block_size,target_frame,source_frame)
 
-            self.MV_field = smooth(self.filter_mode,self.MV_field,self.filterSize)
+            self.MV_field = smooth(self.filter_mode,self.MV_field,self.filter_size)
             self.MV_field_idx = source_frame_idx
-            bwd = smooth(self.filter_mode,bwd,self.filterSize)
+            bwd = smooth(self.filter_mode,bwd,self.filter_size)
 
         Interpolated_Frame =  np.ones(source_frame.shape)*-1
         SAD_interpolated_frame = np.full([source_frame.shape[0],source_frame.shape[1]],np.inf)

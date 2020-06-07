@@ -1,15 +1,4 @@
 
-'''
-%
-%   e.g. 24->60
-%   A A A B B C C    C D D
-%
-%   e.g. 25->30
-%   A A B C D E F
-%
-'''
-
-
 from .Unidirectional import UniDirInterpolator
 from .Bidirectional import BiDirInterpolator
 from .Unidirectional_2 import UniDir2Interpolator

@@ -1,6 +1,6 @@
 import numpy as np
 from numba import njit, float32, types
-@njit(types.UniTuple(float32, 2)(float32[:,:]))
+@njit(types.UniTuple(float32, 2)(float32[:,:]), cache=True)
 def helper(block_flat):
     sorted_idx_row = np.argsort(block_flat[:,0])
     sorted_idx_col = np.argsort(block_flat[:,1])

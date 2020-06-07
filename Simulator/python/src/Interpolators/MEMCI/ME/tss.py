@@ -4,19 +4,17 @@ from imageio import imread, imwrite
 import sys
 import cProfile
 import time
-from numba import jit, uint32, float32, int8, int32, uint8, int64, types, config
+from numba import njit, uint32, float32, int8, int32, uint8, int64, types, config
 # from .plot_mv import plot_vector_field
 
-@jit(uint32(uint8[:,:,:], uint8[:,:,:]), nopython=True)
+@njit(uint32(uint8[:,:,:], uint8[:,:,:]), cache=True)
 def get_sad(source_block, target_block):
     # we need to chagne it to int8 so that it's correct
-    # source_block = source_block.astype(np.int8)
-    # target_block = target_block.astype(np.int8)
-    source_block = np.asarray(source_block, dtype=np.int8)
-    target_block = np.asarray(target_block, dtype=np.int8)
+    source_block = source_block.astype(np.int8)
+    target_block = target_block.astype(np.int8)
     return np.sum(np.abs(np.subtract(source_block, target_block)))
 
-@jit(float32[:,:,:](int32, int32, types.UniTuple(int32, 3), uint8[:,:,:], uint8[:,:,:]), nopython=True)
+@njit(float32[:,:,:](int32, int32, types.UniTuple(int32, 3), uint8[:,:,:], uint8[:,:,:]), cache=True)
 def helper(block_size, steps, frame_shape, source_frame_pad, target_frame_pad):
     output = np.zeros(frame_shape, dtype=np.float32)
     prec_dic = [1, 2, 1, 2, 3, 2, 1, 2, 1]
