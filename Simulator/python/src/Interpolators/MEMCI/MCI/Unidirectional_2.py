@@ -112,12 +112,13 @@ class UniDir2Interpolator(BaseInterpolator):
         #that the current motion field is estimated on.
         if not self.MV_field_idx < idx/self.rate_ratio < self.MV_field_idx+1:
             self.MV_field_idx = source_frame_idx
-            min_side = min(source_frame.shape[0], source_frame.shape[1])
-            step_size = 1
-            while (min_side > 255):
-                min_side /= 2
-                step_size += 1
-            self.ME_args["steps"] = step_size
+            if self.me_mode==hbma:
+                min_side = min(source_frame.shape[0], source_frame.shape[1])
+                step_size = 1
+                while (min_side > 255):
+                    min_side /= 2
+                    step_size += 1
+                self.ME_args["steps"] = step_size
             self.fwr_MV_field = self.me_mode(**self.ME_args, im1=source_frame, im2=target_frame)
             self.bwr_MV_field = self.me_mode(**self.ME_args, im1=target_frame, im2=source_frame)
 
