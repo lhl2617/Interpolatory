@@ -11,28 +11,7 @@ class BiDirInterpolator(MEMCIBaseInterpolator):
 
         super().__init__(target_fps, video_in_path,
                          video_out_path, max_out_frames, max_cache_size,**args)
-        # self.block_size = 8
-        # # print('sup bro set block_size here')
-        # # self.blockSize = block_size
-        # self.target_region = 7
-        # self.me_mode = ME_dict["HBMA"]
-        # # print(self.me_mode)
-        # self.filter_mode = smoothing_dict["weighted"]
-        # self.filterSize = 4
-        # self.sub_region = 1
-        # self.steps = 4
-        # self.min_block_size = 4
 
-        # print(args)
-        # if 'block_size' in args.keys():
-        #     self.block_size = int(args['block_size'])
-        # if 'target_region' in args.keys():
-        #     self.region = int(args['target_region'])
-        # if 'me_mode' in args.keys():
-        #     self.me_mode = ME_dict[ args['me_mode']]
-        #     if self.me_mode == tss:
-        #         self.region = self.steps
-        # print(self.me_mode)
 
     def get_interpolated_frame(self, idx):
 

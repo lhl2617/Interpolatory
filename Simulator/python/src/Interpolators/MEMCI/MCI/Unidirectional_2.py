@@ -59,38 +59,6 @@ class UniDir2Interpolator(MEMCIBaseInterpolator):
 
         super().__init__(target_fps, video_in_path,
                          video_out_path, max_out_frames, max_cache_size,**args)
-        # self.MV_field_idx = -1
-        # self.fwr_MV_field = []
-        # self.bwr_MV_field = []
-        # self.large_block_size = 8
-        # self.region = 7
-        # self.me_mode = ME_dict["HBMA"]
-        # self.sub_region = 1
-        # self.steps = 1
-        # self.block_size = 4
-        # self.upscale_MV = True
-        # if 'block_size' in args.keys():
-        #     self.large_block_size = int(args['block_size'])
-        # if 'target_region' in args.keys():
-        #     self.region = int(args['target_region'])
-        # if 'me_mode' in args.keys():
-        #     self.me_mode = ME_dict[ args['me_mode']]
-        #
-        # self.pad_size = 4*self.block_size
-
-        # if self.me_mode == full:
-        #     self.ME_args = {"block_size":self.large_block_size, "target_region":self.region}
-        #
-        # elif self.me_mode == tss:
-        #     self.ME_args = {"block_size":self.large_block_size, "steps":self.steps}
-        #
-        # elif self.me_mode == hbma:
-        #
-        #     self.upscale_MV = False
-        #     self.ME_args = {"block_size":self.large_block_size,"win_size":self.region,
-        #                     "sub_win_size":self.sub_region, "steps":self.steps,
-        #                     "min_block_size":self.block_size,
-        #                     "cost":"sad", "upscale":self.upscale_MV}
 
     def get_interpolated_frame(self, idx):
 
