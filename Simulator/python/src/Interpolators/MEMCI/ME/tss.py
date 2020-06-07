@@ -76,7 +76,7 @@ if __name__ == "__main__":
         output = get_motion_vectors(block_size, steps, im1, im2)
         # np.savetxt(out_path + "/out.csv", output.reshape(-1), delimiter=',')
 
-    plot_vector_field(output, block_size, out_path)
+    # plot_vector_field(output, block_size, out_path)
 
     # output_intensity = np.copy(output)
     # max_intensity = 0

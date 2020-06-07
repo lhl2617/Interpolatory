@@ -118,7 +118,7 @@ class UniDir2Interpolator(BaseInterpolator):
 
         #Uncomment if you want to plot vector field when running benchmark.py
         self.MV_field = self.fwr_MV_field
-        self.plot_vector_field(source_frame)
+        # self.plot_vector_field(source_frame)
 
         #Get forward and backward intermidiate
 
