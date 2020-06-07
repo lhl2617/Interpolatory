@@ -53,8 +53,9 @@ MCI with median filter for filling holes.
 class UniDirInterpolator(MEMCIBaseInterpolator):
     def __init__(self, target_fps,video_in_path=None, video_out_path=None, max_out_frames=math.inf, max_cache_size=2, **args):
         super().__init__(target_fps, video_in_path,
-                         video_out_path, max_out_frames, max_cache_size)
+                         video_out_path, max_out_frames, max_cache_size,**args)
 
+        print(args)
         # self.block_size = 8
         # # print('sup bro set block_size here')
         # # self.blockSize = block_size
@@ -76,10 +77,10 @@ class UniDirInterpolator(MEMCIBaseInterpolator):
         #     if self.me_mode == tss:
         #         self.region = self.steps
         # if 'filter_mode' in args.keys():
+
         #     self.filter_mode = smoothing_dict[args['filter_mode']]
     ### this function should be only self, idx, like in BaseInterpolator
     def get_interpolated_frame(self, idx):
-
         # self.MV_field_idx= -1 #Index in source video that the current motion field is based on.
         # self.MV_field=[]
 
@@ -196,7 +197,7 @@ class BiDirInterpolator(MEMCIBaseInterpolator):
     def __init__(self, target_fps,video_in_path=None, video_out_path=None, max_out_frames=math.inf, max_cache_size=2, **args):
 
         super().__init__(target_fps, video_in_path,
-                         video_out_path, max_out_frames, max_cache_size)
+                         video_out_path, max_out_frames, max_cache_size,**args)
         # self.block_size = 8
         # # print('sup bro set block_size here')
         # # self.blockSize = block_size
@@ -218,7 +219,7 @@ class BiDirInterpolator(MEMCIBaseInterpolator):
         #     self.me_mode = ME_dict[ args['me_mode']]
         #     if self.me_mode == tss:
         #         self.region = self.steps
-        print(self.me_mode)
+        # print(self.me_mode)
 
     def get_interpolated_frame(self, idx):
 
