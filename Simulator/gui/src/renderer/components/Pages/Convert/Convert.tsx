@@ -449,6 +449,7 @@ export class Convert extends React.Component<{}, IState> {
 
                     <IMode setIMode={this.setIMode} iMode={iMode} disabled={conversionDisabled} disabledIModeKeys={[]} />
 
+
                 </Form>
 
                 <div style={{ margin: 'auto', textAlign: 'center', marginTop: 48, marginBottom: 48 }}>

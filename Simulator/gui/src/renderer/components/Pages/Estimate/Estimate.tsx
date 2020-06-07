@@ -134,6 +134,7 @@ class Estimate extends React.Component<{}, IState> {
                 </Form>
                 <div style={{ margin: 'auto', textAlign: 'center', marginTop: 48, marginBottom: 48 }}>
                     <Button onClick={this.startEstimate} size="large" disabled={overrideDisable || !iMode} type="primary">Start Estimation</Button>
+
                 </div>
 
                 <Modal
@@ -187,6 +188,7 @@ class Estimate extends React.Component<{}, IState> {
                                         )
                                     }
                                 </div>
+
 
                             }
 
