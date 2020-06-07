@@ -7,7 +7,7 @@ from fractions import Fraction
 import scipy
 import sys
 
-from ....util import eprint
+from ....util import eprint, get_first_frame_idx_and_ratio
 
 sys.path.append('.')
 
@@ -87,16 +87,14 @@ class UniDirInterpolator(BaseInterpolator):
         #print("the block size used was:", self.blockSize)
     # def get_interpolated_frame(self, idx, b, t):
         #source_frame is the previous frame in the source vidoe.
-        source_frame_idx = math.floor(idx/self.rate_ratio)
+        source_frame_idx, inv_dist = get_first_frame_idx_and_ratio(idx, self.rate_ratio)
+
+        dist = 1. - inv_dist
+
         source_frame = self.video_stream.get_frame(source_frame_idx)
-        #print(source_frame_idx)
-        #Normalized distance from current_frame to the source frame.
-        dist = idx/self.rate_ratio - math.floor(idx/self.rate_ratio)
-
         #If the frame to be interpolated is coinciding with a source frame.
-        if dist == 0:
+        if math.isclose(dist,0.):
             return source_frame
-
 
         #Check if the frame to be interpolated is between the two frames
         #that the current motion field is estimated on.
