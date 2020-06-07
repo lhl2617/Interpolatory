@@ -41,30 +41,30 @@ class MEMCIBaseInterpolator(BaseInterpolator):
         # self.large_block_size = 8
         print(args)
 
-        if 'block_size' in args.keys():
+        if 'block_size' in args:
             self.block_size = int(args['block_size'])
             # self.large_block_size=int(args['block_size'])
-        if 'target_region' in args.keys():
+        if 'target_region' in args:
             self.region = int(args['target_region'])
-        if 'me_mode' in args.keys():
+        if 'me_mode' in args:
             self.me_mode = ME_dict[ args['me_mode']]
             # if self.me_mode == tss:
             #     self.region = self.steps
-        if 'filter_mode' in args.keys():
+        if 'filter_mode' in args:
             self.filter_mode = smoothing_dict[args['filter_mode']]
-        print(self.filter_mode)
+        # print(self.filter_mode)
 
         self.pad_size = 4 * self.min_block_size
         if self.me_mode == fs:
-            print('fs')
+            # print('fs')
             self.ME_args = {"block_size":self.block_size, "target_region":self.region}
 
         elif self.me_mode == tss:
-            print('tss')
+            # print('tss')
             self.ME_args = {"block_size":self.block_size, "steps":self.steps}
 
         elif self.me_mode == hbma:
-            print('hbma')
+            # print('hbma')
             self.upscale_MV = False
             self.ME_args = {"block_size":self.block_size,"win_size":self.region,
                             "sub_win_size":self.sub_region, "steps":self.steps,
