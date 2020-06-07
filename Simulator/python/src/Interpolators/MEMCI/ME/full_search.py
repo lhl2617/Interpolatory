@@ -7,8 +7,9 @@ from numba import jit, uint32, float32, int8, int32, uint8, int64, types
 # from .plot_mv import plot_vector_field
 
 
-@jit(float32[:,:,:](int32, int32, types.UniTuple(uint32, 3), uint8[:,:,:], uint8[:,:,:], float32[:,:,:]), nopython=True)
-def helper(block_size, target_region, frame_shape, source_frame_pad, target_frame_pad, output):
+@jit(float32[:,:,:](int32, int32, types.UniTuple(uint32, 3), uint8[:,:,:], uint8[:,:,:]), nopython=True)
+def helper(block_size, target_region, frame_shape, source_frame_pad, target_frame_pad):
+    output = np.zeros(frame_shape, dtype=np.float32)
 
     lowest_sad_const = math.inf    # maximum sad score for a block
     lowest_distance_const = math.inf
@@ -57,8 +58,9 @@ def get_motion_vectors(block_size, target_region, im1, im2):
 
     frame_shape = source_frame.shape
 
-    output = np.zeros_like(source_frame, dtype='float32')
-    output = helper(block_size, target_region, frame_shape, source_frame_pad, target_frame_pad, output)
+
+    output = helper(block_size, target_region, frame_shape, source_frame_pad, target_frame_pad)
+
     return output 
 
 if __name__ == "__main__":
