@@ -32,7 +32,7 @@ class MEMCIBaseInterpolator(BaseInterpolator):
         self.me_mode = ME_dict["hbma"]
         # print(self.me_mode)
         self.filter_mode = smoothing_dict["weighted"]
-        self.filterSize = 4
+        self.filter_size = 4
         self.sub_region = 1
         self.steps = 4
         self.min_block_size = 4
@@ -52,8 +52,9 @@ class MEMCIBaseInterpolator(BaseInterpolator):
             #     self.region = self.steps
         if 'filter_mode' in args:
             self.filter_mode = smoothing_dict[args['filter_mode']]
+        if 'filter_size' in args:
+            self.filter_size = int(args['filter_size'])
         # print(self.filter_mode)
-
         self.pad_size = 4 * self.min_block_size
         if self.me_mode == fs:
             # print('fs')
