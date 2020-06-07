@@ -54,7 +54,7 @@ The block from the previous frame is cached (as in previous) and now also the ta
 
 By only removing the first column (or row) and then reading the next column (or row) when the source block moves, a lot of the target window in cache can be reused.
 
-**Cache size = (`b`^2 * 24 bits) + ((2 * `win` + `b`)^2 * 24 bits)**
+**Cache size = (`b`^2 * 3 bytes) + ((2 * `win` + `b`)^2 * 3 bytes)**
 
 - Number of blocks in image = `h` * `w` / (`b`^2)
 - Number of pixels per block = `b`^2
