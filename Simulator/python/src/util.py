@@ -84,9 +84,7 @@ def get_first_frame_idx_and_ratio(idx, rate_ratio):
 # deconstruct the string into a dict
 def deconstruct_settings(s):
     ret = {}
-
-    pairs = s.split(';')
-
+    pairs = s.split('.')
     for pair in pairs:
         unsplit = pair.split('=')
         if len(unsplit) != 2:
@@ -104,7 +102,6 @@ def deconstruct_settings(s):
 # manage <interpolation-mode>[:<settings>]
 def deconstruct_interpolation_mode_and_settings(s):
     pair = s.split(':')
-
     if len(pair) == 1:
         return pair[0], {}
     elif len(pair) == 2:
