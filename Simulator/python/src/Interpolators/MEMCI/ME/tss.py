@@ -7,7 +7,7 @@ import time
 from numba import jit, uint32, float32, int8, int32, uint8, int64, types, config
 # from .plot_mv import plot_vector_field
 
-@jit(float32[:,:,:](int32, int32, int32[:], types.UniTuple(uint32, 3), uint8[:,:,:], uint8[:,:,:], float32[:,:,:]), nopython=True, parallel=True)
+@jit(float32[:,:,:](int32, int32, int32[:], types.UniTuple(uint32, 3), uint8[:,:,:], uint8[:,:,:], float32[:,:,:]), nopython=True)
 def helper(block_size, steps, prec_dic, frame_shape, source_frame_pad, target_frame_pad, output):
     for s_row in range(0, frame_shape[0], block_size):
         for s_col in range(0, frame_shape[1], block_size):
@@ -49,7 +49,6 @@ def helper(block_size, steps, prec_dic, frame_shape, source_frame_pad, target_fr
             output[s_row:s_row+block_size, s_col:s_col+block_size, 2] = lowest_sad
     return output
 
-# @jit(float32[:,:,:](int8, int8, int8[:,:,:], int8[:,:,:]), nopython=True)
 def get_motion_vectors(block_size, steps, im1, im2):
     source_frame=im1
     target_frame=im2
@@ -62,7 +61,10 @@ def get_motion_vectors(block_size, steps, im1, im2):
 
     output = np.zeros_like(source_frame, dtype='float32')
 
-    return helper(block_size, steps, prec_dic, frame_shape, source_frame_pad, target_frame_pad, output)
+    now = time.time()
+    output = helper(block_size, steps, prec_dic, frame_shape, source_frame_pad, target_frame_pad, output)
+    print(f'{time.time()-now}')
+    return output
 
 if __name__ == "__main__":
     if sys.argv[1] == '-f':

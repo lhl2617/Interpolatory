@@ -1,0 +1,16 @@
+         119999980 function calls in 15.762 seconds
+
+   Ordered by: standard name
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000   15.762   15.762 <string>:1(<module>)
+ 29999994    5.509    0.000    8.552    0.000 testnumba.py:18(log2)
+  9999998    4.036    0.000   10.954    0.000 testnumba.py:22(is_power_of_two)
+        1    1.916    1.916   15.762   15.762 testnumba.py:26(go_fast)
+        1    0.000    0.000   15.762   15.762 {built-in method builtins.exec}
+  9999998    0.619    0.000    0.619    0.000 {built-in method math.ceil}
+  9999998    0.638    0.000    0.638    0.000 {built-in method math.floor}
+ 59999988    3.043    0.000    3.043    0.000 {built-in method math.log10}
+        1    0.000    0.000    0.000    0.000 {method 'disable' of '_lsprof.Profiler' objects}
+
+
