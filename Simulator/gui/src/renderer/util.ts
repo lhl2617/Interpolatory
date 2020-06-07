@@ -174,7 +174,7 @@ export const iModeToString = (iMode: InterpolationMode) => {
         ret += `:`;
         ret += (
             Object.entries(iMode.options).map(([key, val]) => `${key}=${val.value}`)
-        ).join(`;`)
+        ).join(`,`)
     }
 
     return ret;
@@ -187,7 +187,7 @@ export const iModeToPrettyString = (iMode: InterpolationMode) => {
         ret += `: `
         ret += (
             Object.entries(iMode.options).map(([key, val]) => `${snakeCaseToFirstWordCapitalised(key)}=${val.value}`)
-        ).join(`; `)
+        ).join(`, `)
     }
 
     return ret

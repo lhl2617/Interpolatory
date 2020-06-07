@@ -14,7 +14,7 @@ from .weighted_mean_filter import weighted_mean_filter
 filter_func_dict = {
     'median' : median_filter,
     'mean' : mean_filter,
-    'weighted_mean' : weighted_mean_filter
+    'weighted' : weighted_mean_filter
 }
 
 def smooth(filter_func, mv_field, block_size):

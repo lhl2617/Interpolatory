@@ -4,26 +4,26 @@ from imageio import imread, imwrite
 import sys
 import cProfile
 import time
+from numba import jit, uint32, float32, int8, int32, uint8, int64, types, config
 # from .plot_mv import plot_vector_field
 
-def get_motion_vectors(block_size, steps, im1, im2):
-    source_frame=im1
-    target_frame=im2
+@jit(uint32(uint8[:,:,:], uint8[:,:,:]), nopython=True)
+def get_sad(source_block, target_block):
+    # we need to chagne it to int8 so that it's correct
+    source_block = np.asarray(source_block, dtype=np.int8)
+    target_block = np.asarray(source_block, dtype=np.int8)
+    return np.sum(np.abs(np.subtract(source_block, target_block)))
+
+@jit(float32[:,:,:](int32, int32, types.UniTuple(int32, 3), uint8[:,:,:], uint8[:,:,:]), nopython=True)
+def helper(block_size, steps, frame_shape, source_frame_pad, target_frame_pad):
+    output = np.zeros(frame_shape, dtype=np.float32)
     prec_dic = [1, 2, 1, 2, 3, 2, 1, 2, 1]
-
-    source_frame_pad = np.pad(source_frame, ((0,block_size), (0,block_size), (0,0)))  # to allow for non divisible block sizes
-    target_frame_pad = np.pad(target_frame, ((0,block_size), (0,block_size), (0,0)))
-
-    output = np.zeros_like(source_frame, dtype='float32')
-
-    prev_time = time.time()
-    for s_row in range(0, source_frame.shape[0], block_size):
-        #print(s_row, time.time() - prev_time)
-        prev_time = time.time()
-        for s_col in range(0, source_frame.shape[1], block_size):
+    for s_row in range(0, frame_shape[0], block_size):
+        for s_col in range(0, frame_shape[1], block_size):
+            
             source_block = source_frame_pad[s_row:s_row+block_size, s_col:s_col+block_size, :]
             center_sad = None
-            lowest_sad = 9999999999999
+            lowest_sad = math.inf
             lowest_idx = (0, 0)
             lowest_i = 0
             curr_row = s_row
@@ -32,21 +32,21 @@ def get_motion_vectors(block_size, steps, im1, im2):
                 S = 2 ** (step - 1)
                 i = -1
 
-                if s_row + block_size >= source_frame.shape[0]:
+                if s_row + block_size >= frame_shape[0]:
                     target_max_row = s_row + 1
                 else:
-                    target_max_row = source_frame.shape[0] - block_size
-                if s_col + block_size >= source_frame.shape[0]:
+                    target_max_row = frame_shape[0] - block_size
+                if s_col + block_size >= frame_shape[0]:
                     target_max_col = s_col + 1
                 else:
-                    target_max_col = source_frame.shape[1] - block_size
+                    target_max_col = frame_shape[1] - block_size
 
                 for t_row in range(curr_row - S, curr_row + S + 1, S):
                     for t_col in range(curr_col - S, curr_col + S + 1, S):
                         i += 1
-                        if (t_row != curr_row or t_col != curr_col or center_sad == None) and (t_row >= 0 and t_row <= target_max_row and t_col >= 0 and t_col <= target_max_col):
+                        if (t_row != curr_row or t_col != curr_col or center_sad is None) and (t_row >= 0 and t_row <= target_max_row and t_col >= 0 and t_col <= target_max_col):
                             target_block = target_frame_pad[t_row:t_row+block_size, t_col:t_col+block_size, :]
-                            sad = np.sum(np.abs(np.subtract(source_block, target_block)))
+                            sad = get_sad(source_block, target_block)
                             if sad < lowest_sad or (sad == lowest_sad and prec_dic[i] > prec_dic[lowest_i]):
                                 lowest_sad = sad
                                 lowest_idx = (t_row, t_col)
@@ -57,7 +57,16 @@ def get_motion_vectors(block_size, steps, im1, im2):
             output[s_row:s_row+block_size, s_col:s_col+block_size, 0] = lowest_idx[0] - s_row
             output[s_row:s_row+block_size, s_col:s_col+block_size, 1] = lowest_idx[1] - s_col
             output[s_row:s_row+block_size, s_col:s_col+block_size, 2] = lowest_sad
+    return output
 
+def get_motion_vectors(block_size, steps, im1, im2):
+    frame_shape = im1.shape
+
+    source_frame_pad = np.pad(im1, ((0,block_size), (0,block_size), (0,0)))  # to allow for non divisible block sizes
+    target_frame_pad = np.pad(im2, ((0,block_size), (0,block_size), (0,0)))
+    now = time.time()
+    output = helper(block_size, steps, frame_shape, source_frame_pad, target_frame_pad)
+    print (time.time() - now)
     return output
 
 if __name__ == "__main__":

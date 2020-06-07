@@ -12,6 +12,7 @@ type Props = {
     setIMode: (iMode: InterpolationMode) => Promise<void>;
     iMode: InterpolationMode | undefined; /// current state
     disabled: boolean;
+    disabledIModeKeys: string[];
 }
 
 type State = {
@@ -42,8 +43,12 @@ const IMode = (props: Props) => {
     }, [])
 
     const getIModeSchema = async () => {
+        const { disabledIModeKeys } = props
         try {
-            const schema = await getInterpolationModeSchema()
+            const schemaAll = (await getInterpolationModeSchema())
+            const enabledIModeKeys = Object.keys(schemaAll).filter((k) => !disabledIModeKeys.includes(k))
+            let schema: Record<string, InterpolationMode> = {}
+            enabledIModeKeys.forEach((k) => schema[k] = schemaAll[k])
             updateState({ iModeSchema: schema })
 
             const iMode = Object.values(schema)[0]
@@ -89,7 +94,7 @@ const IMode = (props: Props) => {
         }
     }
 
-    const { iMode, disabled } = props;
+    const { iMode, disabled, disabledIModeKeys } = props;
     const { iModeSchema } = state;
     return (
         <div>
@@ -98,9 +103,11 @@ const IMode = (props: Props) => {
                 label={<h3>Interpolation Mode</h3>}>
                 <Select disabled={disabled || !iMode} value={iMode?.name} onChange={handleChangeIMode}>
                     {
-                        iModeSchema && (Object.values(iModeSchema).map((m) => {
-                            return (<Option key={m.name} value={m.name} title={m.description}>{m.name}</Option>)
-                        }))
+                        iModeSchema && (
+                            Object.values(iModeSchema)
+                                .map((m) => {
+                                    return (<Option key={m.name} value={m.name} title={m.description}>{m.name}</Option>)
+                                }))
                     }
                 </Select>
             </Form.Item>

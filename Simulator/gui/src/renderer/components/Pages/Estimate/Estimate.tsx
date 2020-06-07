@@ -21,6 +21,7 @@ type IState = {
     frameHeight: number;
     estimateState: "done" | "error" | "estimating" | "idle";
     overrideDisable: boolean;
+    results?: Record<string, string>;
 }
 
 class Estimate extends React.Component<{}, IState> {
@@ -32,7 +33,8 @@ class Estimate extends React.Component<{}, IState> {
             frameWidth: 1920,
             frameHeight: 1080,
             estimateState: `idle`,
-            overrideDisable: false
+            overrideDisable: false,
+            results: undefined
         }
     }
 
@@ -107,7 +109,7 @@ class Estimate extends React.Component<{}, IState> {
     }
 
     render = () => {
-        const { frameHeight, frameWidth, estimateState, overrideDisable, iMode } = this.state
+        const { frameHeight, frameWidth, estimateState, overrideDisable, iMode, results } = this.state
 
         return (
             <div>
@@ -127,11 +129,12 @@ class Estimate extends React.Component<{}, IState> {
                         <InputNumber min={1} step={1}
                             onChange={(optionValue) => optionValue && this._setState({ frameHeight: typeof optionValue === 'number' ? optionValue : parseInt(optionValue) })} value={frameHeight} />
                     </Form.Item>
-                    <IMode setIMode={this.setIMode} iMode={iMode} disabled={false} />
+                    <IMode setIMode={this.setIMode} iMode={iMode} disabled={false} disabledIModeKeys={[`Blur`, `Speed`, `SepConv-CUDA`, `RRIN-CUDA`, `Nearest`, `Oversample`]} />
 
                 </Form>
                 <div style={{ margin: 'auto', textAlign: 'center', marginTop: 48, marginBottom: 48 }}>
-                    <Button onClick={this.startEstimate} size="large" disabled={overrideDisable} type="primary">Start Estimation</Button>
+                    <Button onClick={this.startEstimate} size="large" disabled={overrideDisable || !iMode} type="primary">Start Estimation</Button>
+
                 </div>
 
                 <Modal
@@ -175,12 +178,17 @@ class Estimate extends React.Component<{}, IState> {
 
                             {
                                 /// TODO
-                                // testResult &&
-                                // <div style={{ textAlign: `center`, margin: `auto`, marginTop: 12 }}>
-                                //     <h4 style={{ fontWeight: 800 }}>Results</h4>
-                                //     <p style={{ margin: `auto` }}>PSNR: {testResult.PSNR}</p>
-                                //     <p>SSIM: {testResult.SSIM}</p>
-                                // </div>
+                                results &&
+                                <div style={{ textAlign: `center`, margin: `auto`, marginTop: 12 }}>
+                                    <h4 style={{ fontWeight: 800 }}>Results</h4>
+
+                                    {
+                                        Object.entries(results).map(([key, val]) =>
+                                    <p style={{ margin: `auto` }}>{key}: {val}</p>
+                                        )
+                                    }
+                                </div>
+
 
                             }
 

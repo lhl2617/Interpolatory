@@ -17,7 +17,6 @@ from decimal import Decimal
 from copy import deepcopy
 # from Globals import debug_flags
 # from VideoStream import BenchmarkVideoStream, VideoStream
-import matplotlib.pyplot as plt
 from ..smoothing.threeXthree_mv_smoothing import smooth
 from ..smoothing.median_filter import median_filter
 from ..smoothing.mean_filter import mean_filter
@@ -43,7 +42,7 @@ MCI with median filter for filling holes.
 ME_dict={
     "full":fs,
     "tss":tss,
-    "HBMA":hbma,
+    "hbma":hbma,
 }
 smoothing_dict={
     "mean":mean_filter,
@@ -60,7 +59,7 @@ class UniDirInterpolator(BaseInterpolator):
         # print('sup bro set block_size here')
         # self.blockSize = block_size
         self.target_region = 7
-        self.me_mode = ME_dict["HBMA"]
+        self.me_mode = ME_dict["hbma"]
         # print(self.me_mode)
         self.filter_mode = smoothing_dict["weighted"]
         self.filterSize = 4
@@ -76,6 +75,8 @@ class UniDirInterpolator(BaseInterpolator):
             self.me_mode = ME_dict[ args['me_mode']]
             if self.me_mode == tss:
                 self.region = self.steps
+        if 'filter_mode' in args.keys():
+            self.filter_mode = smoothing_dict[args['filter_mode']]
     ### this function should be only self, idx, like in BaseInterpolator
     def get_interpolated_frame(self, idx):
 
@@ -115,7 +116,6 @@ class UniDirInterpolator(BaseInterpolator):
                 self.steps=step_size
                 self.MV_field= self.me_mode(self.block_size,self.target_region,self.sub_region,self.steps,self.min_block_size,source_frame,target_frame)
 
-            # print("Begin smoothing")
             self.MV_field = smooth(self.filter_mode,self.MV_field,self.filterSize)
             self.MV_field_idx = source_frame_idx
 

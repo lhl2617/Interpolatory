@@ -3,6 +3,7 @@ import numpy as np
 import math
 from fractions import Fraction
 from decimal import Decimal
+from numba import jit, float32, int32, boolean, types
 
 progress_file_path = None
 
@@ -38,29 +39,15 @@ blends frames
 def blend_frames(frames, weights=None):
     return np.average(frames, axis=0, weights=weights).astype(np.uint8, copy=False)
 
-def log2(n):
-    return (math.log10(n) / math.log10(2))
-
 def is_power_of_two(n):
-    return (math.ceil(log2(n))) == math.floor(log2(n))
+    if (n == 0):
+        return True 
+    return (math.ceil(np.log2(n))) == math.floor(np.log2(n))
 
 
-def get_first_frame_idx_and_ratio(idx, rate_ratio):
-    '''
-    used in linear, rrin and other ML methods that support multiplying the flow
-    
-
-    given a rate_ratio and idx, figure out what the first_frame_idx (last possible frame that is before the idx time)
-    and the ratio of time between this frame and the next
-    '''
-    
-    # this period is the number of frame in the targetRate
-    # before a cycle occurs (e.g. in the 24->60 case it occurs between B &
-    # C at period = 5
-    frac = Fraction(Decimal(rate_ratio))
-    period = frac.numerator
-
-
+# accelerate the next function
+@jit(types.Tuple((int32, float32))(int32, int32, float32),nopython=True)
+def get_first_frame_idx_and_ratio_accel(period, idx, rate_ratio):
     # which targetFrame is this after a period
     offset = math.floor(idx % period)
 
@@ -80,6 +67,23 @@ def get_first_frame_idx_and_ratio(idx, rate_ratio):
     ratio = float(rate_ratio - distance_from_prev_rate_ratio_point) / rate_ratio
 
     return frameA_idx, ratio
+def get_first_frame_idx_and_ratio(idx, rate_ratio):
+    '''
+    used in linear, rrin and other ML methods that support multiplying the flow
+    
+
+    given a rate_ratio and idx, figure out what the first_frame_idx (last possible frame that is before the idx time)
+    and the ratio of time between this frame and the next
+    '''
+    
+    # this period is the number of frame in the targetRate
+    # before a cycle occurs (e.g. in the 24->60 case it occurs between B &
+    # C at period = 5
+    frac = Fraction(Decimal(rate_ratio))
+    period = frac.numerator
+
+    return get_first_frame_idx_and_ratio_accel(period, idx, rate_ratio)
+
 
 # deconstruct the string into a dict
 def deconstruct_settings(s):
