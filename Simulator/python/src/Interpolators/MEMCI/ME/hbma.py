@@ -5,25 +5,32 @@ import time
 # from plot_mv import plot_vector_field
 from scipy.ndimage import convolve
 import math
+from numba import njit, float32, int32, types, uint8
 
 cost_key_map = {
     'sad': 0,
     'ssd': 1
 }
 
+@njit(float32(int32, uint8[:,:,:], uint8[:,:,:]))
 def get_cost(cost_key, block1, block2):
     if (cost_key == 0):
+        block1 = np.asarray(block1, dtype=np.int8)
+        block2 = np.asarray(block2, dtype=np.int8)
         return np.sum(np.abs(np.subtract(block1, block2)))
     elif (cost_key == 1):
-        return np.sum(np.square(np.substract(block1, block2)))
+        block1 = np.asarray(block1, dtype=np.int32)
+        block2 = np.asarray(block2, dtype=np.int32)
+        return np.sum(np.square(np.subtract(block1, block2)))
     else:
         # should never happen!
         raise Exception('invalid cost key')
 
 
+@njit(float32[:](int32, uint8[:,:,:], uint8[:,:,:], types.UniTuple(int32, 2), int32, types.UniTuple(int32, 3)))
 def block_wise_fs(cost_key, block1, im, idx, win_size, im_shape):
     if idx[0] >= im_shape[0] or idx[1] >= im_shape[1] or idx[0] < 0 or idx[1] < 0:
-        return [0, 0, math.inf]
+        return np.asarray([0., 0., math.inf], dtype=np.float32)
 
     lowest_cost = math.inf
     lowest_distance = math.inf
@@ -53,9 +60,6 @@ def block_wise_fs(cost_key, block1, im, idx, win_size, im_shape):
         for c_off in range(min_c_off, max_c_off):
             im_c_off = im_c + c_off
             block2 = im[im_r_off : im_r_off + block_size, im_c_off : im_c_off + block_size, :]
-            # force types
-            block1 = np.asarray(block1, dtype=np.float64)
-            block2 = np.asarray(block2, dtype=np.float64)
             cost_val = get_cost(cost_key, block1, block2)
             distance = r_off * r_off + c_off * c_off
             if cost_val < lowest_cost or (cost_val == lowest_cost and distance < lowest_distance):
@@ -63,7 +67,9 @@ def block_wise_fs(cost_key, block1, im, idx, win_size, im_shape):
                 lowest_distance = distance
                 lowest_vec = [r_off, c_off]
 
-    return [lowest_vec[0], lowest_vec[1], lowest_cost]
+    lst = [lowest_vec[0], lowest_vec[1], lowest_cost]
+    return np.asarray(lst, dtype=np.float32)
+
 
 def full_search(cost_key, block_size, win_size, im1, im2):
     im1_pad = np.pad(im1, ((0,block_size), (0,block_size), (0,0)))
@@ -124,6 +130,8 @@ def increase_vec_density(cost_key, mvs, block_size, sub_win_size, im1, im2, vec_
     return out
 
 def get_motion_vectors(block_size, win_size, sub_win_size, steps, min_block_size, im1, im2, cost_str='sad', upscale=True):
+    
+    
     weightings = np.array([
         [0.0625, 0.125, 0.0625],
         [0.125, 0.25, 0.125],
@@ -139,7 +147,11 @@ def get_motion_vectors(block_size, win_size, sub_win_size, steps, min_block_size
         down_im1 = convolve(im_lst[-1][0] / 255.0, weightings, mode='constant')[::2, ::2] * 255.0
         # print(down_im1.shape)
         down_im2 = convolve(im_lst[-1][1] / 255.0, weightings, mode='constant')[::2, ::2] * 255.0
-        im_lst.append((down_im1, down_im2))
+
+        down_im1_ = np.asarray(down_im1, dtype=np.uint8)
+        down_im2_ = np.asarray(down_im2, dtype=np.uint8)
+
+        im_lst.append((down_im1_, down_im2_))
         # print(down_im2.shape)
     # print("Calculating initial motion vectors")
     mvs = full_search(cost_key, block_size, win_size, im_lst[-1][0], im_lst[-1][1])
