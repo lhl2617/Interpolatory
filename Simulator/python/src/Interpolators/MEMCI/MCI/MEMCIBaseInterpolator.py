@@ -54,7 +54,7 @@ class MEMCIBaseInterpolator(BaseInterpolator):
             self.filter_mode = smoothing_dict[args['filter_mode']]
         if 'filter_size' in args:
             self.filter_size = int(args['filter_size'])
-        # print(self.filter_mode)
+        # print(self.filter_size)
         self.pad_size = 4 * self.min_block_size
         if self.me_mode == fs:
             # print('fs')
