@@ -4,26 +4,16 @@ from imageio import imread, imwrite
 import sys
 import cProfile
 import time
+from numba import jit, uint32, float32, int8, int32, uint8, int64, types, config
 # from .plot_mv import plot_vector_field
 
-def get_motion_vectors(block_size, steps, im1, im2):
-    source_frame=im1
-    target_frame=im2
-    prec_dic = [1, 2, 1, 2, 3, 2, 1, 2, 1]
-
-    source_frame_pad = np.pad(source_frame, ((0,block_size), (0,block_size), (0,0)))  # to allow for non divisible block sizes
-    target_frame_pad = np.pad(target_frame, ((0,block_size), (0,block_size), (0,0)))
-
-    output = np.zeros_like(source_frame, dtype='float32')
-
-    prev_time = time.time()
-    for s_row in range(0, source_frame.shape[0], block_size):
-        #print(s_row, time.time() - prev_time)
-        prev_time = time.time()
-        for s_col in range(0, source_frame.shape[1], block_size):
+@jit(float32[:,:,:](int32, int32, int32[:], types.UniTuple(uint32, 3), uint8[:,:,:], uint8[:,:,:], float32[:,:,:]), nopython=True, parallel=True)
+def helper(block_size, steps, prec_dic, frame_shape, source_frame_pad, target_frame_pad, output):
+    for s_row in range(0, frame_shape[0], block_size):
+        for s_col in range(0, frame_shape[1], block_size):
             source_block = source_frame_pad[s_row:s_row+block_size, s_col:s_col+block_size, :]
             center_sad = None
-            lowest_sad = 9999999999999
+            lowest_sad = math.inf
             lowest_idx = (0, 0)
             lowest_i = 0
             curr_row = s_row
@@ -32,14 +22,14 @@ def get_motion_vectors(block_size, steps, im1, im2):
                 S = 2 ** (step - 1)
                 i = -1
 
-                if s_row + block_size >= source_frame.shape[0]:
+                if s_row + block_size >= frame_shape[0]:
                     target_max_row = s_row + 1
                 else:
-                    target_max_row = source_frame.shape[0] - block_size
-                if s_col + block_size >= source_frame.shape[0]:
+                    target_max_row = frame_shape[0] - block_size
+                if s_col + block_size >= frame_shape[0]:
                     target_max_col = s_col + 1
                 else:
-                    target_max_col = source_frame.shape[1] - block_size
+                    target_max_col = frame_shape[1] - block_size
 
                 for t_row in range(curr_row - S, curr_row + S + 1, S):
                     for t_col in range(curr_col - S, curr_col + S + 1, S):
@@ -57,8 +47,22 @@ def get_motion_vectors(block_size, steps, im1, im2):
             output[s_row:s_row+block_size, s_col:s_col+block_size, 0] = lowest_idx[0] - s_row
             output[s_row:s_row+block_size, s_col:s_col+block_size, 1] = lowest_idx[1] - s_col
             output[s_row:s_row+block_size, s_col:s_col+block_size, 2] = lowest_sad
-
     return output
+
+# @jit(float32[:,:,:](int8, int8, int8[:,:,:], int8[:,:,:]), nopython=True)
+def get_motion_vectors(block_size, steps, im1, im2):
+    source_frame=im1
+    target_frame=im2
+    prec_dic = np.array([1, 2, 1, 2, 3, 2, 1, 2, 1], dtype=np.int32)
+
+    frame_shape = source_frame.shape
+
+    source_frame_pad = np.pad(source_frame, ((0,block_size), (0,block_size), (0,0)))  # to allow for non divisible block sizes
+    target_frame_pad = np.pad(target_frame, ((0,block_size), (0,block_size), (0,0)))
+
+    output = np.zeros_like(source_frame, dtype='float32')
+
+    return helper(block_size, steps, prec_dic, frame_shape, source_frame_pad, target_frame_pad, output)
 
 if __name__ == "__main__":
     if sys.argv[1] == '-f':
