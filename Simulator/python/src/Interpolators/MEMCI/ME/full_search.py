@@ -3,39 +3,31 @@ import math
 from imageio import imread, imwrite
 import time
 import sys
+from numba import jit, uint32, float32, int8, int32, uint8, int64, types
 # from .plot_mv import plot_vector_field
 
-'''
-block_size = size of block used in source and target frame
-target_region = number of pixels padding the block to be searched
-'''
-def get_motion_vectors(block_size, target_region, im1, im2):
-    source_frame=im1
-    target_frame=im2
+
+@jit(float32[:,:,:](int32, int32, types.UniTuple(uint32, 3), uint8[:,:,:], uint8[:,:,:], float32[:,:,:]), nopython=True)
+def helper(block_size, target_region, frame_shape, source_frame_pad, target_frame_pad, output):
+
     lowest_sad_const = math.inf    # maximum sad score for a block
     lowest_distance_const = math.inf
-
-    source_frame_pad = np.pad(source_frame, ((0,block_size), (0,block_size), (0,0)))  # to allow for non divisible block sizes
-    target_frame_pad = np.pad(target_frame, ((0,block_size), (0,block_size), (0,0)))
-
-    output = np.zeros_like(source_frame, dtype='float32')
-
-    for s_row in range(0, source_frame.shape[0], block_size):
+    for s_row in range(0, frame_shape[0], block_size):
         # print(s_row)
-        for s_col in range(0, source_frame.shape[1], block_size):
+        for s_col in range(0, frame_shape[1], block_size):
             source_block = source_frame_pad[s_row:s_row+block_size, s_col:s_col+block_size, :]
             lowest_sad = lowest_sad_const
             lowest_distance = lowest_distance_const
             target_index = (0, 0)
 
-            if s_row + block_size >= source_frame.shape[0]:
+            if s_row + block_size >= frame_shape[0]:
                 target_max_row = s_row + 1
             else:
-                target_max_row = source_frame.shape[0] - block_size
-            if s_col + block_size >= source_frame.shape[0]:
+                target_max_row = frame_shape[0] - block_size
+            if s_col + block_size >= frame_shape[0]:
                 target_max_col = s_col + 1
             else:
-                target_max_col = source_frame.shape[1] - block_size
+                target_max_col = frame_shape[1] - block_size
 
             for t_row in range(max(0, s_row - target_region), min(target_max_row, s_row + target_region + 1)):
                 for t_col in range(max(0, s_col - target_region), min(target_max_col, s_col + target_region + 1)):
@@ -51,6 +43,23 @@ def get_motion_vectors(block_size, target_region, im1, im2):
             output[s_row:s_row+block_size, s_col:s_col+block_size, 2] = lowest_sad
 
     return output
+
+'''
+block_size = size of block used in source and target frame
+target_region = number of pixels padding the block to be searched
+'''
+def get_motion_vectors(block_size, target_region, im1, im2):
+    source_frame=im1
+    target_frame=im2
+
+    source_frame_pad = np.pad(source_frame, ((0,block_size), (0,block_size), (0,0)))  # to allow for non divisible block sizes
+    target_frame_pad = np.pad(target_frame, ((0,block_size), (0,block_size), (0,0)))
+
+    frame_shape = source_frame.shape
+
+    output = np.zeros_like(source_frame, dtype='float32')
+    output = helper(block_size, target_region, frame_shape, source_frame_pad, target_frame_pad, output)
+    return output 
 
 if __name__ == "__main__":
     if sys.argv[1] == '-f':

@@ -61,9 +61,7 @@ def get_motion_vectors(block_size, steps, im1, im2):
 
     output = np.zeros_like(source_frame, dtype='float32')
 
-    now = time.time()
     output = helper(block_size, steps, prec_dic, frame_shape, source_frame_pad, target_frame_pad, output)
-    print(f'{time.time()-now}')
     return output
 
 if __name__ == "__main__":
