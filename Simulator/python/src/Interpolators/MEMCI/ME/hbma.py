@@ -14,6 +14,9 @@ cost_key_map = {
 
 @njit(float32(int32, uint8[:,:,:], uint8[:,:,:]))
 def get_cost(cost_key, block1, block2):
+    block1 = np.asarray(block1, dtype=np.int32)
+    block2 = np.asarray(block2, dtype=np.int32)
+    return np.sum(np.square(np.subtract(block1, block2)))
     if (cost_key == 0):
         block1 = np.asarray(block1, dtype=np.int8)
         block2 = np.asarray(block2, dtype=np.int8)
@@ -70,26 +73,31 @@ def block_wise_fs(cost_key, block1, im, idx, win_size, im_shape):
     lst = [lowest_vec[0], lowest_vec[1], lowest_cost]
     return np.asarray(lst, dtype=np.float32)
 
+@njit(float32[:,:,:](int32, int32, int32, uint8[:,:,:], uint8[:,:,:], types.UniTuple(int32, 3)))
+def full_search_jit(cost_key, block_size, win_size, im1_pad, im2_pad, im_shape):
+    im_0, im_1, im_2 = im_shape
 
-def full_search(cost_key, block_size, win_size, im1, im2):
-    im1_pad = np.pad(im1, ((0,block_size), (0,block_size), (0,0)))
-    im2_pad = np.pad(im2, ((0,block_size), (0,block_size), (0,0)))
-
-    mvs = np.zeros_like(im1[::block_size, ::block_size, :], dtype=np.float32)
+    mvs = np.zeros((im_0//block_size, im_1//block_size, im_2), dtype=np.float32)
 
     for row in range(mvs.shape[0]):
         im_r = row * block_size
         for col in range(mvs.shape[1]):
             im_c = col * block_size
             block1 = im1_pad[im_r : im_r + block_size, im_c : im_c + block_size, :]
-            mvs[row, col, :] = block_wise_fs(cost_key, block1, im2_pad, (im_r, im_c), win_size, im2.shape)[:]
+            mvs[row, col, :] = block_wise_fs(cost_key, block1, im2_pad, (im_r, im_c), win_size, im_shape)[:]
 
     return mvs
 
-def increase_vec_density(cost_key, mvs, block_size, sub_win_size, im1, im2, vec_scale=1):
+def full_search(cost_key, block_size, win_size, im1, im2):
     im1_pad = np.pad(im1, ((0,block_size), (0,block_size), (0,0)))
     im2_pad = np.pad(im2, ((0,block_size), (0,block_size), (0,0)))
 
+    im_shape = im1.shape
+
+    return full_search_jit(cost_key, block_size, win_size, im1_pad, im2_pad, im_shape)
+
+@njit(float32[:,:,:](int32, float32[:,:,:], int32, int32, uint8[:,:,:], uint8[:,:,:], types.UniTuple(int32, 3), int32))
+def increase_vec_density_jit(cost_key, mvs, block_size, sub_win_size, im1_pad, im2_pad, im_shape, vec_scale):
     out = np.zeros((mvs.shape[0]<<1, mvs.shape[1]<<1, mvs.shape[2]), dtype=np.float32)
 
     for row in range(mvs.shape[0]):
@@ -105,11 +113,11 @@ def increase_vec_density(cost_key, mvs, block_size, sub_win_size, im1, im2, vec_
             else:
                 vecs.append(mvs[row + 1, col] * vec_scale)
 
-            if (row+1)*2*block_size >= im1.shape[0]:
+            if (row+1)*2*block_size >= im_shape[0]:
                 r_max = row*2+1
             else:
                 r_max = (row+1)*2
-            if (col+1)*2*block_size >= im1.shape[1]:
+            if (col+1)*2*block_size >= im_shape[1]:
                 c_max = col*2+1
             else:
                 c_max = (col+1)*2
@@ -121,7 +129,7 @@ def increase_vec_density(cost_key, mvs, block_size, sub_win_size, im1, im2, vec_
                     block = im1_pad[im_r : im_r + block_size, im_c : im_c + block_size, :]
                     lowest_cost = math.inf
                     for vec in vecs:
-                        res = block_wise_fs(cost_key, block, im2_pad, (im_r+vec[0], im_c+vec[1]), sub_win_size, im1.shape)
+                        res = block_wise_fs(cost_key, block, im2_pad, (im_r+vec[0], im_c+vec[1]), sub_win_size, im_shape)
                         if res[2] < lowest_cost:
                             lowest_cost = res[2]
                             out[o_r, o_c, 2] = lowest_cost
@@ -129,9 +137,26 @@ def increase_vec_density(cost_key, mvs, block_size, sub_win_size, im1, im2, vec_
 
     return out
 
+
+def increase_vec_density(cost_key, mvs, block_size, sub_win_size, im1, im2, vec_scale=1):
+    im1_pad = np.pad(im1, ((0,block_size), (0,block_size), (0,0)))
+    im2_pad = np.pad(im2, ((0,block_size), (0,block_size), (0,0)))
+
+    im_shape = im1.shape
+
+    return increase_vec_density_jit(cost_key, mvs, block_size, sub_win_size, im1_pad, im2_pad, im_shape, vec_scale)
+
+@njit(float32[:,:,:](types.UniTuple(int32, 3), float32[:,:,:], int32))
+def upscale_mvs(im_shape, mvs, block_size):
+    out = np.zeros(im_shape, dtype=np.float32)
+    for row in range(mvs.shape[0]):
+        o_r = row * block_size
+        for col in range(mvs.shape[1]):
+            o_c = col * block_size
+            out[o_r : o_r + block_size, o_c : o_c + block_size, :] = mvs[row, col, :]
+    return out
+
 def get_motion_vectors(block_size, win_size, sub_win_size, steps, min_block_size, im1, im2, cost_str='sad', upscale=True):
-    
-    
     weightings = np.array([
         [0.0625, 0.125, 0.0625],
         [0.125, 0.25, 0.125],
@@ -166,13 +191,7 @@ def get_motion_vectors(block_size, win_size, sub_win_size, steps, min_block_size
         mvs = increase_vec_density(cost_key, mvs, block_size, sub_win_size, im1, im2)
 
     if upscale:
-        out = np.zeros_like(im1, dtype='float32')
-        for row in range(mvs.shape[0]):
-            o_r = row * block_size
-            for col in range(mvs.shape[1]):
-                o_c = col * block_size
-                out[o_r : o_r + block_size, o_c : o_c + block_size, :] = mvs[row, col, :]
-        return out
+        mvs = upscale_mvs(im1.shape, mvs, block_size)
 
     return mvs
 
