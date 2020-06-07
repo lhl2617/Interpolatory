@@ -75,6 +75,8 @@ class UniDirInterpolator(BaseInterpolator):
             self.me_mode = ME_dict[ args['me_mode']]
             if self.me_mode == tss:
                 self.region = self.steps
+        if 'filter_mode' in args.keys():
+            self.filter_mode = smoothing_dict[args['filter_mode']]
     ### this function should be only self, idx, like in BaseInterpolator
     def get_interpolated_frame(self, idx):
 
@@ -114,7 +116,6 @@ class UniDirInterpolator(BaseInterpolator):
                 self.steps=step_size
                 self.MV_field= self.me_mode(self.block_size,self.target_region,self.sub_region,self.steps,self.min_block_size,source_frame,target_frame)
 
-            # print("Begin smoothing")
             self.MV_field = smooth(self.filter_mode,self.MV_field,self.filterSize)
             self.MV_field_idx = source_frame_idx
 

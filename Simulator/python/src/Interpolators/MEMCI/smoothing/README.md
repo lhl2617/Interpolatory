@@ -1,5 +1,7 @@
 with hbma sad, defaults
 
-weighted
+--- BEFORE MCI JIT
+
+weighted {"PSNR": 28.44485892532367, "SSIM": 0.88266629399296}
 median
-mean
+mean {"PSNR": 28.916011654317142, "SSIM": 0.8922143091834916}
