@@ -125,7 +125,7 @@ class UniDirInterpolator(BaseInterpolator):
 
 
         #Initialize new frame
-        Interpolated_Frame =  np.ones(source_frame.shape)*-1
+        Interpolated_Frame =  np.full(source_frame.shape, -1) 
         #Matrix with lowest sad value fo every interpolated pixel.
         SAD_interpolated_frame = np.full([source_frame.shape[0],source_frame.shape[1]],np.inf)
 

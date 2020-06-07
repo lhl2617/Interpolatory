@@ -14,16 +14,13 @@ cost_key_map = {
 
 @njit(float32(int32, uint8[:,:,:], uint8[:,:,:]))
 def get_cost(cost_key, block1, block2):
-    block1 = np.asarray(block1, dtype=np.int32)
-    block2 = np.asarray(block2, dtype=np.int32)
-    return np.sum(np.square(np.subtract(block1, block2)))
     if (cost_key == 0):
-        block1 = np.asarray(block1, dtype=np.int8)
-        block2 = np.asarray(block2, dtype=np.int8)
+        block1 = block1.astype(np.int8)
+        block2 = block2.astype(np.int8)
         return np.sum(np.abs(np.subtract(block1, block2)))
     elif (cost_key == 1):
-        block1 = np.asarray(block1, dtype=np.int32)
-        block2 = np.asarray(block2, dtype=np.int32)
+        block1 = block1.astype(np.int32)
+        block2 = block2.astype(np.int32)
         return np.sum(np.square(np.subtract(block1, block2)))
     else:
         # should never happen!
@@ -173,10 +170,10 @@ def get_motion_vectors(block_size, win_size, sub_win_size, steps, min_block_size
         # print(down_im1.shape)
         down_im2 = convolve(im_lst[-1][1] / 255.0, weightings, mode='constant')[::2, ::2] * 255.0
 
-        down_im1_ = np.asarray(down_im1, dtype=np.uint8)
-        down_im2_ = np.asarray(down_im2, dtype=np.uint8)
+        down_im1 = down_im1.astype(np.uint8)
+        down_im2 = down_im2.astype(np.uint8)
 
-        im_lst.append((down_im1_, down_im2_))
+        im_lst.append((down_im1, down_im2))
         # print(down_im2.shape)
     # print("Calculating initial motion vectors")
     mvs = full_search(cost_key, block_size, win_size, im_lst[-1][0], im_lst[-1][1])

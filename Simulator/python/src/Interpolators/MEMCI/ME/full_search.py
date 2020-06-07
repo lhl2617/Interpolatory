@@ -9,9 +9,9 @@ from numba import jit, uint32, float32, int8, int32, uint8, int64, types
 
 @jit(uint32(uint8[:,:,:], uint8[:,:,:]), nopython=True)
 def get_sad(source_block, target_block):
-    # we need to chagne it to int8 so that it's correct
-    source_block = np.asarray(source_block, dtype=np.int8)
-    target_block = np.asarray(source_block, dtype=np.int8)
+    # we need to change it to int8 so that it's correct
+    source_block = source_block.astype(np.int8)
+    target_block = target_block.astype(np.int8)
     return np.sum(np.abs(np.subtract(source_block, target_block)))
 
 @jit(float32[:,:,:](int32, int32, types.UniTuple(uint32, 3), uint8[:,:,:], uint8[:,:,:]), nopython=True)
@@ -59,6 +59,7 @@ target_region = number of pixels padding the block to be searched
 def get_motion_vectors(block_size, target_region, im1, im2):
     source_frame=im1
     target_frame=im2
+    
 
     source_frame_pad = np.pad(source_frame, ((0,block_size), (0,block_size), (0,0)))  # to allow for non divisible block sizes
     target_frame_pad = np.pad(target_frame, ((0,block_size), (0,block_size), (0,0)))
