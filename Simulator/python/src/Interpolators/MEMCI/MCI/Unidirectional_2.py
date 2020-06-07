@@ -113,7 +113,7 @@ class UniDir2Interpolator(BaseInterpolator):
         if not self.MV_field_idx < idx/self.rate_ratio < self.MV_field_idx+1:
             self.MV_field_idx = source_frame_idx
             min_side = min(source_frame.shape[0], source_frame.shape[1])
-            step_size = 0
+            step_size = 1
             while (min_side > 255):
                 min_side /= 2
                 step_size += 1
