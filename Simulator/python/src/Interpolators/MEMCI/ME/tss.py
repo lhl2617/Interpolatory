@@ -7,10 +7,17 @@ import time
 from numba import jit, uint32, float32, int8, int32, uint8, int64, types, config
 # from .plot_mv import plot_vector_field
 
-@jit(float32[:,:,:](int32, int32, int32[:], types.UniTuple(uint32, 3), uint8[:,:,:], uint8[:,:,:], float32[:,:,:]), nopython=True)
-def helper(block_size, steps, prec_dic, frame_shape, source_frame_pad, target_frame_pad, output):
+@jit(uint32(uint8[:,:,:], uint8[:,:,:]), nopython=True)
+def get_sad(source_block, target_block):
+    return np.sum(np.abs(np.subtract(source_block, target_block)))
+
+@jit(float32[:,:,:](int32, int32, types.UniTuple(int32, 3), uint8[:,:,:], uint8[:,:,:]), nopython=True)
+def helper(block_size, steps, frame_shape, source_frame_pad, target_frame_pad):
+    output = np.zeros(frame_shape, dtype=np.float32)
+    prec_dic = [1, 2, 1, 2, 3, 2, 1, 2, 1]
     for s_row in range(0, frame_shape[0], block_size):
         for s_col in range(0, frame_shape[1], block_size):
+            
             source_block = source_frame_pad[s_row:s_row+block_size, s_col:s_col+block_size, :]
             center_sad = None
             lowest_sad = math.inf
@@ -34,9 +41,9 @@ def helper(block_size, steps, prec_dic, frame_shape, source_frame_pad, target_fr
                 for t_row in range(curr_row - S, curr_row + S + 1, S):
                     for t_col in range(curr_col - S, curr_col + S + 1, S):
                         i += 1
-                        if (t_row != curr_row or t_col != curr_col or center_sad == None) and (t_row >= 0 and t_row <= target_max_row and t_col >= 0 and t_col <= target_max_col):
+                        if (t_row != curr_row or t_col != curr_col or center_sad is None) and (t_row >= 0 and t_row <= target_max_row and t_col >= 0 and t_col <= target_max_col):
                             target_block = target_frame_pad[t_row:t_row+block_size, t_col:t_col+block_size, :]
-                            sad = np.sum(np.abs(np.subtract(source_block, target_block)))
+                            sad = get_sad(source_block, target_block)
                             if sad < lowest_sad or (sad == lowest_sad and prec_dic[i] > prec_dic[lowest_i]):
                                 lowest_sad = sad
                                 lowest_idx = (t_row, t_col)
@@ -50,18 +57,13 @@ def helper(block_size, steps, prec_dic, frame_shape, source_frame_pad, target_fr
     return output
 
 def get_motion_vectors(block_size, steps, im1, im2):
-    source_frame=im1
-    target_frame=im2
-    prec_dic = np.array([1, 2, 1, 2, 3, 2, 1, 2, 1], dtype=np.int32)
+    frame_shape = im1.shape
 
-    frame_shape = source_frame.shape
-
-    source_frame_pad = np.pad(source_frame, ((0,block_size), (0,block_size), (0,0)))  # to allow for non divisible block sizes
-    target_frame_pad = np.pad(target_frame, ((0,block_size), (0,block_size), (0,0)))
-
-    output = np.zeros_like(source_frame, dtype='float32')
-
-    output = helper(block_size, steps, prec_dic, frame_shape, source_frame_pad, target_frame_pad, output)
+    source_frame_pad = np.pad(im1, ((0,block_size), (0,block_size), (0,0)))  # to allow for non divisible block sizes
+    target_frame_pad = np.pad(im2, ((0,block_size), (0,block_size), (0,0)))
+    now = time.time()
+    output = helper(block_size, steps, frame_shape, source_frame_pad, target_frame_pad)
+    print (time.time() - now)
     return output
 
 if __name__ == "__main__":

@@ -43,7 +43,7 @@ MCI with median filter for filling holes.
 ME_dict={
     "full":fs,
     "tss":tss,
-    "HBMA":hbma,
+    "hbma":hbma,
 }
 smoothing_dict={
     "mean":mean_filter,
@@ -60,7 +60,7 @@ class UniDirInterpolator(BaseInterpolator):
         # print('sup bro set block_size here')
         # self.blockSize = block_size
         self.target_region = 7
-        self.me_mode = ME_dict["HBMA"]
+        self.me_mode = ME_dict["hbma"]
         # print(self.me_mode)
         self.filter_mode = smoothing_dict["weighted"]
         self.filterSize = 4

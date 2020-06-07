@@ -32,7 +32,7 @@ Link: https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=5440975
 ME_dict={
     "full":full,
     "tss":tss,
-    "HBMA":hbma,
+    "hbma":hbma,
 }
 
 def get_weight_kern(kernlen=8):
