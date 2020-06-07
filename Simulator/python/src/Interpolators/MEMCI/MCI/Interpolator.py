@@ -17,7 +17,6 @@ from decimal import Decimal
 from copy import deepcopy
 # from Globals import debug_flags
 # from VideoStream import BenchmarkVideoStream, VideoStream
-import matplotlib.pyplot as plt
 from ..smoothing.threeXthree_mv_smoothing import smooth
 from ..smoothing.median_filter import median_filter
 from ..smoothing.mean_filter import mean_filter

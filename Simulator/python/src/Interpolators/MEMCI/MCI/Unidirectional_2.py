@@ -12,7 +12,6 @@ from decimal import Decimal
 from copy import deepcopy
 # from Globals import debug_flags
 # from VideoStream import BenchmarkVideoStream, VideoStream
-import matplotlib.pyplot as plt
 from ..smoothing.threeXthree_mv_smoothing import smooth
 from ..smoothing.median_filter import median_filter
 from ..smoothing.mean_filter import mean_filter
@@ -355,6 +354,7 @@ class UniDir2Interpolator(BaseInterpolator):
         return block_out
 
     def plot_vector_field(self,source_frame):
+        import matplotlib.pyplot as plt
         #Downsample so each vector represents one block.
         if self.upscale_MV == False:
             Down_sampled_MV = self.MV_field
@@ -380,7 +380,7 @@ class UniDir2Interpolator(BaseInterpolator):
         plt.show()
 
     def show_images(self, Ff, Fb, Fc, Fc_filled):
-
+        import matplotlib.pyplot as plt
         f, ax = plt.subplots(2,2,sharex=True, sharey=True)
         ax[0][0].imshow(Ff.astype(int))
         ax[0][0].set_title('Forward intermediate frame')
