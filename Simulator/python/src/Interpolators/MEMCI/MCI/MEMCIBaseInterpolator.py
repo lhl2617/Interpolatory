@@ -7,6 +7,9 @@ from ..ME.full_search import get_motion_vectors as fs
 from ..ME.tss import get_motion_vectors as tss
 from ..ME.hbma import get_motion_vectors as hbma
 import math
+from ....Globals import debug_flags
+
+print_debug = debug_flags['debug_MEMCI_args']
 
 class MEMCIBaseInterpolator(BaseInterpolator):
     def __init__(self, target_fps,video_in_path=None, video_out_path=None, max_out_frames=math.inf, max_cache_size=2, **args):
@@ -43,17 +46,31 @@ class MEMCIBaseInterpolator(BaseInterpolator):
 
         if 'block_size' in args:
             self.block_size = int(args['block_size'])
-            # self.large_block_size=int(args['block_size'])
+            if (print_debug): print(f'block_size: {args['block_size']}')
+        elif print_debug: print(f'block_size: 8')
+
         if 'target_region' in args:
             self.region = int(args['target_region'])
+            if (print_debug): print(f'target_region: {args['target_region']}')
+        elif print_debug: print(f'target_region: 7')
+
         if 'me_mode' in args:
             self.me_mode = ME_dict[ args['me_mode']]
-            # if self.me_mode == tss:
-            #     self.region = self.steps
+            if (print_debug): print(f'me_mode: {args['me_mode']}')
+        elif print_debug: print(f'me_mode: hbma')
+
         if 'filter_mode' in args:
             self.filter_mode = smoothing_dict[args['filter_mode']]
+            if (print_debug): print(f'filter_mode: {args['filter_mode']}')
+        elif print_debug: print(f'filter_mode: weighted')
+
         if 'filter_size' in args:
             self.filter_size = int(args['filter_size'])
+            if (print_debug): print(f'filter_size: {args['filter_size']}')
+        elif print_debug: print(f'filter_size: 4')
+
+
+
         # print(self.filter_size)
         self.pad_size = 4 * self.min_block_size
         if self.me_mode == fs:
