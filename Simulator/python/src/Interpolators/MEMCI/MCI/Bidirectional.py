@@ -5,6 +5,7 @@ import numpy as np
 import scipy
 from ..smoothing.threeXthree_mv_smoothing import smooth
 from ..ME.hbma import get_motion_vectors as hbma
+from ....util import get_first_frame_idx_and_ratio
 
 class BiDirInterpolator(MEMCIBaseInterpolator):
     def __init__(self, target_fps,video_in_path=None, video_out_path=None, max_out_frames=math.inf, max_cache_size=2, **args):
@@ -54,17 +55,17 @@ class BiDirInterpolator(MEMCIBaseInterpolator):
         #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
-        # self.MV_field_idx= -1
-        # self.MV_field=[]
-        source_frame_idx = math.floor(idx/self.rate_ratio)
+        source_frame_idx, inv_dist = get_first_frame_idx_and_ratio(idx, self.rate_ratio)
+
+        dist = 1. - inv_dist
+
         source_frame = self.video_stream.get_frame(source_frame_idx)
-        dist = idx/self.rate_ratio - math.floor(idx/self.rate_ratio)
-
-        if dist == 0:
+        #If the frame to be interpolated is coinciding with a source frame.
+        if math.isclose(dist,0.):
             return source_frame
-        if not self.MV_field_idx < idx/self.rate_ratio < self.MV_field_idx+1:
-            target_frame = self.video_stream.get_frame(source_frame_idx+1)
+        target_frame = self.video_stream.get_frame(source_frame_idx+1)
 
+        if not self.MV_field_idx < idx/self.rate_ratio < self.MV_field_idx+1:
             if(self.me_mode!=hbma):
                 # self.me_mode = ME_dict[self.me_mode]
                 self.MV_field= self.me_mode(self.block_size,self.region,source_frame,target_frame)
