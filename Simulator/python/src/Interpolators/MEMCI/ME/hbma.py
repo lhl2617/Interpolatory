@@ -72,9 +72,9 @@ def block_wise_fs(cost_key, block1, im, idx, win_size, im_shape):
 
 @njit(float32[:,:,:](int32, int32, int32, uint8[:,:,:], uint8[:,:,:], types.UniTuple(int32, 3)), cache=True)
 def full_search_jit(cost_key, block_size, win_size, im1_pad, im2_pad, im_shape):
-    im_0, im_1, im_2 = im_shape
+    im_0, im_1, _ = im_shape
 
-    mvs = np.zeros((im_0//block_size, im_1//block_size, im_2), dtype=np.float32)
+    mvs = np.zeros((math.ceil(im_0/block_size), math.ceil(im_1/block_size), 3), dtype=np.float32)
 
     for row in range(mvs.shape[0]):
         im_r = row * block_size
@@ -161,31 +161,27 @@ def get_motion_vectors(block_size, win_size, sub_win_size, steps, min_block_size
     ])[:,:,None]
 
     cost_key = cost_key_map[cost_str]
-    # print('HBMA')
     im_lst = []
     im_lst.append((im1,im2))
     for i in range(1, steps+1):
-        # print('Downscaling level',i)
         down_im1 = convolve(im_lst[-1][0] / 255.0, weightings, mode='constant')[::2, ::2] * 255.0
-        # print(down_im1.shape)
         down_im2 = convolve(im_lst[-1][1] / 255.0, weightings, mode='constant')[::2, ::2] * 255.0
 
         down_im1 = down_im1.astype(np.uint8)
         down_im2 = down_im2.astype(np.uint8)
 
         im_lst.append((down_im1, down_im2))
-        # print(down_im2.shape)
-    # print("Calculating initial motion vectors")
+
     mvs = full_search(cost_key, block_size, win_size, im_lst[-1][0], im_lst[-1][1])
 
-    for (curr_im1, curr_im2) in (im_lst[-2 :: -1]):
-        # print('Propagating back to previous level')
+    for (curr_im1, curr_im2) in (im_lst[-2 :: -1]):]
         mvs = increase_vec_density(cost_key, mvs, block_size, sub_win_size, curr_im1, curr_im2, vec_scale=2)
 
     while(block_size > min_block_size):
         block_size = block_size >> 1
-        # print('Increasing density with block size', block_size)
         mvs = increase_vec_density(cost_key, mvs, block_size, sub_win_size, im1, im2)
+
+    mvs = mvs[: math.ceil(im1.shape[0]/min_block_size), : math.ceil(im1.shape[1]/min_block_size), :]
 
     if upscale:
         mvs = upscale_mvs(im1.shape, mvs, block_size)
