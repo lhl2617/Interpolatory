@@ -45,28 +45,33 @@ class MEMCIBaseInterpolator(BaseInterpolator):
         # print(args)
 
         if 'block_size' in args:
-            self.block_size = int(args['block_size'])
-            if (print_debug): print(f'block_size: {args['block_size']}')
+            arg = args['block_size']
+            self.block_size = int(arg)
+            if (print_debug): print(f'block_size: {arg}')
         elif print_debug: print(f'block_size: 8')
 
         if 'target_region' in args:
-            self.region = int(args['target_region'])
-            if (print_debug): print(f'target_region: {args['target_region']}')
+            arg = args['target_region']
+            self.region = int(arg)
+            if (print_debug): print(f'target_region: {arg}')
         elif print_debug: print(f'target_region: 7')
 
         if 'me_mode' in args:
-            self.me_mode = ME_dict[ args['me_mode']]
-            if (print_debug): print(f'me_mode: {args['me_mode']}')
+            arg = args['me_mode']
+            self.me_mode = ME_dict[arg]
+            if (print_debug): print(f'me_mode: {arg}')
         elif print_debug: print(f'me_mode: hbma')
 
         if 'filter_mode' in args:
-            self.filter_mode = smoothing_dict[args['filter_mode']]
-            if (print_debug): print(f'filter_mode: {args['filter_mode']}')
+            arg = args['filter_mode']
+            self.filter_mode = smoothing_dict[arg]
+            if (print_debug): print(f'filter_mode: {arg}')
         elif print_debug: print(f'filter_mode: weighted')
 
         if 'filter_size' in args:
-            self.filter_size = int(args['filter_size'])
-            if (print_debug): print(f'filter_size: {args['filter_size']}')
+            arg = args['filter_size']
+            self.filter_size = int(arg)
+            if (print_debug): print(f'filter_size: {arg}')
         elif print_debug: print(f'filter_size: 4')
 
 
