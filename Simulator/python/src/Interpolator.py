@@ -200,7 +200,6 @@ def checkValidMode(interpolator_str, mode_flag):
     if not interpolator_modes[mode_flag]:
         raise Exception (f'Unsupported mode `{mode_flag}` for `{interpolator_str}`')
 
-
 def getIDocs():
     print('# Interpolator Documentation')
 

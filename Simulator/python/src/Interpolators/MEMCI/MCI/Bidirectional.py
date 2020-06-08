@@ -15,7 +15,7 @@ class BiDirInterpolator(MEMCIBaseInterpolator):
 
 
     def get_interpolated_frame(self, idx):
-
+        '''
         def gaussian_filter_2d(sigma):
             # sigma: the parameter sigma in the Gaussian kernel (unit: pixel)
             #
@@ -48,7 +48,7 @@ class BiDirInterpolator(MEMCIBaseInterpolator):
                 image[:,:,i] = np.sqrt(x_axis*x_axis+y_axis*y_axis)
 
             return image
-
+        '''
         #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
         #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
         #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -84,8 +84,8 @@ class BiDirInterpolator(MEMCIBaseInterpolator):
             self.MV_field_idx = source_frame_idx
             bwd = smooth(self.filter_mode,bwd,self.filter_size)
 
-        Interpolated_Frame =  np.ones(source_frame.shape)*-1
-        SAD_interpolated_frame = np.full([source_frame.shape[0],source_frame.shape[1]],np.inf)
+        Interpolated_Frame =  np.full(source_frame.shape, -1, dtype=np.int32) 
+        SAD_interpolated_frame = np.full((source_frame.shape[0],source_frame.shape[1]),np.inf, dtype=np.float32)
 
         for u in range(0, source_frame.shape[0]):
             for v in range(0, source_frame.shape[1]):
