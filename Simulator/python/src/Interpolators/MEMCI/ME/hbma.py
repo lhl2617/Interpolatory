@@ -122,6 +122,7 @@ def increase_vec_density_jit(cost_key, mvs, block_size, sub_win_size, im1_pad, i
                 im_r = o_r * block_size
                 for o_c in range(col*2, c_max):
                     im_c = o_c * block_size
+                    # print(block_size, r_max, c_max, im_shape, im1_pad.shape, out.shape, mvs.shape, row, col, o_r, o_c, im_r, im_c)
                     block = im1_pad[im_r : im_r + block_size, im_c : im_c + block_size, :]
                     lowest_cost = math.inf
                     for vec in vecs:
@@ -174,13 +175,11 @@ def get_motion_vectors(block_size, win_size, sub_win_size, steps, min_block_size
     mvs = full_search(cost_key, block_size, win_size, im_lst[-1][0], im_lst[-1][1])
 
     for (curr_im1, curr_im2) in (im_lst[-2 :: -1]):
-        mvs = increase_vec_density(cost_key, mvs, block_size, sub_win_size, curr_im1, curr_im2, vec_scale=2)
+        mvs = increase_vec_density(cost_key, mvs, block_size, sub_win_size, curr_im1, curr_im2, vec_scale=2)[: math.ceil(curr_im1.shape[0]/block_size), : math.ceil(curr_im1.shape[1]/block_size), :]
 
     while(block_size > min_block_size):
         block_size = block_size >> 1
-        mvs = increase_vec_density(cost_key, mvs, block_size, sub_win_size, im1, im2)
-
-    mvs = mvs[: math.ceil(im1.shape[0]/min_block_size), : math.ceil(im1.shape[1]/min_block_size), :]
+        mvs = increase_vec_density(cost_key, mvs, block_size, sub_win_size, im1, im2)[: math.ceil(im1.shape[0]/block_size), : math.ceil(im1.shape[1]/block_size), :]
 
     if upscale:
         mvs = upscale_mvs(im1.shape, mvs, block_size)
