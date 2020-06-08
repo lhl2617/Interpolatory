@@ -49,7 +49,7 @@ def benchmark(interpolator, output_path=None):
         psnr.append(skimage.metrics.peak_signal_noise_ratio(im_true, im_test, data_range=255))
         ssim.append(skimage.metrics.structural_similarity(im_true, im_test, data_range=255, multichannel=True))
 
-        
+
         cnt_done += 1
         pct = str(math.floor(100 * float(cnt_done) / len(paths))).rjust(3, ' ')
         curr = int(round(time.time() * 1000))
@@ -68,7 +68,8 @@ def benchmark(interpolator, output_path=None):
 
     res = {
         'PSNR': np.mean(psnr),
-        'SSIM': np.mean(ssim)
+        'SSIM': np.mean(ssim),
+        'Time taken':sToMMSS((end-start) / 1000)
     }
 
     res_json = json.dumps(res)
