@@ -36,14 +36,14 @@ def get_weight_kern(kernlen=8):
     x = np.append(x, np.flip(x))
     xx, yy = np.meshgrid(x,x)
     weights = 6*np.square(5*(np.log2(xx)+np.log2(yy)))
-    '''weights = np.array([[0,1,1,2,2,1,1,0],
+    weights = np.array([[0,1,1,2,2,1,1,0],
                         [1,2,4,5,5,4,2,1],
                         [1,4,6,9,9,6,4,1],
                         [2,5,9,12,12,9,5,2],
                         [2,5,9,12,12,9,5,2],
                         [1,4,6,9,9,6,4,1],
                         [1,2,4,5,5,4,2,1],
-                        [0,1,1,2,2,1,1,0]])'''
+                        [0,1,1,2,2,1,1,0]])
     weights = np.repeat(weights[:, :, np.newaxis], 3, axis=2)
 
     return weights
@@ -88,7 +88,7 @@ class UniDir2Interpolator(MEMCIBaseInterpolator):
 
         #Uncomment if you want to plot vector field when running benchmark.py
         self.MV_field = self.fwr_MV_field
-        # self.plot_vector_field(source_frame)
+        #self.plot_vector_field(source_frame)
 
         #Get forward and backward intermidiate
 
@@ -101,7 +101,7 @@ class UniDir2Interpolator(MEMCIBaseInterpolator):
         #Fill holes in the combined frame
         Fc_filled = self.BDHI(Fc)
 
-        # self.show_images(Ff,Fb,Fc,Fc_filled)
+        #self.show_images(Ff,Fb,Fc,Fc_filled)
 
 
         #Remove padding
@@ -130,19 +130,18 @@ class UniDir2Interpolator(MEMCIBaseInterpolator):
 
 
 
-
         #Weights
-        w = get_weight_kern(2*self.block_size)
-        SAD_norm = self.block_size*self.block_size*3
+        w = get_weight_kern(2*self.min_block_size)
+        SAD_norm = self.min_block_size*self.min_block_size*3
         #Iterate trough all blocks.
         ##Accumulations##
 
-        for block_row_index in range(0, frame_shape[0], self.block_size):
-            for block_col_index in range(0, frame_shape[1], self.block_size):
+        for block_row_index in range(0, frame_shape[0], self.min_block_size):
+            for block_col_index in range(0, frame_shape[1], self.min_block_size):
 
 
                 if self.upscale_MV == False:
-                    MV_i = MV_field[int(block_row_index/self.block_size), int(block_col_index/self.block_size), 0:3]
+                    MV_i = MV_field[int(block_row_index/self.min_block_size), int(block_col_index/self.min_block_size), 0:3]
 
                 else:
                     MV_i = MV_field[block_row_index, block_col_index, 0:3]
@@ -155,13 +154,11 @@ class UniDir2Interpolator(MEMCIBaseInterpolator):
                 i = block_row_index + self.pad_size
                 j = block_col_index + self.pad_size
 
-                SAD = MV_field[block_row_index, block_col_index,2]/SAD_norm
-
                 #Index for expanded block.
-                min_row = i-(int(self.block_size/2))
-                max_row = i+self.block_size+(int(self.block_size/2))
-                min_col = j-(int(self.block_size/2))
-                max_col = j+self.block_size+(int(self.block_size/2))
+                min_row = i-(int(self.min_block_size/2))
+                max_row = i+self.min_block_size+(int(self.min_block_size/2))
+                min_col = j-(int(self.min_block_size/2))
+                max_col = j+self.min_block_size+(int(self.min_block_size/2))
 
 
 
@@ -169,12 +166,12 @@ class UniDir2Interpolator(MEMCIBaseInterpolator):
                     acc = np.multiply(w,(((1-dist)*(F1[min_row:max_row,min_col:max_col,:]))+(dist*F2[min_row+Xb:max_row+Xb,min_col+Yb:max_col+Yb,:])))
                 else:
                     acc = np.multiply(w,F1[min_row:max_row,min_col:max_col,:])
-                accumulations[min_row+Xb:max_row+Xb,min_col+Yb:max_col+Yb,:]+= acc
+                accumulations[min_row+TXb:max_row+TXb,min_col+TYb:max_col+TYb,:]+= acc
 
                 WM = np.multiply(w,np.absolute(F1[min_row:max_row,min_col:max_col,:]-F2[min_row+Xb:max_row+Xb,min_col+Yb:max_col+Yb,:]))
-                WMCD[min_row+Xb:max_row+Xb,min_col+Yb:max_col+Yb,:] += WM
+                WMCD[min_row+TXb:max_row+TXb,min_col+TYb:max_col+TYb,:] += WM
 
-                weights[min_row+Xb:max_row+Xb,min_col+Yb:max_col+Yb,:] += w
+                weights[min_row+TXb:max_row+TXb,min_col+TYb:max_col+TYb,:] += w
 
         F = np.zeros(F1.shape)    #interpolated frame
         E = np.zeros(F2.shape)    #weighted average
@@ -197,7 +194,7 @@ class UniDir2Interpolator(MEMCIBaseInterpolator):
     def Error_adaptive_combination(self, Ff, Ef, Fb, Eb):
         Fc = np.full(Ff.shape,-1)
 
-        alpha = 8 #Empirically determined parameter used to smooth the weights.
+        alpha = 1 #Empirically determined parameter used to smooth the weights.
 
         for i in range(0,Ff.shape[0]):
             for j in range(0,Ff.shape[1]):
@@ -216,7 +213,7 @@ class UniDir2Interpolator(MEMCIBaseInterpolator):
     #Block-Wise Directional Hole Interpolation
     def BDHI(self,Fc):
         Fc_out = np.copy(Fc)
-        fill_block_size = 2*self.block_size
+        fill_block_size = 2*self.min_block_size
         for row_index in range(self.pad_size,Fc.shape[0]-self.pad_size, fill_block_size):
             for col_index in range(self.pad_size, Fc.shape[1]-self.pad_size, fill_block_size):
                 block = Fc[row_index:row_index+(fill_block_size),col_index:col_index+fill_block_size,:]
@@ -323,10 +320,10 @@ class UniDir2Interpolator(MEMCIBaseInterpolator):
         #Downsample so each vector represents one block.
         if self.upscale_MV == False:
             Down_sampled_MV = self.MV_field
-            X, Y = np.meshgrid(np.linspace(0,(self.MV_field.shape[1]*self.block_size)-1, Down_sampled_MV.shape[1]), \
-                                np.linspace(0,(self.MV_field.shape[0]*self.block_size) -1, Down_sampled_MV.shape[0]))
+            X, Y = np.meshgrid(np.linspace(0,(self.MV_field.shape[1]*self.min_block_size)-1, Down_sampled_MV.shape[1]), \
+                                np.linspace(0,(self.MV_field.shape[0]*self.min_block_size) -1, Down_sampled_MV.shape[0]))
         else :
-            Down_sampled_MV=self.MV_field[::self.block_size,::self.block_size,:]
+            Down_sampled_MV=self.MV_field[::self.min_block_size,::self.min_block_size,:]
             X, Y = np.meshgrid(np.linspace(0,self.MV_field.shape[1]-1, Down_sampled_MV.shape[1]), \
                                 np.linspace(0,self.MV_field.shape[0]-1, Down_sampled_MV.shape[0]))
 
@@ -341,7 +338,7 @@ class UniDir2Interpolator(MEMCIBaseInterpolator):
 
         cbar=fig.colorbar(vector_field)
         cbar.ax.set_ylabel('|MV| in pixels')
-        plt.title("Block size="+str(self.block_size)+ "\nSteps="+str(self.steps))
+        plt.title("Block size="+str(self.min_block_size)+ "\nSteps="+str(self.steps))
         plt.show()
 
     def show_images(self, Ff, Fb, Fc, Fc_filled):
