@@ -4,17 +4,17 @@ from imageio import imread, imwrite
 import sys
 import cProfile
 import time
-from numba import jit, uint32, float32, int8, int32, uint8, int64, types, config
+from numba import njit, uint32, float32, int8, int32, uint8, int64, types, config
 # from .plot_mv import plot_vector_field
 
-@jit(uint32(uint8[:,:,:], uint8[:,:,:]), nopython=True)
+@njit(uint32(uint8[:,:,:], uint8[:,:,:]), cache=True)
 def get_sad(source_block, target_block):
     # we need to chagne it to int8 so that it's correct
-    source_block = np.asarray(source_block, dtype=np.int8)
-    target_block = np.asarray(source_block, dtype=np.int8)
+    source_block = source_block.astype(np.int8)
+    target_block = target_block.astype(np.int8)
     return np.sum(np.abs(np.subtract(source_block, target_block)))
 
-@jit(float32[:,:,:](int32, int32, types.UniTuple(int32, 3), uint8[:,:,:], uint8[:,:,:]), nopython=True)
+@njit(float32[:,:,:](int32, int32, types.UniTuple(int32, 3), uint8[:,:,:], uint8[:,:,:]), cache=True)
 def helper(block_size, steps, frame_shape, source_frame_pad, target_frame_pad):
     output = np.zeros(frame_shape, dtype=np.float32)
     prec_dic = [1, 2, 1, 2, 3, 2, 1, 2, 1]
@@ -64,25 +64,23 @@ def get_motion_vectors(block_size, steps, im1, im2):
 
     source_frame_pad = np.pad(im1, ((0,block_size), (0,block_size), (0,0)))  # to allow for non divisible block sizes
     target_frame_pad = np.pad(im2, ((0,block_size), (0,block_size), (0,0)))
-    now = time.time()
     output = helper(block_size, steps, frame_shape, source_frame_pad, target_frame_pad)
-    print (time.time() - now)
     return output
 
-if __name__ == "__main__":
-    if sys.argv[1] == '-f':
-        csv_path = sys.argv[2]
-        image_height = int(sys.argv[3])
-        image_width = int(sys.argv[4])
-        out_path = sys.argv[5]
-        output = np.genfromtxt(csv_path, delimiter=',').reshape((image_height, image_width, 3))
-    else:
-        block_size = int(sys.argv[1])
-        steps = int(sys.argv[2])
-        im1 = imread(sys.argv[3])[:,:,:3]
-        im2 = imread(sys.argv[4])[:,:,:3]
-        out_path = sys.argv[5]
-        output = get_motion_vectors(block_size, steps, im1, im2)
+# if __name__ == "__main__":
+#     if sys.argv[1] == '-f':
+#         csv_path = sys.argv[2]
+#         image_height = int(sys.argv[3])
+#         image_width = int(sys.argv[4])
+#         out_path = sys.argv[5]
+#         output = np.genfromtxt(csv_path, delimiter=',').reshape((image_height, image_width, 3))
+#     else:
+#         block_size = int(sys.argv[1])
+#         steps = int(sys.argv[2])
+#         im1 = imread(sys.argv[3])[:,:,:3]
+#         im2 = imread(sys.argv[4])[:,:,:3]
+#         out_path = sys.argv[5]
+#         output = get_motion_vectors(block_size, steps, im1, im2)
         # np.savetxt(out_path + "/out.csv", output.reshape(-1), delimiter=',')
 
     # plot_vector_field(output, block_size, out_path)

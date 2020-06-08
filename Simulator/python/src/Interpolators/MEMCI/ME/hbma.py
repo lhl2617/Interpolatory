@@ -12,25 +12,22 @@ cost_key_map = {
     'ssd': 1
 }
 
-@njit(float32(int32, uint8[:,:,:], uint8[:,:,:]))
+@njit(float32(int32, uint8[:,:,:], uint8[:,:,:]), cache=True)
 def get_cost(cost_key, block1, block2):
-    block1 = np.asarray(block1, dtype=np.int32)
-    block2 = np.asarray(block2, dtype=np.int32)
-    return np.sum(np.square(np.subtract(block1, block2)))
     if (cost_key == 0):
-        block1 = np.asarray(block1, dtype=np.int8)
-        block2 = np.asarray(block2, dtype=np.int8)
+        block1 = block1.astype(np.int8)
+        block2 = block2.astype(np.int8)
         return np.sum(np.abs(np.subtract(block1, block2)))
     elif (cost_key == 1):
-        block1 = np.asarray(block1, dtype=np.int32)
-        block2 = np.asarray(block2, dtype=np.int32)
+        block1 = block1.astype(np.int32)
+        block2 = block2.astype(np.int32)
         return np.sum(np.square(np.subtract(block1, block2)))
     else:
         # should never happen!
         raise Exception('invalid cost key')
 
 
-@njit(float32[:](int32, uint8[:,:,:], uint8[:,:,:], types.UniTuple(int32, 2), int32, types.UniTuple(int32, 3)))
+@njit(float32[:](int32, uint8[:,:,:], uint8[:,:,:], types.UniTuple(int32, 2), int32, types.UniTuple(int32, 3)), cache=True)
 def block_wise_fs(cost_key, block1, im, idx, win_size, im_shape):
     if idx[0] >= im_shape[0] or idx[1] >= im_shape[1] or idx[0] < 0 or idx[1] < 0:
         return np.asarray([0., 0., math.inf], dtype=np.float32)
@@ -73,7 +70,7 @@ def block_wise_fs(cost_key, block1, im, idx, win_size, im_shape):
     lst = [lowest_vec[0], lowest_vec[1], lowest_cost]
     return np.asarray(lst, dtype=np.float32)
 
-@njit(float32[:,:,:](int32, int32, int32, uint8[:,:,:], uint8[:,:,:], types.UniTuple(int32, 3)))
+@njit(float32[:,:,:](int32, int32, int32, uint8[:,:,:], uint8[:,:,:], types.UniTuple(int32, 3)), cache=True)
 def full_search_jit(cost_key, block_size, win_size, im1_pad, im2_pad, im_shape):
     im_0, im_1, im_2 = im_shape
 
@@ -96,7 +93,7 @@ def full_search(cost_key, block_size, win_size, im1, im2):
 
     return full_search_jit(cost_key, block_size, win_size, im1_pad, im2_pad, im_shape)
 
-@njit(float32[:,:,:](int32, float32[:,:,:], int32, int32, uint8[:,:,:], uint8[:,:,:], types.UniTuple(int32, 3), int32))
+@njit(float32[:,:,:](int32, float32[:,:,:], int32, int32, uint8[:,:,:], uint8[:,:,:], types.UniTuple(int32, 3), int32), cache=True)
 def increase_vec_density_jit(cost_key, mvs, block_size, sub_win_size, im1_pad, im2_pad, im_shape, vec_scale):
     out = np.zeros((mvs.shape[0]<<1, mvs.shape[1]<<1, mvs.shape[2]), dtype=np.float32)
 
@@ -146,7 +143,7 @@ def increase_vec_density(cost_key, mvs, block_size, sub_win_size, im1, im2, vec_
 
     return increase_vec_density_jit(cost_key, mvs, block_size, sub_win_size, im1_pad, im2_pad, im_shape, vec_scale)
 
-@njit(float32[:,:,:](types.UniTuple(int32, 3), float32[:,:,:], int32))
+@njit(float32[:,:,:](types.UniTuple(int32, 3), float32[:,:,:], int32), cache=True)
 def upscale_mvs(im_shape, mvs, block_size):
     out = np.zeros(im_shape, dtype=np.float32)
     for row in range(mvs.shape[0]):
@@ -173,10 +170,10 @@ def get_motion_vectors(block_size, win_size, sub_win_size, steps, min_block_size
         # print(down_im1.shape)
         down_im2 = convolve(im_lst[-1][1] / 255.0, weightings, mode='constant')[::2, ::2] * 255.0
 
-        down_im1_ = np.asarray(down_im1, dtype=np.uint8)
-        down_im2_ = np.asarray(down_im2, dtype=np.uint8)
+        down_im1 = down_im1.astype(np.uint8)
+        down_im2 = down_im2.astype(np.uint8)
 
-        im_lst.append((down_im1_, down_im2_))
+        im_lst.append((down_im1, down_im2))
         # print(down_im2.shape)
     # print("Calculating initial motion vectors")
     mvs = full_search(cost_key, block_size, win_size, im_lst[-1][0], im_lst[-1][1])

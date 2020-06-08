@@ -35,7 +35,7 @@ class LinearInterpolator(BaseInterpolator):
 
         if (debug_flags['debug_interpolator']):
             print(
-                f'targetframe: {idx}, using source frame: ({weightA} * {frameA_idx} + {weightB} * {frameB_idx}) / {self.rate_ratio}')
+                f'targetframe: {idx}, using source frame: ({weightA} * {frameA_idx} + {weightB} * {frameB_idx})')
 
         weights = [weightA, weightB]
         frames = [frameA, frameB]

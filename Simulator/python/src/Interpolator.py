@@ -49,7 +49,7 @@ InterpolatorDocs = {
                 "value": "hbma",
                 "enum": [
                     "hbma",
-                    "full",
+                    "fs",
                     "tss",
                 ],
                 "enumDescriptions": [
