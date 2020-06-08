@@ -101,7 +101,7 @@ InterpolatorDocs = {
             },
             "target_region": {
                 "type": "number",
-                "value": 3,
+                "value": 7,
                 "description": "The distance in pixels (positive integer) that the algorithm searches for motion"
             },
             "mci_mode": {
@@ -138,7 +138,7 @@ InterpolatorDocs = {
             },
             "filter_size": {
                 "type": "number",
-                "value": 5,
+                "value": 4,
                 "description": "Filter size (positive integer) used by MCI filter method"
             }
         }

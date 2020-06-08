@@ -12,7 +12,7 @@ type Props = {
     setIMode: (iMode: InterpolationMode) => Promise<void>;
     iMode: InterpolationMode | undefined; /// current state
     disabled: boolean;
-    disabledIModeKeys: string[];
+    modeFlag: '-i' | '-e' | '-b' | '-t';
 }
 
 type State = {
@@ -43,12 +43,18 @@ const IMode = (props: Props) => {
     }, [])
 
     const getIModeSchema = async () => {
-        const { disabledIModeKeys } = props
+        const { modeFlag } = props
         try {
-            const schemaAll = (await getInterpolationModeSchema())
-            const enabledIModeKeys = Object.keys(schemaAll).filter((k) => !disabledIModeKeys.includes(k))
+            const schemaAll = await getInterpolationModeSchema()
+            
             let schema: Record<string, InterpolationMode> = {}
-            enabledIModeKeys.forEach((k) => schema[k] = schemaAll[k])
+
+            Object.entries(schemaAll).forEach(([iModeKey, iMode]) => {
+                if (iMode.modes[modeFlag]) {
+                    schema[iModeKey] = iMode
+                }
+            })
+
             updateState({ iModeSchema: schema })
 
             const iMode = Object.values(schema)[0]
@@ -94,7 +100,7 @@ const IMode = (props: Props) => {
         }
     }
 
-    const { iMode, disabled, disabledIModeKeys } = props;
+    const { iMode, disabled } = props;
     const { iModeSchema } = state;
     return (
         <div>

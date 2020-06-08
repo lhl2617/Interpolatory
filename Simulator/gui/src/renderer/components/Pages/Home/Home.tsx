@@ -117,7 +117,7 @@ export class Home extends React.Component<IProps, IState> {
         const { setFeaturesEnabled } = this.props;
         const proc = cp.spawn(python3, [binName, '-ver']);
 
-        setTimeout(() => proc.kill(), 10000);
+        setTimeout(() => proc.kill(), 30000);
 
         let stdoutTxt = ``;
         let stderrTxt = ``;

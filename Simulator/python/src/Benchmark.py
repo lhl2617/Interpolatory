@@ -65,9 +65,9 @@ def benchmark(interpolator, output_path=None):
 
         if debug_flags['debug_benchmark_progress']:
             print(progStr)
+    end = int(round(time.time()))
 
     if debug_flags['debug_benchmark_progress']:
-        end = int(round(time.time()))
         print(f'PROGRESS::100%::Completed | Time taken: {sToMMSS((end-start))}')
 
     res = {

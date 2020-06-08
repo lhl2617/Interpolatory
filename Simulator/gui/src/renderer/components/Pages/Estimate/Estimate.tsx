@@ -129,7 +129,7 @@ class Estimate extends React.Component<{}, IState> {
                         <InputNumber min={1} step={1}
                             onChange={(optionValue) => optionValue && this._setState({ frameHeight: typeof optionValue === 'number' ? optionValue : parseInt(optionValue) })} value={frameHeight} />
                     </Form.Item>
-                    <IMode setIMode={this.setIMode} iMode={iMode} disabled={false} disabledIModeKeys={[`Blur`, `Speed`, `SepConv-CUDA`, `RRIN-CUDA`, `Nearest`, `Oversample`]} />
+                    <IMode setIMode={this.setIMode} iMode={iMode} disabled={false} modeFlag="-e" />
 
                 </Form>
                 <div style={{ margin: 'auto', textAlign: 'center', marginTop: 48, marginBottom: 48 }}>

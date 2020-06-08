@@ -118,10 +118,11 @@ export const getPercentageFromProgressString = (s: string) => {
     return parseInt(s.substr(0, 3), 10);
 }
 
+export type IModeFlags = '-t' | '-e' | '-b' | '-i'
 export type IModeEnumType = { type: "enum", description: string, value: string, enum: string[], enumDescriptions: [] }
 export type IModeNumberType = { type: "number", description: string, value: number }
 export type InterpolationModeOptions = Record<string, IModeEnumType | IModeNumberType>
-export type InterpolationMode = { name: string, description: string, options?: InterpolationModeOptions }
+export type InterpolationMode = { name: string, description: string, options?: InterpolationModeOptions, modes: Record<IModeFlags, boolean> }
 export type InterpolationModeSchema = Record<string, InterpolationMode>
 
 /// from the py get the JSON binary

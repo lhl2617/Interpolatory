@@ -218,7 +218,7 @@ export class Benchmark extends React.Component<{}, IState> {
                     </Form.Item>
 
 
-                    <IMode setIMode={this.setIMode} iMode={iMode} disabled={false} disabledIModeKeys={[`Blur`, `Speed`]} />
+                    <IMode setIMode={this.setIMode} iMode={iMode} disabled={false} modeFlag="-b" />
 
 
 
