@@ -12,9 +12,6 @@
 ### `python3 main.py -depcuda`
 - Check whether CUDA dependencies are metGet this help. 
 
-### `python3 main.py -il`
-- List all supported interpolation modes
-
 ### `python3 main.py -doc`
 - List all supported interpolation modes and their CLI usage guide
 
