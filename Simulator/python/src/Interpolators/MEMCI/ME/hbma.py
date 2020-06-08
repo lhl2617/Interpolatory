@@ -174,7 +174,7 @@ def get_motion_vectors(block_size, win_size, sub_win_size, steps, min_block_size
 
     mvs = full_search(cost_key, block_size, win_size, im_lst[-1][0], im_lst[-1][1])
 
-    for (curr_im1, curr_im2) in (im_lst[-2 :: -1]):]
+    for (curr_im1, curr_im2) in (im_lst[-2 :: -1]):
         mvs = increase_vec_density(cost_key, mvs, block_size, sub_win_size, curr_im1, curr_im2, vec_scale=2)
 
     while(block_size > min_block_size):
