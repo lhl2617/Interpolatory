@@ -11,12 +11,11 @@ cost_key_map = {
     'sad': 0,
     'ssd': 1
 }
-
 @njit(float32(int32, uint8[:,:,:], uint8[:,:,:]), cache=True)
 def get_cost(cost_key, block1, block2):
     if (cost_key == 0):
-        block1 = block1.astype(np.int8)
-        block2 = block2.astype(np.int8)
+        block1 = block1.astype(np.int32)
+        block2 = block2.astype(np.int32)
         return np.sum(np.abs(np.subtract(block1, block2)))
     elif (cost_key == 1):
         block1 = block1.astype(np.int32)
@@ -185,7 +184,6 @@ def get_motion_vectors(block_size, win_size, sub_win_size, steps, min_block_size
 
     if upscale:
         mvs = upscale_mvs(im1.shape, mvs, block_size)
-
     return mvs
 
 # if __name__ == "__main__":

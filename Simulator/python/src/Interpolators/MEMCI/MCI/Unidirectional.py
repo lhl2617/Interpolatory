@@ -19,6 +19,7 @@ MCI with median filter for filling holes.
 
 '''
 
+# this is to filter out all the holes (set as -1)
 @njit(uint8[:](int32[:,:]), cache=True)
 def filter_out_neg1(arr):
     arr = arr.flatten()

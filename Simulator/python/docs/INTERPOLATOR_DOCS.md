@@ -42,7 +42,7 @@
     - Possible values: 
         * `unidir`: Unidirectional Method
         * `bidir`: Bidirectional Method
-        * `unidir2`: Improved Unidirectional Method
+        * `unidir2`: Improved Bidirectional Method
 - `filter_mode`
     - Which filtering method to use.
     - Default: `weighted_mean`

@@ -4,9 +4,7 @@ import os
 import pathlib
 
 sys.path.append('./src')
-from src import util, Interpolator, Benchmark, Globals
-from src.Interpolator import InterpolatorDictionary, InterpolatorDocs, getIDocs
-from src.Benchmark import benchmark, get_middle_frame
+from src import util, Globals
 
 mode_flag = None
 
@@ -32,8 +30,6 @@ if (len(sys.argv) > 1):
         util.progress_file_path = file_path
         args = args[:-1]
 
-
-interpolators = list(InterpolatorDictionary.keys())
 # limited_interpolators = list(LimitedInterpolatorDictionary.keys())
 version = 'Interpolatory Simulator 0.0.1'
 
@@ -44,18 +40,13 @@ if mode_flag == '-h':
     print(manual.read())
     manual.close() 
 
-elif mode_flag == '-il':
-    print(json.dumps(interpolators))
-
-
-elif mode_flag == '-il':
-    print(json.dumps(interpolators))
-
 elif mode_flag == '-doc':
+    from src.Interpolator import getIDocs
     getIDocs()
 
 # this schema is for gui
 elif mode_flag == '-schema':
+    from src.Interpolator import InterpolatorDocs
     print(json.dumps(InterpolatorDocs))
 
 
@@ -78,8 +69,11 @@ elif mode_flag == '-mi' and len(args) == 2:
     # print('- python3 main.py -i <input-video-path> -m <interpolation-mode>[:<settings>] -f <output-frame-rate> -o <output-file-path>')
 elif mode_flag == '-i' and len(args) == 8 and '-m' == args[2] and '-f' == args[4] and '-o' == args[6]:
     import math
+    from src.Interpolator import InterpolatorDictionary, checkValidMode
     input_video_path = args[1]
     interpolation_mode, settings = util.deconstruct_interpolation_mode_and_settings(args[3])
+
+    checkValidMode(interpolation_mode, mode_flag)
 
     target_fps = int(args[5])
     output_video_path = args[7]
@@ -91,8 +85,11 @@ elif mode_flag == '-i' and len(args) == 8 and '-m' == args[2] and '-f' == args[4
 
 
 elif mode_flag == '-b' and len(args) >= 2:
-    # print(args[1])
+    from src.Benchmark import benchmark
+    from src.Interpolator import InterpolatorDictionary, checkValidMode
     interpolation_mode, settings = util.deconstruct_interpolation_mode_and_settings(args[1])
+
+    checkValidMode(interpolation_mode, mode_flag)
 
     output_path = None
     if (len(args) > 2):
@@ -105,8 +102,11 @@ elif mode_flag == '-b' and len(args) >= 2:
     
 
 elif mode_flag == '-t' and len(args) >= 7 and '-f' == args[2] and '-o' == args[5] :
-
+    from src.Benchmark import benchmark, get_middle_frame
+    from src.Interpolator import InterpolatorDictionary, checkValidMode
     interpolation_mode, settings = util.deconstruct_interpolation_mode_and_settings(args[1])
+
+    checkValidMode(interpolation_mode, mode_flag)
 
     frame_1_path = args[3]
     frame_2_path = args[4]
@@ -120,6 +120,8 @@ elif mode_flag == '-t' and len(args) >= 7 and '-f' == args[2] and '-o' == args[5
     interpolator = interpolator_obj(2, **settings)
     get_middle_frame(interpolator, frame_1_path, frame_2_path, output_file_path, ground_truth_path)
     
+elif mode_flag == '-e' and len(args) == 2:
+    raise Exception('TODO')
 
 elif mode_flag == '-ver':
     print(json.dumps(version))

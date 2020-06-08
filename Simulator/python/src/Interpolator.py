@@ -21,27 +21,63 @@ InterpolatorDictionary = {
 InterpolatorDocs = {
     "Nearest": {
         "name": "Nearest",
-        "description": "Known as drop/repeat. Nearest frame in point of time is used"
+        "description": "Known as drop/repeat. Nearest frame in point of time is used",
+        "modes": {
+            "-i": True, # interpolate
+            "-b": True, # benchmark
+            "-t": True, # middle frame
+            "-e": False # estimate hardware
+        }
     },
     "Oversample": {
         "name": "Oversample",
-        "description": "Similar to nearest except frames at boundaries are blended (oversampled)"
+        "description": "Similar to nearest except frames at boundaries are blended (oversampled)",
+        "modes": {
+            "-i": True, # interpolate
+            "-b": True, # benchmark
+            "-t": True, # middle frame
+            "-e": False # estimate hardware
+        }
     },
     "Linear": {
         "name": "Linear",
-        "description": "Bilinear interpolation in which new frames are created by blending frames by their weights w.r.t. time"
+        "description": "Bilinear interpolation in which new frames are created by blending frames by their weights w.r.t. time",
+        "modes": {
+            "-i": True, # interpolate
+            "-b": True, # benchmark
+            "-t": True, # middle frame
+            "-e": True # estimate hardware
+        }
     },
     "Blur": {
         "name": "Blur",
-        "description": "Downconverts frame rate and blends frames, supports only downconversion by 2 to the n where n is an integer"
+        "description": "Downconverts frame rate and blends frames, supports only downconversion by 2 to the n where n is an integer",
+        "modes": {
+            "-i": True, # interpolate
+            "-b": False, # benchmark
+            "-t": False, # middle frame
+            "-e": False # estimate hardware
+        }
     },
     "Speed": {
         "name": "Speed",
-        "description": "Converts frame rate by simply changing the speed of the video. No frame is created nor dropped."
+        "description": "Converts frame rate by simply changing the speed of the video. No frame is created nor dropped.",
+        "modes": {
+            "-i": True, # interpolate
+            "-b": False, # benchmark
+            "-t": False, # middle frame
+            "-e": False # estimate hardware
+        }
     },
     "MEMCI": {
         "name": "MEMCI",
         "description": "Motion Estimation & Motion Compensated Interpolation method.",
+        "modes": {
+            "-i": True, # interpolate
+            "-b": True, # benchmark
+            "-t": True, # middle frame
+            "-e": True # estimate hardware
+        },
         "options": {
             "me_mode": {
                 "type": "enum",
@@ -108,6 +144,12 @@ InterpolatorDocs = {
     "SepConv-CUDA": {
         "name": "SepConv-CUDA",
         "description": "SepConv kernel-based method. Requires CUDA dependencies. Supports only upconversion by a factor of 2 or if the factor has denominator 2 (e.g. 2.5 = 5/2). For the latter case, upconversion is done at a doubled factor and a pair of frames are blended to create one output frame.",
+        "modes": {
+            "-i": True, # interpolate
+            "-b": True, # benchmark
+            "-t": True, # middle frame
+            "-e": False # estimate hardware
+        },
         "options": {
             "model": {
                 "type": "enum",
@@ -127,6 +169,12 @@ InterpolatorDocs = {
     "RRIN-CUDA": {
         "name": "RRIN-CUDA",
         "description": "Residue Refinement method. Requires CUDA dependencies.",
+        "modes": {
+            "-i": True, # interpolate
+            "-b": True, # benchmark
+            "-t": True, # middle frame
+            "-e": False # estimate hardware
+        },
         "options": {
             "flow_usage_method": {
                 "type": "enum",
@@ -145,8 +193,22 @@ InterpolatorDocs = {
     }
 }
 
+def checkValidMode(interpolator_str, mode_flag):
+    if not interpolator_str in InterpolatorDocs:
+        raise Exception(f'Invalid interpolator name: `{interpolator_str}`')
+    interpolator_modes = InterpolatorDocs[interpolator_str]['modes']
+    if not interpolator_modes[mode_flag]:
+        raise Exception (f'Unsupported mode `{mode_flag}` for `{interpolator_str}`')
+
 def getIDocs():
     print('# Interpolator Documentation')
+
+    modeOptionMap = {
+        '-i': '-i (Video Interpolation)',
+        '-b': '-b (Benchmarking)',
+        '-t': '-t (Getting middle frame)',
+        '-e': '-e (Get hardware estimates)'
+    }
 
     def getOptions(iDocOptions):
         for key, optionObj in iDocOptions.items():
@@ -168,9 +230,14 @@ def getIDocs():
         desc = iDocObj['description']
         print(f'- Name: `{name}`')
         print(f'- Description: {desc}')
+        print(f'### Supported modes')
+        for mode, enabled in iDocObj['modes'].items():
+            print (f'{modeOptionMap[mode]}: {enabled}')   
         if 'options' in iDocObj:
             print(f'### Options')
             getOptions(iDocObj['options'])
+
+        
         print('')
     
 
