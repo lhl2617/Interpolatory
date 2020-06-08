@@ -23,7 +23,8 @@ class MEMCIBaseInterpolator(BaseInterpolator):
         smoothing_dict = {
             "mean": mean_filter,
             "median": median_filter,
-            "weighted": weighted_mean_filter
+            "weighted": weighted_mean_filter,
+            "none": None
 
         }
         self.MV_field_idx = -1
@@ -34,7 +35,7 @@ class MEMCIBaseInterpolator(BaseInterpolator):
         self.region = 7
         self.me_mode = ME_dict["hbma"]
         # print(self.me_mode)
-        self.filter_mode = smoothing_dict["weighted"]
+        self.filter_mode = smoothing_dict["none"]
         self.filter_size = 4
         self.sub_region = 1
         self.steps = 4
@@ -66,7 +67,7 @@ class MEMCIBaseInterpolator(BaseInterpolator):
             arg = args['filter_mode']
             self.filter_mode = smoothing_dict[arg]
             if (print_debug): print(f'filter_mode: {arg}')
-        elif print_debug: print(f'filter_mode: weighted')
+        elif print_debug: print(f'filter_mode: none')
 
         if 'filter_size' in args:
             arg = args['filter_size']

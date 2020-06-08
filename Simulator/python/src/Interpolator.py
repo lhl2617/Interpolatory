@@ -121,14 +121,16 @@ InterpolatorDocs = {
             },
             "filter_mode": {
                 "type": "enum",
-                "description": "Which filtering method to use.",
-                "value": "weighted_mean",
+                "description": "Which filtering method to use. (Not applicable for unidir2)",
+                "value": "none",
                 "enum": [
+                    "none",
                     "mean",
                     "median",
                     "weighted"
                 ],
                 "enumDescriptions": [
+                    "None",
                     "Mean",
                     "Median",
                     "Weighted Mean"

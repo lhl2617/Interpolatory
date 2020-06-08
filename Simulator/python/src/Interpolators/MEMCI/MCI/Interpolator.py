@@ -23,6 +23,8 @@ def MEMCI (target_fps, video_in_path=None, video_out_path=None, max_out_frames=m
         return BiDirInterpolator(target_fps, video_in_path, video_out_path, max_out_frames, max_cache_size,**args)
 
     elif (mci_mode == 'unidir2'):
+        # no smoothing in unidir2
+        args['filter_mode'] = 'none'
         if (print_debug): print(f'mci_mode: unidir2')
         return UniDir2Interpolator(target_fps, video_in_path, video_out_path, max_out_frames, max_cache_size,**args)
 

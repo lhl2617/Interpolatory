@@ -24,7 +24,7 @@ def benchmark(interpolator, output_path=None):
     paths = sorted(glob.glob(f'{basedir}/benchmarks/middlebury/*/frame10i11.png'))
 
     cnt_done = 0
-    start = int(round(time.time() * 1000))
+    start = int(round(time.time()))
 
     for path_to_truth in paths:
         test_name = path_to_truth.split(path.sep)[-2]
@@ -56,8 +56,8 @@ def benchmark(interpolator, output_path=None):
 
         cnt_done += 1
         pct = str(math.floor(100 * float(cnt_done) / len(paths))).rjust(3, ' ')
-        curr = int(round(time.time() * 1000))
-        elapsed_seconds = int((curr-start) / 1000)
+        curr = int(round(time.time()))
+        elapsed_seconds = int((curr-start))
         elapsed = sToMMSS(elapsed_seconds)
         eta = getETA(elapsed_seconds, cnt_done, len(paths))
         progStr = f'PROGRESS::{pct}%::Frame {cnt_done}/{len(paths)} | Time elapsed: {elapsed} | Estimated Time Left: {eta}'
@@ -67,13 +67,13 @@ def benchmark(interpolator, output_path=None):
             print(progStr)
 
     if debug_flags['debug_benchmark_progress']:
-        end = int(round(time.time() * 1000))
-        print(f'PROGRESS::100%::Completed | Time taken: {sToMMSS((end-start) / 1000)}')
+        end = int(round(time.time()))
+        print(f'PROGRESS::100%::Completed | Time taken: {sToMMSS((end-start))}')
 
     res = {
         'PSNR': np.mean(psnr),
         'SSIM': np.mean(ssim),
-        'Time taken':sToMMSS((end-start) / 1000)
+        'Time taken':sToMMSS((end-start))
     }
 
     res_json = json.dumps(res)
