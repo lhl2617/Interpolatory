@@ -36,14 +36,14 @@ def get_weight_kern(kernlen=8):
     x = np.append(x, np.flip(x))
     xx, yy = np.meshgrid(x,x)
     weights = 6*np.square(5*(np.log2(xx)+np.log2(yy)))
-    weights = np.array([[0,1,1,2,2,1,1,0],
+    '''weights = np.array([[0,1,1,2,2,1,1,0],
                         [1,2,4,5,5,4,2,1],
                         [1,4,6,9,9,6,4,1],
                         [2,5,9,12,12,9,5,2],
                         [2,5,9,12,12,9,5,2],
                         [1,4,6,9,9,6,4,1],
                         [1,2,4,5,5,4,2,1],
-                        [0,1,1,2,2,1,1,0]])
+                        [0,1,1,2,2,1,1,0]])'''
     weights = np.repeat(weights[:, :, np.newaxis], 3, axis=2)
 
     return weights
