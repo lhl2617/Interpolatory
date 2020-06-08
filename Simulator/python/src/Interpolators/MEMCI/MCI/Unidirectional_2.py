@@ -56,7 +56,6 @@ class UniDir2Interpolator(MEMCIBaseInterpolator):
                          video_out_path, max_out_frames, max_cache_size,**args)
 
     def get_interpolated_frame(self, idx):
-
         #source_frame is the previous frame in the source vidoe.
         source_frame_idx = math.floor(idx/self.rate_ratio)
         source_frame = self.video_stream.get_frame(source_frame_idx)
