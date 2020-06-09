@@ -36,3 +36,8 @@
 - If `[<ground-truth-path>]` is provided, metrics (PSNR & SSIM) are returned
 - Extra configuration settings can be set in `<settings>` using semicolon separated key-value pairs, e.g. for MEMCI, `"MEMCI:block_size=32;filter_size=8"`
 - See interpolation mode usage guides in `python3 main.py -doc`
+
+### `python3 main.py -e <interpolation-mode>[:<settings>] <frame-width> <frame-height>`
+- Estimate hardware requirements using `<interpolation mode>`
+- Extra configuration settings can be set in `<settings>` using semicolon separated key-value pairs, e.g. for MEMCI, `"MEMCI:block_size=32;filter_size=8"`
+- See interpolation mode usage guides in `python3 main.py -doc`
