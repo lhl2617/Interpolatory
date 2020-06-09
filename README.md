@@ -1,5 +1,11 @@
 # Interpolatory
 
+## Repository Structure
+- Simulator
+    - Contains code for simulator framework, both CLI and GUI
+- Team
+    - Contains team and groupwork information such as deadlines and meeting minutes
+
 ## Intel Video Interpolation - Imperial College London
 
 ### Team Members

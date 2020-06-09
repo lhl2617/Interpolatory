@@ -1,4 +1,5 @@
-imageio~=2.8.0
-imageio-ffmpeg~=0.4.1
-scikit-image~=0.16.2
-numpy~=1.18.2
+imageio>=2.8.0
+imageio-ffmpeg>=0.4.1
+scikit-image>=0.16.2
+numpy>=1.18.2
+numba>=0.49.1

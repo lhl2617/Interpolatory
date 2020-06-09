@@ -1,20 +1,17 @@
 /* eslint-disable no-underscore-dangle */
 /* eslint-disable react/jsx-closing-bracket-location */
 import * as React from 'react';
-import { Input, Form, Select, Radio, message, Button, Popover, Modal, Progress, Popconfirm, Spin } from 'antd';
+import { Input, Form, Select, message, Button, Modal, Progress, Popconfirm, Spin, InputNumber } from 'antd';
 import { remote } from 'electron';
 import * as cp from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 
-import {
-    InfoCircleOutlined
-} from '@ant-design/icons';
+import { supportedVideoFormats } from '../../../globals';
+import { getPython3, getInterpolatory, ValidatorObj, defaultValidatorStatus, getProgressFilePath, processProgressFile, getPercentageFromProgressString, InterpolationMode, iModeToString, iModeToPrettyString } from '../../../util';
+import IMode from '../../IMode/IMode';
 
-import { supportedVideoFormats, supportedTargetFPS } from '../../../globals';
-import { getPython3, getInterpolatory, getInterpolationModesFromProcess, ValidatorObj, defaultValidatorStatus, getProgressFilePath, processProgressFile, getPercentageFromProgressString } from '../../../util';
-
-message.config({ top: 64, maxCount: 3, duration: 6 })
+message.config({ top: 64, maxCount: 3 })
 
 // conversion process
 let convProc: cp.ChildProcessWithoutNullStreams | undefined;
@@ -39,13 +36,12 @@ type VideoMetadata = {
 const pleaseInput = `Please input video path.`;
 
 type IState = {
+    iMode: InterpolationMode | undefined;
     inputVideoPath: string;
     inputVideoMetadata: VideoMetadata | undefined;
     inputValidator: ValidatorObj;
     outputVideoPath: string;
     outputValidator: ValidatorObj;
-    interpolationMode: string;
-    supportedInterpolationModes: string[];
     targetFPS: number;
     convertState: "done" | "error" | "converting" | "idle";
     progressString: string;
@@ -58,13 +54,12 @@ export class Convert extends React.Component<{}, IState> {
     constructor(props: any) {
         super(props);
         this.state = {
+            iMode: undefined,
             inputVideoPath: ``,
             inputVideoMetadata: undefined,
             inputValidator: { status: `error`, help: pleaseInput },
             outputVideoPath: ``,
             outputValidator: { status: `error`, help: pleaseInput },
-            interpolationMode: ``,
-            supportedInterpolationModes: [],
             targetFPS: 60,
             convertState: "idle",
             progressString: ``,
@@ -80,7 +75,6 @@ export class Convert extends React.Component<{}, IState> {
 
     componentDidMount = () => {
         this.mounted = true;
-        this.getInterpolationModes();
     };
 
     componentWillUnmount = () => {
@@ -88,18 +82,11 @@ export class Convert extends React.Component<{}, IState> {
         this.resetConvert();
     }
 
-    getInterpolationModes = async () => {
-        try {
-            const modes = await getInterpolationModesFromProcess();
-            this._setState({
-                supportedInterpolationModes: modes,
-                interpolationMode: modes.length ? modes[0] : ``
-            })
-        }
-        catch (err) {
-            message.error(err.message);
-        }
-    };
+
+    setIMode = async (iMode: InterpolationMode) => {
+        this._setState({ iMode: iMode })
+    }
+
 
     setOutputFilePath = async (filePath: string) => {
         this._setState({
@@ -215,6 +202,7 @@ export class Convert extends React.Component<{}, IState> {
 
         proc.stderr.on('data', (data) => {
             // message.error(data.toString())
+            console.error(data.toString())
         })
 
         proc.on('close', (code) => {
@@ -266,18 +254,14 @@ export class Convert extends React.Component<{}, IState> {
         );
     }
 
-    handleTargetFPSChange = async (fps: number) => {
-        this._setState({
-            targetFPS: fps,
-        })
+    handleTargetFPSChange = async (inp: number | string | undefined) => {
+        if (inp) {
+            const fps = typeof inp === 'number' ? inp : parseFloat(inp)
+            this._setState({
+                targetFPS: fps,
+            })
+        }
     }
-
-    handleInterpolationModeChange = async (mode: string) => {
-        this._setState({
-            interpolationMode: mode,
-        });
-    }
-
 
     // processProgressString = async (stdout: string) => {
     //     const getLastProgressLine = () => {
@@ -303,7 +287,14 @@ export class Convert extends React.Component<{}, IState> {
 
     startConvert = async () => {
         this._setState({ convertState: `converting`, progressString: `` });
-        const { inputVideoPath, interpolationMode, targetFPS, outputVideoPath } = this.state;
+        const { inputVideoPath, iMode, targetFPS, outputVideoPath } = this.state;
+
+        if (!iMode) {
+            message.error(`Interpolation Mode not set!`)
+            return;
+        }
+
+        const interpolationMode = iModeToString(iMode)
 
         let gotStderr = ``;
 
@@ -351,6 +342,7 @@ export class Convert extends React.Component<{}, IState> {
 
         convProc.stderr.on(`data`, (data) => {
             gotStderr += data.toString();
+            console.error(data.toString())
         })
 
         convProc.on(`close`, (code) => {
@@ -374,21 +366,18 @@ export class Convert extends React.Component<{}, IState> {
                 convertState: `idle`,
                 progressString: ``,
                 overrideDisable: false,
-            })   
+            })
         }
         if (convProc) {
             this._setState({ overrideDisable: true, convertState: `idle` });
             convProc.kill(`SIGKILL`);
             convProc = undefined;
-            setTimeout(() => updateState(), 3000);
         }
-        else {
-            updateState();
-        }
+        setTimeout(() => updateState(), 3000);
     }
 
     render() {
-        const { overrideDisable, inputVideoPath, inputVideoMetadata, outputVideoPath, targetFPS, interpolationMode, supportedInterpolationModes, inputValidator, outputValidator, convertState, progressString } = this.state;
+        const { overrideDisable, inputVideoPath, inputVideoMetadata, outputVideoPath, targetFPS, iMode, inputValidator, outputValidator, convertState, progressString } = this.state;
 
         const disabled = inputValidator.status === "error";
         const conversionDisabled = overrideDisable || disabled || outputValidator.status === "error" || convertState !== `idle`;
@@ -397,6 +386,7 @@ export class Convert extends React.Component<{}, IState> {
 
         return (
             <div>
+                <h2>Convert video frame rates</h2>
                 <Form layout="vertical" >
                     <Form.Item
                         label={<h3>Source Video Path</h3>}
@@ -451,34 +441,18 @@ export class Convert extends React.Component<{}, IState> {
                     </Form.Item>
 
                     <Form.Item
-                        label={<Popover content={<div>More frame rates can be set via CLI.</div>} trigger="hover"><h3>Target FPS <InfoCircleOutlined /></h3></Popover>}
+                        label={<h3>Target FPS</h3>}
                     >
-                        <Radio.Group value={targetFPS} onChange={(e) => this.handleTargetFPSChange(e.target.value)}
-                            disabled={disabled}>
-                            {
-                                (supportedTargetFPS.map((fps) => {
-                                    return (<Radio.Button key={fps} value={fps} disabled={fps === inputVideoMetadata?.fps}>{fps}</Radio.Button>)
-                                }))
-                            }
-                        </Radio.Group>
+                        <InputNumber min={0.001} max={240} step={0.001} onChange={this.handleTargetFPSChange} value={targetFPS} disabled={disabled} />
                     </Form.Item>
 
 
-                    <Form.Item
-                        label={<h3>Interpolation Mode</h3>}>
-                        <Select value={interpolationMode} onChange={this.handleInterpolationModeChange}
-                            disabled={disabled}>
-                            {
-                                (supportedInterpolationModes.map((m) => {
-                                    return (<Option key={m} value={m} >{m}</Option>)
-                                }))
-                            }
-                        </Select>
-                    </Form.Item>
+                    <IMode setIMode={this.setIMode} iMode={iMode} disabled={conversionDisabled} modeFlag="-i"/>
+
 
                 </Form>
 
-                <div style={{ margin: 'auto', textAlign: 'center', marginTop: 48 }}>
+                <div style={{ margin: 'auto', textAlign: 'center', marginTop: 48, marginBottom: 48 }}>
                     <Button onClick={this.startConvert} size="large" disabled={conversionDisabled} type="primary">Start Conversion</Button>
                 </div>
 
@@ -496,7 +470,7 @@ export class Convert extends React.Component<{}, IState> {
                     <h4>Destination</h4>
                     <p>`{outputVideoPath}` ({targetFPS} fps)</p>
                     <h4>Interpolation Mode</h4>
-                    <p>{interpolationMode}</p>
+                    <p>{iMode && iModeToPrettyString(iMode)}</p>
                     {
                         (convertState === `converting`) && <div>
                             <h4 style={{ textAlign: `center`, margin: `auto`, marginTop: 12 }}>Converting... <Spin size="small" /></h4>

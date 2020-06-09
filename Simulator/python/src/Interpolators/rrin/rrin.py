@@ -1,7 +1,15 @@
+'''
+Model source
+
+H. Li, Y. Yuan and Q. Wang, "Video Frame Interpolation Via Residue Refinement," ICASSP 2020 - 2020 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP), Barcelona, Spain, 2020, pp. 2613-2617, doi: 10.1109/ICASSP40776.2020.9053987
+
+https://github.com/HopLee6/RRIN
+'''
+
 from ..base import BaseInterpolator, MidFrameBaseInterpolator
 import math
 from collections import deque
-from ...util import get_first_frame_idx_and_ratio
+from ...util import get_first_frame_idx_and_ratio, eprint
 
 class RRINMidFrameInterpolator(MidFrameBaseInterpolator):
     def __init__(self, target_fps, video_in_path=None, video_out_path=None, max_out_frames=math.inf, max_cache_size=2, **args):
@@ -32,7 +40,7 @@ class RRINMidFrameInterpolator(MidFrameBaseInterpolator):
         self.model = model
 
 
-    def get_middle_frame(self, image_1, image_2):
+    def get_middle_frame(self, image_1, image_2, torchvision=None):
         import torch
         import torchvision
         from torchvision import transforms
@@ -114,7 +122,7 @@ class RRINLinearInterpolator(BaseInterpolator):
         pader = torch.nn.ReplicationPad2d([0, W_-W, 0, H_-H])
         img1, img2 = pader(img1), pader(img2)
 
-        output = self.model(img1, img2, ratio)
+        output = self.model(img1, img2, 1. - ratio)
 
         output = output[0, :, 0:H, 0:W].squeeze(0).cpu()
 
@@ -128,7 +136,14 @@ class RRINLinearInterpolator(BaseInterpolator):
         image_1_idx, ratio = get_first_frame_idx_and_ratio(idx, self.rate_ratio)
 
         image_1 = self.video_stream.get_frame(image_1_idx)
+
+        if (ratio == 1.0):
+            return image_1
+
         image_2 = self.video_stream.get_frame(image_1_idx + 1)
+
+        if (ratio == 0):
+            return image_2
 
         output = self.get_frame_at_ratio(image_1, image_2, ratio)
 
@@ -136,3 +151,18 @@ class RRINLinearInterpolator(BaseInterpolator):
 
     def __str__(self):
         return 'RRIN-Linear'
+
+# return object at runtime
+def RRIN(target_fps, video_in_path=None, video_out_path=None, max_out_frames=math.inf, max_cache_size=2, **args):
+    flow_usage_method = 'linear'
+
+    if 'flow_usage_method' in args:
+        flow_usage_method = args['flow_usage_method']
+
+    if (flow_usage_method == 'linear'):
+        return RRINLinearInterpolator(target_fps, video_in_path, video_out_path, max_out_frames, max_cache_size)
+    elif (flow_usage_method == 'midframe'):
+        return RRINMidFrameInterpolator(target_fps, video_in_path, video_out_path, max_out_frames, max_cache_size)
+    else:
+        eprint(f'Unknown RRIN flow_usage_method argument: {flow_usage_method}')
+        exit(1)

@@ -1,8 +1,32 @@
+'''
+Model source
+
+S. Niklaus, L. Mai, and F. Liu, “Video frame interpolation via
+adaptive separable convolution,” in IEEE International Conference
+on Computer Vision, 2017
+
+https://github.com/sniklaus/sepconv-slomo
+'''
+
 from ..base import MidFrameBaseInterpolator
 from ...util import is_power_of_two
 import math
 
-class SepConvBase(MidFrameBaseInterpolator):
+class SepConv(MidFrameBaseInterpolator):
+    def __init__(self, target_fps, video_in_path=None, video_out_path=None, max_out_frames=math.inf, max_cache_size=2, **args):
+        self.model = 'lf'
+
+        if 'model' in args:
+            self.model = args['model']
+
+        from .src import run
+        run.arguments_strModel = self.model
+        super().__init__(target_fps, video_in_path,
+                         video_out_path, max_out_frames, max_cache_size)
+
+    def __str__(self):
+        return f'SepConv - {self.model}'
+
     def get_middle_frame(self, image_1, image_2):
         import numpy
         import torch
@@ -16,27 +40,5 @@ class SepConvBase(MidFrameBaseInterpolator):
         out_frame = (tenOutput.clamp(0.0, 1.0).numpy().transpose(1, 2, 0)[:, :, ::-1] * 255.0).astype(numpy.uint8)
 
         return out_frame
-
-class SepConvL1(SepConvBase):
-    def __init__(self, target_fps, video_in_path=None, video_out_path=None, max_out_frames=math.inf, max_cache_size=2, **args):
-        from .src import run
-        run.arguments_strModel = 'l1'
-        super().__init__(target_fps, video_in_path,
-                         video_out_path, max_out_frames, max_cache_size)
-
-    def __str__(self):
-        return 'SepConv - L1'
-
-class SepConvLf(SepConvBase):    
-    def __init__(self, target_fps, video_in_path=None, video_out_path=None, max_out_frames=math.inf, max_cache_size=2, **args):
-        from .src import run
-        run.arguments_strModel = 'lf'
-        super().__init__(target_fps, video_in_path,
-                         video_out_path, max_out_frames, max_cache_size)
-
-    def __str__(self):
-        return 'SepConv - Lf'
-
-
 
     

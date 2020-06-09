@@ -1,10 +1,10 @@
 import sys
 import json
+import os
+import pathlib
 
 sys.path.append('./src')
-from src import util, Interpolator, Benchmark, Globals
-from src.Interpolator import InterpolatorDictionary
-from src.Benchmark import benchmark, get_middle_frame
+from src import util, Globals
 
 mode_flag = None
 
@@ -30,61 +30,25 @@ if (len(sys.argv) > 1):
         util.progress_file_path = file_path
         args = args[:-1]
 
-
-interpolators = list(InterpolatorDictionary.keys())
 # limited_interpolators = list(LimitedInterpolatorDictionary.keys())
 version = 'Interpolatory Simulator 0.0.1'
 
 if mode_flag == '-h':
-    print('======')
-    print('Manual')
-    print('======')
+    import markdown
+    basedir = pathlib.Path(__file__).parent.absolute()
+    manual = open(f'{basedir}/docs/USAGEGUIDE.md', "r") 
+    print(manual.read())
+    manual.close() 
 
-    print('')
-    print('- python3 main.py -h')
-    print('Get this help.')
+elif mode_flag == '-doc':
+    from src.Interpolator import getIDocs
+    getIDocs()
 
-    print('')
-    print('- python3 main.py -il')
-    print('List all supported interpolation modes')
+# this schema is for gui
+elif mode_flag == '-schema':
+    from src.Interpolator import InterpolatorDocs
+    print(json.dumps(InterpolatorDocs))
 
-    print('')
-    print('- python3 main.py -mv <video-path>')
-    print('Load a video and print metadata to stdout. If not supported, will return non-zero value')
-    
-    print('')
-    print('- python3 main.py -mi <video-path>')
-    print('Load an image and print height, width, and colour dimensions to stdout. If not supported, will return non-zero value')
-    
-    print('')
-    print('- python3 main.py -i <input-video-path> -m <interpolation-mode> -f <output-frame-rate> -o <output-file-path>')
-    print('Get in an input video source from <input-video-path> and, using <interpolation-mode> mode, interpolate to <output-frame-rate> fps and save to <output-file-path>')
-    
-    print('')
-    print('- python3 main.py -b <interpolation-mode> [<output-folder>]')
-    print('Run Middlebury benchmark to get results based on an <interpolation-mode>')
-    print('If provided, outputs interpolated images to <output-folder>')
-    
-    print('')
-    print('- python3 main.py -t <interpolation-mode> -f <frame1> <frame2> -o <output-file-path> [<ground-truth-path>]')
-    print('Using <interpolation mode, get the interpolated midpoint frame between <frame1> and <frame2>, saving the output to <output-file-path>')
-    print('If [<ground-truth-path>] provided, metrics (PSNR & SSIM) are returned')
-    
-    print('')
-    print('- python3 main.py -ver')
-    print('Get version')
-
-    print('')
-    print('- python3 main.py -dep')
-    print('Check whether normal requirements are met')
-
-    print('')
-    print('- python3 main.py -depcuda')
-    print('Check whether CUDA dependencies are met')
-
-
-elif mode_flag == '-il':
-    print(json.dumps(interpolators))
 
 elif mode_flag == '-mv' and len(args) == 2:
     import imageio
@@ -100,42 +64,50 @@ elif mode_flag == '-mi' and len(args) == 2:
     im_path = args[1]
     
     im = imageio.imread(im_path)
-    print(im.shape)
 
     # print('')
-    # print('- python3 main.py -i <input-video-path> -m <interpolation-mode> -f <output-frame-rate> -o <output-file-path>')
-    # print('Get in an input video source from <input-video-path> and, using <interpolation-mode> mode, interpolate to <output-frame-rate> fps and save to <output-file-path>')
+    # print('- python3 main.py -i <input-video-path> -m <interpolation-mode>[:<settings>] -f <output-frame-rate> -o <output-file-path>')
 elif mode_flag == '-i' and len(args) == 8 and '-m' == args[2] and '-f' == args[4] and '-o' == args[6]:
     import math
+    from src.Interpolator import InterpolatorDictionary, checkValidMode
     input_video_path = args[1]
-    interpolation_mode = args[3]
+    interpolation_mode, settings = util.deconstruct_interpolation_mode_and_settings(args[3])
+
+    checkValidMode(interpolation_mode, mode_flag)
+
     target_fps = int(args[5])
     output_video_path = args[7]
 
     interpolator_obj = InterpolatorDictionary[interpolation_mode]
-    interpolator = interpolator_obj(target_fps, input_video_path, output_video_path, math.inf)
+    interpolator = interpolator_obj(target_fps, input_video_path, output_video_path, math.inf, **settings)
     interpolator.interpolate_video()
 
 
 
-    # print('')
-    # print('- python3 main.py -b <interpolation-mode>')
-    # print('Run Middlebury benchmark to get results based on an <interpolation-mode>')
 elif mode_flag == '-b' and len(args) >= 2:
-    interpolation_mode = args[1]
+    from src.Benchmark import benchmark
+    from src.Interpolator import InterpolatorDictionary, checkValidMode
+    interpolation_mode, settings = util.deconstruct_interpolation_mode_and_settings(args[1])
+
+    checkValidMode(interpolation_mode, mode_flag)
+
     output_path = None
     if (len(args) > 2):
         output_path = args[2]
 
-    benchmark(interpolation_mode, output_path)
+    interpolator_obj = InterpolatorDictionary[interpolation_mode]
+    interpolator = interpolator_obj(2, **settings)
+    # print(settings)
+    benchmark(interpolator, output_path)
     
 
-
-    # print('- python3 main.py -t <interpolation-mode> -f <frame1> <frame2> -o <output-file-path> [<ground-truth-path>]')
-    # print('Using <interpolation mode, get the interpolated midpoint frame between <frame1> and <frame2>, saving the output to <output-file-path>')
-    # print('If [<ground-truth-path>] provided, metrics (PSNR & SSIM) are returned')
 elif mode_flag == '-t' and len(args) >= 7 and '-f' == args[2] and '-o' == args[5] :
-    interpolation_mode = args[1]
+    from src.Benchmark import benchmark, get_middle_frame
+    from src.Interpolator import InterpolatorDictionary, checkValidMode
+    interpolation_mode, settings = util.deconstruct_interpolation_mode_and_settings(args[1])
+
+    checkValidMode(interpolation_mode, mode_flag)
+
     frame_1_path = args[3]
     frame_2_path = args[4]
     output_file_path = args[6]
@@ -144,8 +116,12 @@ elif mode_flag == '-t' and len(args) >= 7 and '-f' == args[2] and '-o' == args[5
     if (len(args) > 7):
         ground_truth_path = args[7]        
 
-    get_middle_frame(interpolation_mode, frame_1_path, frame_2_path, output_file_path, ground_truth_path)
+    interpolator_obj = InterpolatorDictionary[interpolation_mode]
+    interpolator = interpolator_obj(2, **settings)
+    get_middle_frame(interpolator, frame_1_path, frame_2_path, output_file_path, ground_truth_path)
     
+elif mode_flag == '-e' and len(args) == 2:
+    raise Exception('TODO')
 
 elif mode_flag == '-ver':
     print(json.dumps(version))
@@ -188,7 +164,5 @@ elif mode_flag == '-depcuda':
 else:
     print(f'Unknown command. Run `python3 main.py -h` for a usage guide')
 
-# print('')
 
 exit(0)
-

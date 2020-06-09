@@ -15,7 +15,7 @@ from .Globals import debug_flags
 from .util import sToMMSS, getETA, signal_progress
 
 
-def benchmark(interpolation_mode, output_path=None):
+def benchmark(interpolator, output_path=None):
     psnr = []
     ssim = []
 
@@ -24,7 +24,7 @@ def benchmark(interpolation_mode, output_path=None):
     paths = sorted(glob.glob(f'{basedir}/benchmarks/middlebury/*/frame10i11.png'))
 
     cnt_done = 0
-    start = int(round(time.time() * 1000))
+    start = int(round(time.time()))
 
     for path_to_truth in paths:
         test_name = path_to_truth.split(path.sep)[-2]
@@ -38,7 +38,6 @@ def benchmark(interpolation_mode, output_path=None):
 
         im_true = imageio.imread(path_to_truth)
 
-        interpolator = InterpolatorDictionary[interpolation_mode](2)
         im_test = interpolator.get_benchmark_frame(frame_1, frame_2)
 
 
@@ -46,14 +45,19 @@ def benchmark(interpolation_mode, output_path=None):
             output_pathname = path.join(output_path, f'{test_name}.png')
             imageio.imwrite(output_pathname, im_test)
 
+
         psnr.append(skimage.metrics.peak_signal_noise_ratio(im_true, im_test, data_range=255))
         ssim.append(skimage.metrics.structural_similarity(im_true, im_test, data_range=255, multichannel=True))
 
 
+        # print(psnr)
+        # print(ssim)
+        # exit()
+
         cnt_done += 1
         pct = str(math.floor(100 * float(cnt_done) / len(paths))).rjust(3, ' ')
-        curr = int(round(time.time() * 1000))
-        elapsed_seconds = int((curr-start) / 1000)
+        curr = int(round(time.time()))
+        elapsed_seconds = int((curr-start))
         elapsed = sToMMSS(elapsed_seconds)
         eta = getETA(elapsed_seconds, cnt_done, len(paths))
         progStr = f'PROGRESS::{pct}%::Frame {cnt_done}/{len(paths)} | Time elapsed: {elapsed} | Estimated Time Left: {eta}'
@@ -61,14 +65,15 @@ def benchmark(interpolation_mode, output_path=None):
 
         if debug_flags['debug_benchmark_progress']:
             print(progStr)
+    end = int(round(time.time()))
 
     if debug_flags['debug_benchmark_progress']:
-        end = int(round(time.time() * 1000))
-        print(f'PROGRESS::100%::Completed | Time taken: {sToMMSS((end-start) / 1000)}')
+        print(f'PROGRESS::100%::Completed | Time taken: {sToMMSS((end-start))}')
 
     res = {
         'PSNR': np.mean(psnr),
-        'SSIM': np.mean(ssim)
+        'SSIM': np.mean(ssim),
+        'Time taken':sToMMSS((end-start))
     }
 
     res_json = json.dumps(res)
@@ -81,12 +86,11 @@ def benchmark(interpolation_mode, output_path=None):
 
     print(res_json)
 
-def get_middle_frame(interpolation_mode, frame_1_path, frame_2_path, output_file_path, ground_truth_path=None):
+def get_middle_frame(interpolator, frame_1_path, frame_2_path, output_file_path, ground_truth_path=None):
 
     frame_1 = imageio.imread(frame_1_path)
     frame_2 = imageio.imread(frame_2_path)
 
-    interpolator = InterpolatorDictionary[interpolation_mode](2)
     im_test = interpolator.get_benchmark_frame(frame_1, frame_2)
 
     imageio.imwrite(output_file_path, im_test)
@@ -104,15 +108,14 @@ def get_middle_frame(interpolation_mode, frame_1_path, frame_2_path, output_file
         if (res['PSNR'] == math.inf):
             res['PSNR'] = 'Infinity'
 
-    res_json = json.dumps(res)
+        res_json = json.dumps(res)
 
-    if (not (output_file_path is None)):
         output_pathname = path.join(output_file_path, 'results.txt')
         f = open(output_pathname, "w")
         f.write(res_json)
         f.close()
 
-    print(json.dumps(res_json))
+        print(json.dumps(res_json))
 
 # def test():
 #     psnr = {}

@@ -11,7 +11,6 @@ from ..util import sToMMSS, getETA, signal_progress, is_power_of_two, blend_fram
 from ..Globals import debug_flags
 from ..VideoStream import BenchmarkVideoStream, VideoStream
 
-
 '''
 Base Interpolator object for implemented interpolators to derive from.
 
@@ -29,10 +28,6 @@ class BaseInterpolator(object):
         self.video_stream = None
         self.video_out_writer = None
 
-        self.MV_field_idx = -1
-        self.MV_field = []
-        self.fwr_MV_field = []
-        self.bwr_MV_field = []
 
         self.max_frames_possible = None
         self.rate_ratio = None
@@ -84,7 +79,7 @@ class BaseInterpolator(object):
                 'Cannot interpolate video, no input video path or output video path')
 
 
-        start = int(round(time.time() * 1000))
+        start = int(round(time.time()))
 
         # target number of frames is limited by max possible according to source
         target_nframes = min(self.max_frames_possible, self.max_out_frames)
@@ -93,8 +88,8 @@ class BaseInterpolator(object):
             # if (debug_flags['debug_progress']):
             if ((i % self.target_fps) == 0):
                 pct = str(math.floor(100 * (i+1) / target_nframes)).rjust(3, ' ')
-                curr = int(round(time.time() * 1000))
-                elapsed_seconds = int((curr-start) / 1000)
+                curr = int(round(time.time()))
+                elapsed_seconds = int((curr-start))
                 elapsed = sToMMSS(elapsed_seconds)
                 eta = getETA(elapsed_seconds, i, target_nframes)
                 progStr = f'PROGRESS::{pct}%::Frame {i}/{target_nframes} | Time elapsed: {elapsed} | Estimated Time Left: {eta}'
@@ -108,11 +103,11 @@ class BaseInterpolator(object):
 
         self.video_out_writer.close()
 
-        end = int(round(time.time() * 1000))
+        end = int(round(time.time()))
 
         # if (debug_flags['debug_timer']):
-        elapsed = sToMMSS(int((end-start) / 1000))
-        progStr = f'PROGRESS::100%::Complete | Time taken: {sToMMSS((end-start) / 1000)}'
+        elapsed = sToMMSS(int((end-start)))
+        progStr = f'PROGRESS::100%::Complete | Time taken: {sToMMSS((end-start))}'
         signal_progress(progStr)
         if (debug_flags['debug_progress']):
             print(progStr)
@@ -141,11 +136,16 @@ class BaseInterpolator(object):
         backup_interpolator = deepcopy(self)
 
         # replace with Benchmark video_stream
+        self.MV_field_idx = -1
         self.video_stream = BenchmarkVideoStream(image_1, image_2)
         self.target_fps = 2
         self.max_out_frames = 2
+
         self.rate_ratio = 2.
         self.max_frames_possible = 2
+
+        # clear cache for MidFrame
+        self.clear_cache()
 
         res = self.get_interpolated_frame(1)
 
@@ -153,6 +153,10 @@ class BaseInterpolator(object):
         self = backup_interpolator
 
         return res
+
+    def clear_cache(self):
+        # used for MidFrameBaseInterpolator to inherit and clear cache
+        pass
 
 class MidFrameBaseInterpolator(BaseInterpolator):
     '''
@@ -236,8 +240,8 @@ class MidFrameBaseInterpolator(BaseInterpolator):
                 self.cache.clear()
 
                 # repopulate cache
-                image_1_idx = int(idx // self.rate_ratio * self.rate_ratio)
-                image_2_idx = int(image_1_idx + self.rate_ratio)
+                image_1_idx = int(true_idx)
+                image_2_idx = int(true_idx + self.rate_ratio)
 
                 # put the relevant frames in cache first
                 frameA_idx = true_idx // self.rate_ratio
@@ -279,7 +283,8 @@ class MidFrameBaseInterpolator(BaseInterpolator):
 
             return self.cache[idx]
 
-
+    def clear_cache(self):
+        self.cache.clear()
 
 '''
 Parameters for saving

@@ -10,15 +10,16 @@ import {
 } from '@ant-design/icons';
 
 
-import { getInterpolationModesFromProcess, ValidatorObj, getPython3, getInterpolatory, defaultValidatorStatus } from '../../../util';
+import { getInterpolationModesFromProcess, ValidatorObj, getPython3, getInterpolatory, defaultValidatorStatus, InterpolationMode, InterpolationModeSchema, getInterpolationModeSchema, iModeToPrettyString, iModeToString } from '../../../util';
 import { BenchmarkResult } from '../Benchmark/Benchmark';
+import IMode from '../../IMode/IMode';
 
 let frame1Dim: any; // this is to check whether sizes are OK
 
 const { Search } = Input;
 const { Option } = Select;
 
-message.config({ top: 64, maxCount: 3, duration: 6 })
+message.config({ top: 64, maxCount: 3 })
 
 const python3 = getPython3();
 const binName = getInterpolatory();
@@ -28,8 +29,7 @@ const binName = getInterpolatory();
 let testProc: cp.ChildProcessWithoutNullStreams | undefined;
 
 type IState = {
-    supportedInterpolationModes: string[];
-    interpolationMode: string;
+    iMode: InterpolationMode | undefined;
     outputPath: string;
     outputPathValidator: ValidatorObj;
     inputPaths: { frame1: string, frame2: string }
@@ -74,8 +74,7 @@ export class Test extends React.Component<{}, IState> {
     constructor(props: any) {
         super(props);
         this.state = {
-            supportedInterpolationModes: [],
-            interpolationMode: ``,
+            iMode: undefined,
             outputPath: ``,
             outputPathValidator: pleaseInputValidatorObj,
             inputPaths: { frame1: ``, frame2: `` },
@@ -95,33 +94,17 @@ export class Test extends React.Component<{}, IState> {
 
     componentDidMount = () => {
         this.mounted = true;
-        this.getInterpolationModes();
     };
+
 
     componentWillUnmount = () => {
         this.mounted = false;
         this.resetTest();
     }
 
-    getInterpolationModes = async () => {
-        try {
-            const modes = await getInterpolationModesFromProcess();
-            this._setState({
-                supportedInterpolationModes: modes,
-                interpolationMode: modes.length ? modes[0] : ``
-            })
-        }
-        catch (err) {
-            message.error(err.message);
-        }
-    };
-
-    handleInterpolationModeChange = async (mode: string) => {
-        this._setState({
-            interpolationMode: mode,
-        });
+    setIMode = async (iMode: InterpolationMode) => {
+        this._setState({ iMode: iMode })
     }
-
 
     setFrame1Path = async (filePath: string) => {
 
@@ -289,8 +272,16 @@ export class Test extends React.Component<{}, IState> {
 
     startTest = async () => {
         this._setState({ testState: `testing` });
-        const { inputPaths, groundTruthPath, outputPath, interpolationMode } = this.state;
+        const { inputPaths, groundTruthPath, outputPath, iMode } = this.state;
         const { frame1, frame2 } = inputPaths;
+
+        if (!iMode) {
+            /// should not happen
+            message.error(`Invalid Interpolation mode`)
+            return;
+        }
+
+        const interpolationMode = iModeToString(iMode)
 
         // eslint-disable-next-line prefer-const
         let args = [binName, `-t`, interpolationMode, `-f`, frame1, frame2, `-o`, outputPath];
@@ -319,6 +310,7 @@ export class Test extends React.Component<{}, IState> {
 
         testProc.stderr.on(`data`, (data) => {
             gotStderr += data.toString();
+            console.error(data.toString())
         })
 
         testProc.on(`close`, (code) => {
@@ -341,25 +333,19 @@ export class Test extends React.Component<{}, IState> {
             this._setState({
                 testState: `idle`,
                 overrideDisable: false,
-            })   
+            })
         }
         if (testProc) {
-            this._setState({ testState: `idle`, overrideDisable: true })
-
+            this._setState({ overrideDisable: true, testState: `idle` });
             testProc.kill(`SIGKILL`);
             testProc = undefined;
-
-            setTimeout(() => updateState(), 3000);
         }
-        else {
-            updateState();
-        }
+        setTimeout(() => updateState(), 3000);
     }
 
     render() {
         const {
-            supportedInterpolationModes,
-            interpolationMode,
+            iMode,
             outputPath,
             outputPathValidator,
             inputValidators,
@@ -375,7 +361,7 @@ export class Test extends React.Component<{}, IState> {
         return (
 
             <div>
-                <h2>Testing produces middle frame when given two frames</h2>
+                <h2>Testing produces the interpolated middle frame of given two frames</h2>
                 <Form layout="vertical" >
 
                     <Form.Item
@@ -468,19 +454,10 @@ export class Test extends React.Component<{}, IState> {
 
 
 
-                    <Form.Item
-                        label={<h3>Interpolation Mode</h3>}>
-                        <Select disabled={supportedInterpolationModes.length === 0} value={interpolationMode} onChange={this.handleInterpolationModeChange}>
-                            {
-                                (supportedInterpolationModes.map((m) => {
-                                    return (<Option key={m} value={m} >{m}</Option>)
-                                }))
-                            }
-                        </Select>
-                    </Form.Item>
+                    <IMode setIMode={this.setIMode} iMode={iMode} disabled={testDisabled} modeFlag="-t"/>
 
 
-                    <div style={{ margin: 'auto', textAlign: 'center', marginTop: 48 }}>
+                    <div style={{ margin: 'auto', textAlign: 'center', marginTop: 48, marginBottom: 48 }}>
                         <Button onClick={this.startTest} size="large" disabled={testDisabled} type="primary">Start Process</Button>
                     </div>
 
@@ -508,7 +485,7 @@ export class Test extends React.Component<{}, IState> {
                             </span>
                         }
                         <h4>Interpolation Mode</h4>
-                        <p>{interpolationMode}</p>
+                        <p>{iMode && iModeToPrettyString(iMode)}</p>
                         <h4>Output Frame Directory</h4>
                         <p>{outputPath.length ? outputPath : `N/A`}</p>
                         {

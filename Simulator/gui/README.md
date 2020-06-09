@@ -1,33 +1,26 @@
 # Interpolatory Software Simulator GUI
 
-## Requirements
-* Node (v12 and above)
+## Usage
+A pre-built 64-bit Windows Installer and executable is available upon request.
 
-## Getting started
+## Development
+
+### Requirements
+* Node (v12 and above)
+* Python 3 (tested on 3.8.2 Windows & 3.6.2 Ubuntu 18.04)
+* Python source code for Interpolatory CLI
+
+### Getting started
 Install dependencies
 ```bash
 npm install
 ```
-
-## Usage
-Both processes have to be started **simultaneously** in different console tabs:
-
-```bash
-npm run start-renderer-dev
-npm run start-main-dev
-```
-
-This will start the application with hot-reload so you can instantly start developing your application.
-
-You can also run do the following to start both in a single process:
-
+### Start Development
 ```bash
 npm run start-dev
 ```
 
-## Packaging
-We use [Electron builder](https://www.electron.build/) to build and package the application. By default you can run the following to package for your current platform:
-
+### Packaging
 ```bash
 npm run dist
 ```
@@ -39,16 +32,3 @@ You can make builds for specific platforms (or multiple platforms) by using the 
 ```bash
 npm run dist -- -mwl
 ```
-
-## Husky and Prettier
-This project comes with both Husky and Prettier setup to ensure a consistent code style. 
-
-To change the code style, you can change the configuration in `.prettierrc`. 
-
-In case you want to get rid of this, you can removing the following from `package.json`:
-
-1. Remove `precommit` from the `scripts` section
-1. Remove the `lint-staged` section
-1. Remove `lint-staged`, `prettier`, `eslint-config-prettier`, and `husky` from the `devDependencies`
-
-Also remove all mentions of Prettier from the `extends` section in `.eslintrc.json`.

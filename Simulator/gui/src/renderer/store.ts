@@ -3,7 +3,6 @@
 export enum LocalStorageKey {
     PythonPath = "PythonPath",
     InterpolatoryPath = "InterpolatoryPath",
-    DependencyLastInstallTime = "DependencyLastInstallTime"
 }
 
 
