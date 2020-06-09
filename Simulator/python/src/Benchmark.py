@@ -110,13 +110,7 @@ def get_middle_frame(interpolator, frame_1_path, frame_2_path, output_file_path,
 
         res_json = json.dumps(res)
 
-        output_pathname = path.join(output_file_path, 'results.txt')
-        f = open(output_pathname, "w")
-        f.write(res_json)
-        f.close()
-
-        print(json.dumps(res_json))
-
+        print(res_json)
 # def test():
 #     psnr = {}
 #     ssim = {}

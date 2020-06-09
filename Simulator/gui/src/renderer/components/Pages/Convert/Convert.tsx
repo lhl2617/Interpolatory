@@ -361,6 +361,7 @@ export class Convert extends React.Component<{}, IState> {
     }
 
     resetConvert = async () => {
+        this._setState({ overrideDisable: true, convertState: `idle` });
         const updateState = () => {
             this._setState({
                 convertState: `idle`,
@@ -369,7 +370,6 @@ export class Convert extends React.Component<{}, IState> {
             })
         }
         if (convProc) {
-            this._setState({ overrideDisable: true, convertState: `idle` });
             convProc.kill(`SIGKILL`);
             convProc = undefined;
         }
@@ -457,7 +457,7 @@ export class Convert extends React.Component<{}, IState> {
                 </div>
 
                 <Modal
-                    style={{ left: 150 }}
+                    style={{ left: 100 }}
                     title='Conversion'
                     visible={convertState !== `idle`}
                     footer={null}

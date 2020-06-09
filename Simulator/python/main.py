@@ -64,6 +64,8 @@ elif mode_flag == '-mi' and len(args) == 2:
     im_path = args[1]
     
     im = imageio.imread(im_path)
+    print(im.shape)
+
 
     # print('')
     # print('- python3 main.py -i <input-video-path> -m <interpolation-mode>[:<settings>] -f <output-frame-rate> -o <output-file-path>')
@@ -119,9 +121,28 @@ elif mode_flag == '-t' and len(args) >= 7 and '-f' == args[2] and '-o' == args[5
     interpolator_obj = InterpolatorDictionary[interpolation_mode]
     interpolator = interpolator_obj(2, **settings)
     get_middle_frame(interpolator, frame_1_path, frame_2_path, output_file_path, ground_truth_path)
-    
-elif mode_flag == '-e' and len(args) == 2:
-    raise Exception('TODO')
+
+elif mode_flag == '-e' and len(args) == 4:
+    from src.Benchmark import benchmark, get_middle_frame
+    from src.Interpolator import InterpolatorDictionary, checkValidMode
+    interpolation_mode, settings = util.deconstruct_interpolation_mode_and_settings(args[1])
+    checkValidMode(interpolation_mode, mode_flag)
+
+    frame_width = args[2]
+    frame_height = args[1]
+
+    import time
+    time.sleep(3)
+
+    mock_res = {
+        "Cache size (MB)": "423",
+        "Bandwidth (GB/s)": "1.212",
+        "ALM usage": "n/a",
+        "DSP usage": "n/a"
+    }
+
+    print(json.dumps(mock_res))
+
 
 elif mode_flag == '-ver':
     print(json.dumps(version))

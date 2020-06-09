@@ -53,6 +53,7 @@ class Estimate extends React.Component<{}, IState> {
     }
 
     resetEstimate = async () => {
+        this._setState({ overrideDisable: true, estimateState: `idle` });
         const updateState = () => {
             this._setState({
                 estimateState: `idle`,
@@ -60,7 +61,6 @@ class Estimate extends React.Component<{}, IState> {
             })
         }
         if (estProc) {
-            this._setState({ overrideDisable: true, estimateState: `idle` });
             estProc.kill(`SIGKILL`);
             estProc = undefined;
         }
@@ -83,14 +83,15 @@ class Estimate extends React.Component<{}, IState> {
         const interpolationMode = iModeToString(iMode)
 
         const args = [binName, `-e`, interpolationMode, frameWidth.toString(), frameHeight.toString(), `-gui`];
+        console.log(`go!`)
 
         estProc = cp.spawn(python3, args, { cwd: path.dirname(binName) })
 
         let gotStderr = ``
 
         estProc.stdout.on(`data`, (data) => {
-            const res = JSON.parse(data);
-            /// TODO:- wait for Naim's structure
+            const res: Record<string, string> = JSON.parse(data);
+            this._setState({ results: res, estimateState: `done` })
         });
 
         estProc.stderr.on(`data`, (data) => {
@@ -138,8 +139,8 @@ class Estimate extends React.Component<{}, IState> {
                 </div>
 
                 <Modal
-                    style={{ left: 150 }}
-                    title='Benchmark'
+                    style={{ left: 100 }}
+                    title='Estimate'
                     visible={estimateState !== `idle`}
                     footer={null}
                     closable={false}
@@ -177,14 +178,13 @@ class Estimate extends React.Component<{}, IState> {
                             <h4 style={{ textAlign: `center`, margin: `auto`, marginTop: 12, color: `green` }}>Finished</h4>
 
                             {
-                                /// TODO
                                 results &&
                                 <div style={{ textAlign: `center`, margin: `auto`, marginTop: 12 }}>
                                     <h4 style={{ fontWeight: 800 }}>Results</h4>
 
                                     {
-                                        Object.entries(results).map(([key, val]) =>
-                                    <p style={{ margin: `auto` }}>{key}: {val}</p>
+                                        Object.entries(results).map(([key, val], i) =>
+                                            <p key={i} style={{ margin: `auto` }}>{key}: {val}</p>
                                         )
                                     }
                                 </div>
