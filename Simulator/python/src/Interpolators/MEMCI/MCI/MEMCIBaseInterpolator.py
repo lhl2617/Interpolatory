@@ -38,7 +38,7 @@ class MEMCIBaseInterpolator(BaseInterpolator):
         self.filter_mode = smoothing_dict["none"]
         self.filter_size = 4
         self.sub_region = 1
-        self.steps = 4
+        self.steps = 3
         self.min_block_size = 4
 
         self.upscale_MV = True
@@ -60,6 +60,8 @@ class MEMCIBaseInterpolator(BaseInterpolator):
         if 'me_mode' in args:
             arg = args['me_mode']
             self.me_mode = ME_dict[arg]
+            if self.me_mode==tss:
+                self.region=self.steps
             if (print_debug): print(f'me_mode: {arg}')
         elif print_debug: print(f'me_mode: hbma')
 
