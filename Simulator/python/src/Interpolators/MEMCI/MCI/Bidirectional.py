@@ -3,9 +3,79 @@ from .MEMCIBaseInterpolator import MEMCIBaseInterpolator
 import math
 import numpy as np
 import scipy
+import time
 from ..smoothing.threeXthree_mv_smoothing import smooth
 from ..ME.hbma import get_motion_vectors as hbma
 from ....util import get_first_frame_idx_and_ratio
+from numba import njit, uint8, int32, float32
+
+# this is to filter out all the holes (set as -1)
+@njit(uint8[:](int32[:,:]), cache=True)
+def filter_out_neg1(arr):
+    arr = arr.flatten()
+    j = len(arr) - np.count_nonzero(arr == -1)
+    result = np.empty(j, dtype=np.uint8)
+    j = 0
+    for i in range(arr.size):
+        if arr[i] != -1:
+            result[j] = arr[i]
+            j += 1
+    return result
+
+
+@njit(uint8[:,:,:](uint8[:,:,:], uint8[:,:,:], float32[:,:,:], float32[:,:,:], float32), cache=True)
+def helper(source_frame, target_frame, fwr_MV_field, bwr_MV_field, dist):
+    Interpolated_Frame =  np.full(source_frame.shape, -1, dtype=np.int32) 
+    SAD_interpolated_frame = np.full((source_frame.shape[0],source_frame.shape[1]),np.inf, dtype=np.float32)
+
+    for u in range(source_frame.shape[0]):
+        for v in range(source_frame.shape[1]):
+
+            u_i = int(u + round(fwr_MV_field[u, v, 0] * dist))
+            v_i = int(v + round(fwr_MV_field[u, v, 1] * dist))
+            if(u_i<source_frame.shape[0] and v_i<source_frame.shape[1]):
+                if fwr_MV_field[u, v, 2] < SAD_interpolated_frame[u_i, v_i]:
+                    Interpolated_Frame[u_i, v_i] = source_frame[u, v]
+                    #Interpolated_Frame[u_i, v_i] = [0,0,source_frame[u, v ,2]]
+                    SAD_interpolated_frame[u_i, v_i] = fwr_MV_field[u, v, 2]
+
+            bwdist = 1.0 - dist
+            u_i = int(u + round(bwr_MV_field[u, v, 0] * bwdist))
+            v_i = int(v + round(bwr_MV_field[u, v, 1] * bwdist))
+            if(u_i<source_frame.shape[0] and v_i<source_frame.shape[1]):
+                if bwr_MV_field[u, v, 2] < SAD_interpolated_frame[u_i, v_i]:
+                    if SAD_interpolated_frame[u_i, v_i] != np.inf :
+                        t = bwr_MV_field[u, v, 2]+SAD_interpolated_frame[u_i, v_i]
+                        Interpolated_Frame[u_i, v_i] = target_frame[u, v]*SAD_interpolated_frame[u_i, v_i]/t + Interpolated_Frame[u_i, v_i]*bwr_MV_field[u, v, 2]/t
+                        SAD_interpolated_frame[u_i, v_i] = bwr_MV_field[u, v, 2]
+                    else:
+                        Interpolated_Frame[u_i, v_i] = target_frame[u, v]
+                        SAD_interpolated_frame[u_i, v_i] = bwr_MV_field[u, v, 2]
+
+    k=10
+
+    New_Interpolated_Frame = np.asarray(Interpolated_Frame, dtype=np.uint8)
+
+    for u in range(0, Interpolated_Frame.shape[0]):
+        for v in range(0, Interpolated_Frame.shape[1]):
+            if Interpolated_Frame[u,v,0] == -1:
+                #to make sure the hole is not empty
+                Interpolated_Frame[u, v] = target_frame[u, v]
+                SAD_interpolated_frame[u, v] = fwr_MV_field[u, v, 2]
+
+                u_min=max(0,u-k)
+                u_max=min(Interpolated_Frame.shape[0],u+k+1)
+                v_min=max(0,v-k)
+                v_max=min(Interpolated_Frame.shape[1],v+k+1)
+                for i in range(3):
+                    block = Interpolated_Frame[u_min:u_max,v_min:v_max,i]
+                    block = filter_out_neg1(block)
+                    New_Interpolated_Frame[u,v,i] = np.median(block)
+
+    New_Interpolated_Frame = New_Interpolated_Frame.astype(np.uint8)
+    #New_Interpolated_Frame = Interpolated_Frame.astype(source_frame.dtype)
+    #outframe = convol(New_Interpolated_Frame)
+    return New_Interpolated_Frame
 
 class BiDirInterpolator(MEMCIBaseInterpolator):
     def __init__(self, target_fps,video_in_path=None, video_out_path=None, max_out_frames=math.inf, max_cache_size=2, **args):
@@ -68,8 +138,8 @@ class BiDirInterpolator(MEMCIBaseInterpolator):
         if not self.MV_field_idx < idx/self.rate_ratio < self.MV_field_idx+1:
             if(self.me_mode!=hbma):
                 # self.me_mode = ME_dict[self.me_mode]
-                self.MV_field= self.me_mode(self.block_size,self.region,source_frame,target_frame)
-                bwd = self.me_mode(self.block_size, self.region, target_frame, source_frame)
+                self.fwr_MV_field = self.me_mode(self.block_size,self.region,source_frame,target_frame)
+                self.bwr_MV_field = self.me_mode(self.block_size, self.region, target_frame, source_frame)
             else:
                 min_side = min(source_frame.shape[0],source_frame.shape[1])
                 step_size=1
@@ -77,66 +147,16 @@ class BiDirInterpolator(MEMCIBaseInterpolator):
                     min_side/=2
                     step_size+=1
                 self.steps=step_size
-                self.MV_field= self.me_mode(self.block_size,self.region,self.sub_region,self.steps,self.min_block_size,source_frame,target_frame)
-                bwd = self.me_mode(self.block_size,self.region,self.sub_region,self.steps,self.min_block_size,target_frame,source_frame)
+                self.fwr_MV_field= self.me_mode(self.block_size,self.region,self.sub_region,self.steps,self.min_block_size,source_frame,target_frame)
+                self.bwr_MV_field = self.me_mode(self.block_size,self.region,self.sub_region,self.steps,self.min_block_size,target_frame,source_frame)
 
-            self.MV_field = smooth(self.filter_mode,self.MV_field,self.filter_size)
+            self.fwr_MV_field = smooth(self.filter_mode,self.fwr_MV_field,self.filter_size)
             self.MV_field_idx = source_frame_idx
-            bwd = smooth(self.filter_mode,bwd,self.filter_size)
+            self.bwr_MV_field = smooth(self.filter_mode,self.bwr_MV_field,self.filter_size)
 
-        Interpolated_Frame =  np.full(source_frame.shape, -1, dtype=np.int32) 
-        SAD_interpolated_frame = np.full((source_frame.shape[0],source_frame.shape[1]),np.inf, dtype=np.float32)
+        output = helper(source_frame, target_frame, self.fwr_MV_field, self.bwr_MV_field, dist)
 
-        for u in range(0, source_frame.shape[0]):
-            for v in range(0, source_frame.shape[1]):
-
-                u_i = int(u + round(self.MV_field[u, v, 0] * dist))
-                v_i = int(v + round(self.MV_field[u, v, 1] * dist))
-                if(u_i<source_frame.shape[0] and v_i<source_frame.shape[1]):
-                    if self.MV_field[u, v, 2] < SAD_interpolated_frame[u_i, v_i]:
-                        Interpolated_Frame[u_i, v_i] = source_frame[u, v]
-                        #Interpolated_Frame[u_i, v_i] = [0,0,source_frame[u, v ,2]]
-                        SAD_interpolated_frame[u_i, v_i] = self.MV_field[u, v, 2]
-
-                bwdist = 1.0 - dist
-                u_i = int(u + round(bwd[u, v, 0] * bwdist))
-                v_i = int(v + round(bwd[u, v, 1] * bwdist))
-                if(u_i<source_frame.shape[0] and v_i<source_frame.shape[1]):
-                    if bwd[u, v, 2] < SAD_interpolated_frame[u_i, v_i]:
-                        if SAD_interpolated_frame[u_i, v_i] != np.inf :
-                            t = bwd[u, v, 2]+SAD_interpolated_frame[u_i, v_i]
-                            #Interpolated_Frame[u_i, v_i] = target_frame[u, v]*bwd[u, v, 2]/t + Interpolated_Frame[u_i, v_i]*SAD_interpolated_frame[u_i, v_i]/t
-                            Interpolated_Frame[u_i, v_i] = target_frame[u, v]*SAD_interpolated_frame[u_i, v_i]/t + Interpolated_Frame[u_i, v_i]*bwd[u, v, 2]/t
-                            SAD_interpolated_frame[u_i, v_i] = bwd[u, v, 2]
-                        else:
-                            Interpolated_Frame[u_i, v_i] = target_frame[u, v]
-                            #Interpolated_Frame[u_i, v_i] = [0,target_frame[u, v ,1],0] #R G B
-                            SAD_interpolated_frame[u_i, v_i] = bwd[u, v, 2]
-
-        k=10
-
-        New_Interpolated_Frame = np.copy(Interpolated_Frame)
-
-        for u in range(0, Interpolated_Frame.shape[0]):
-            for v in range(0, Interpolated_Frame.shape[1]):
-                if Interpolated_Frame[u,v,0] == -1:
-                    #to make sure the hole is not empty
-                    Interpolated_Frame[u, v] = target_frame[u, v]
-                    SAD_interpolated_frame[u, v] = self.MV_field[u, v, 2]
-
-                    u_min=max(0,u-k)
-                    u_max=min(Interpolated_Frame.shape[0],u+k+1)
-                    v_min=max(0,v-k)
-                    v_max=min(Interpolated_Frame.shape[1],v+k+1)
-                    for i in range(3):
-                        block = Interpolated_Frame[u_min:u_max,v_min:v_max,i]
-                        block = block[block != -1]
-                        New_Interpolated_Frame[u,v,i] = np.median(block)
-
-        New_Interpolated_Frame = New_Interpolated_Frame.astype(source_frame.dtype)
-        #New_Interpolated_Frame = Interpolated_Frame.astype(source_frame.dtype)
-        #outframe = convol(New_Interpolated_Frame)
-        return New_Interpolated_Frame
+        return output
 
     def __str__(self):
         return 'bwMEMCI'

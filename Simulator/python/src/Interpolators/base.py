@@ -79,7 +79,7 @@ class BaseInterpolator(object):
                 'Cannot interpolate video, no input video path or output video path')
 
 
-        start = int(round(time.time() * 1000))
+        start = int(round(time.time()))
 
         # target number of frames is limited by max possible according to source
         target_nframes = min(self.max_frames_possible, self.max_out_frames)
@@ -88,8 +88,8 @@ class BaseInterpolator(object):
             # if (debug_flags['debug_progress']):
             if ((i % self.target_fps) == 0):
                 pct = str(math.floor(100 * (i+1) / target_nframes)).rjust(3, ' ')
-                curr = int(round(time.time() * 1000))
-                elapsed_seconds = int((curr-start) / 1000)
+                curr = int(round(time.time()))
+                elapsed_seconds = int((curr-start))
                 elapsed = sToMMSS(elapsed_seconds)
                 eta = getETA(elapsed_seconds, i, target_nframes)
                 progStr = f'PROGRESS::{pct}%::Frame {i}/{target_nframes} | Time elapsed: {elapsed} | Estimated Time Left: {eta}'
@@ -103,11 +103,11 @@ class BaseInterpolator(object):
 
         self.video_out_writer.close()
 
-        end = int(round(time.time() * 1000))
+        end = int(round(time.time()))
 
         # if (debug_flags['debug_timer']):
-        elapsed = sToMMSS(int((end-start) / 1000))
-        progStr = f'PROGRESS::100%::Complete | Time taken: {sToMMSS((end-start) / 1000)}'
+        elapsed = sToMMSS(int((end-start)))
+        progStr = f'PROGRESS::100%::Complete | Time taken: {sToMMSS((end-start))}'
         signal_progress(progStr)
         if (debug_flags['debug_progress']):
             print(progStr)

@@ -447,7 +447,7 @@ export class Convert extends React.Component<{}, IState> {
                     </Form.Item>
 
 
-                    <IMode setIMode={this.setIMode} iMode={iMode} disabled={conversionDisabled} disabledIModeKeys={[]} />
+                    <IMode setIMode={this.setIMode} iMode={iMode} disabled={conversionDisabled} modeFlag="-i"/>
 
 
                 </Form>

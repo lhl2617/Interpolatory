@@ -11,16 +11,11 @@ from .weighted_mean_filter import weighted_mean_filter
 # from tss import get_motion_vectors as mv_tss
 # from hbma import get_motion_vectors as hbma
 
-filter_func_dict = {
-    'median' : median_filter,
-    'mean' : mean_filter,
-    'weighted' : weighted_mean_filter
-}
-
 def smooth(filter_func, mv_field, block_size):
+    if filter_func == None:
+        return mv_field
     out = np.copy(mv_field)
     for row in range(0, mv_field.shape[0], block_size):
-        #print(row)
         for col in range(0, mv_field.shape[1], block_size):
             low_row = max(0, int(row - block_size))
             high_row = min(int(row + block_size), mv_field.shape[0]) + 1

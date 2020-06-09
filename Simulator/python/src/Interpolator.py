@@ -101,7 +101,7 @@ InterpolatorDocs = {
             },
             "target_region": {
                 "type": "number",
-                "value": 3,
+                "value": 7,
                 "description": "The distance in pixels (positive integer) that the algorithm searches for motion"
             },
             "mci_mode": {
@@ -121,14 +121,16 @@ InterpolatorDocs = {
             },
             "filter_mode": {
                 "type": "enum",
-                "description": "Which filtering method to use.",
-                "value": "weighted_mean",
+                "description": "Which filtering method to use. (Not applicable for unidir2)",
+                "value": "none",
                 "enum": [
+                    "none",
                     "mean",
                     "median",
                     "weighted"
                 ],
                 "enumDescriptions": [
+                    "None",
                     "Mean",
                     "Median",
                     "Weighted Mean"
@@ -136,7 +138,7 @@ InterpolatorDocs = {
             },
             "filter_size": {
                 "type": "number",
-                "value": 5,
+                "value": 4,
                 "description": "Filter size (positive integer) used by MCI filter method"
             }
         }

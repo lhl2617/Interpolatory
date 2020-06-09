@@ -16,6 +16,7 @@ from ....util import get_first_frame_idx_and_ratio
 from numba import njit, types, uint8, int32, float32, boolean, float64, int64
 from ...base import BaseInterpolator
 from .MEMCIBaseInterpolator import MEMCIBaseInterpolator
+from ..smoothing.threeXthree_mv_smoothing import smooth
 
 '''
 This motion compensated frame interpolation (MCFI) method
@@ -45,7 +46,7 @@ def get_weight_kern(kernlen=8):
     return weights
 
 
-@njit(types.UniTuple(float32[:,:,:], 2)(types.UniTuple(int32, 3), uint8[:,:,:], uint8[:,:,:], int32, float32[:,:,:], boolean, int32, float32, float32[:,:,:]))
+@njit(types.UniTuple(float32[:,:,:], 2)(types.UniTuple(int32, 3), uint8[:,:,:], uint8[:,:,:], int32, float32[:,:,:], boolean, int32, float32, float32[:,:,:]), cache=True)
 def IEWMC_helper(frame_shape, F1_pad, F2_pad, min_block_size, MV_field, upscale_MV, pad_size, dist, w):
     #accumulations of the weighted motion compensations
     accumulations = np.zeros(F1_pad.shape, dtype=np.float32)
@@ -139,7 +140,7 @@ def IEWMC(MV_field, F1, F2, dist, pad_size, min_block_size, upscale_MV):
 
 
 #Error-Adaptive Combination
-@njit(float32[:,:,:](float32[:,:,:],float32[:,:,:],float32[:,:,:],float32[:,:,:]))
+@njit(float32[:,:,:](float32[:,:,:],float32[:,:,:],float32[:,:,:],float32[:,:,:]), cache=True)
 def Error_adaptive_combination(Ff, Ef, Fb, Eb):
     Fc = np.full(Ff.shape, -1, dtype=np.float32)
 
@@ -159,7 +160,7 @@ def Error_adaptive_combination(Ff, Ef, Fb, Eb):
 
     return Fc
 
-@njit(float32[:,:,:](float32[:,:,:]))
+@njit(float32[:,:,:](float32[:,:,:]), cache=True)
 def fill_holes(block):
     block_out = np.copy(block)
     ah = np.array([0.1,0.1,0.1,0.1], dtype=np.float32) #Average Abs differences in each direction.
@@ -259,7 +260,7 @@ def fill_holes(block):
 
 
 #Block-Wise Directional Hole Interpolation
-@njit(float32[:,:,:](float32[:,:,:], int32, int32))
+@njit(float32[:,:,:](float32[:,:,:], int32, int32), cache=True)
 def BDHI(Fc, min_block_size, pad_size):
     Fc_out = np.copy(Fc)
     fill_block_size = 2*min_block_size
@@ -284,7 +285,7 @@ def BDHI(Fc, min_block_size, pad_size):
 
     return Fc_out
 
-@njit(uint8[:,:,:](float32[:,:,:], int32))
+@njit(uint8[:,:,:](float32[:,:,:], int32), cache=True)
 def unpad_and_downconvert(frame, pad_size):
     return frame[pad_size:-pad_size,pad_size:-pad_size,:].astype(np.uint8)
 
@@ -319,7 +320,6 @@ class UniDir2Interpolator(MEMCIBaseInterpolator):
                 # print(self.ME_args)
             self.fwr_MV_field = self.me_mode(**self.ME_args, im1=source_frame, im2=target_frame)
             self.bwr_MV_field = self.me_mode(**self.ME_args, im1=target_frame, im2=source_frame)
-
         #Uncomment if you want to plot vector field when running benchmark.py
         self.MV_field = self.fwr_MV_field
         #self.plot_vector_field(source_frame)

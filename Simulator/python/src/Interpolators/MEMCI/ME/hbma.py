@@ -11,6 +11,7 @@ cost_key_map = {
     'sad': 0,
     'ssd': 1
 }
+
 @njit(float32(int32, uint8[:,:,:], uint8[:,:,:]), cache=True)
 def get_cost(cost_key, block1, block2):
     if (cost_key == 0):
@@ -98,16 +99,16 @@ def increase_vec_density_jit(cost_key, mvs, block_size, sub_win_size, im1_pad, i
 
     for row in range(mvs.shape[0]):
         for col in range(mvs.shape[1]):
-            vecs = []
-            vecs.append(mvs[row, col])  # parent vector (and sad but ignore)
+            vecs = np.empty((3, 3), dtype=np.float32)
+            vecs[0] = mvs[row, col]  # parent vector (and sad but ignore)
             if col >= 1:
-                vecs.append(mvs[row, col - 1] * vec_scale)
+                vecs[1] = (mvs[row, col - 1] * vec_scale)
             else:
-                vecs.append(mvs[row, col + 1] * vec_scale)
+                vecs[1] = (mvs[row, col + 1] * vec_scale)
             if row >= 1:
-                vecs.append(mvs[row - 1, col] * vec_scale)
+                vecs[2] = (mvs[row - 1, col] * vec_scale)
             else:
-                vecs.append(mvs[row + 1, col] * vec_scale)
+                vecs[2] = (mvs[row + 1, col] * vec_scale)
 
             if (row+1)*2*block_size >= im_shape[0]:
                 r_max = row*2+1
@@ -169,7 +170,6 @@ def get_motion_vectors(block_size, win_size, sub_win_size, steps, min_block_size
 
         down_im1 = down_im1.astype(np.uint8)
         down_im2 = down_im2.astype(np.uint8)
-
         im_lst.append((down_im1, down_im2))
 
     mvs = full_search(cost_key, block_size, win_size, im_lst[-1][0], im_lst[-1][1])
