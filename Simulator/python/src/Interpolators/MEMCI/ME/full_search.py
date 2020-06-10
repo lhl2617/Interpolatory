@@ -14,7 +14,7 @@ def get_sad(source_block, target_block):
     target_block = target_block.astype(np.float32)
     source_block = 0.299 * source_block[:,:,0] + 0.587 * source_block[:,:,1] + 0.114 * source_block[:,:,2]
     target_block = 0.299 * target_block[:,:,0] + 0.587 * target_block[:,:,1] + 0.114 * target_block[:,:,2]
-    return int(np.sum(np.abs(np.subtract(source_block, target_block))))
+    return (np.sum(np.abs(np.subtract(source_block, target_block))))
 
 @njit(float32[:,:,:](int32, int32, types.UniTuple(uint32, 3), uint8[:,:,:], uint8[:,:,:]), cache=True)
 def helper(block_size, target_region, frame_shape, source_frame_pad, target_frame_pad):
