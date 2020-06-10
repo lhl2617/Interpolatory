@@ -15,13 +15,17 @@ cost_key_map = {
 @njit(float32(int32, uint8[:,:,:], uint8[:,:,:]), cache=True)
 def get_cost(cost_key, block1, block2):
     if (cost_key == 0):
-        block1 = block1.astype(np.int32)
-        block2 = block2.astype(np.int32)
-        return np.sum(np.abs(np.subtract(block1, block2)))
+        source_block = block1.astype(np.float32)
+        target_block = block2.astype(np.float32)
+        source_block = 0.299 * source_block[:,:,0] + 0.587 * source_block[:,:,1] + 0.114 * source_block[:,:,2]
+        target_block = 0.299 * target_block[:,:,0] + 0.587 * target_block[:,:,1] + 0.114 * target_block[:,:,2]
+        return (np.sum(np.abs(np.subtract(source_block, target_block))))
     elif (cost_key == 1):
-        block1 = block1.astype(np.int32)
-        block2 = block2.astype(np.int32)
-        return np.sum(np.square(np.subtract(block1, block2)))
+        source_block = block1.astype(np.float32)
+        target_block = block2.astype(np.float32)
+        source_block = 0.299 * source_block[:,:,0] + 0.587 * source_block[:,:,1] + 0.114 * source_block[:,:,2]
+        target_block = 0.299 * target_block[:,:,0] + 0.587 * target_block[:,:,1] + 0.114 * target_block[:,:,2]
+        return (np.sum(np.square(np.subtract(source_block, target_block))))
     else:
         # should never happen!
         raise Exception('invalid cost key')
