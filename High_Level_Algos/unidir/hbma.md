@@ -1,19 +1,38 @@
-# Full Search ME and Unidirectional MCI:
+# HBMA ME and Unidirectional MCI:
 
 ## Parameters:
 
-- `b` = size of single axis of block in pixels
+- `b_max` = max size of single axis of block in pixels
+- `b_min` = min size of single axis of block in pixels
 - `r` = number of rows of pixels in frame
 - `c` = number of columns of pixels in frame
 - `w` = size of single axis of search window in pixels
+- `s` = steps
 
-## Full Search:
+## HBMA:
 
-- For each block in first image (`source block`):
-    - Calculate SAD of `source block` with blocks of matching size in a window in the second image
-        - For each block in the window in the second image (`target block`):
-            - Calculate SAD of `source block` and `target block` and note corresponding vector
-    - Take the vector corresponding to the lowest SAD and record in output with SAD (for occlusion in MCI) (in cases where there are multiple lowest SADs, precedence should be given to the smallest vector)
+- Block size must be power of 2
+- Reduce first and second images `steps` times using linear filter, storing each image
+    - Weightings for linear filter:
+      |      |     |      |
+      |------|-----|------| 
+      |0.0625|0.125|0.0625| 
+      |0.125 |0.25 |0.125 |
+      |0.0625|0.125|0.0625|
+    - Convolve filter with images with stride of (2,2) to downscale
+- Perform full search algorithm on smallest first and second frames
+- For next smallest images -> original images:
+    - Increase motion vector density
+        - Because the image size is halved when downscaled, with a consistent block size, a ("parent") block in the downscaled image is 4 ("child") blocks in the original image
+        - For each of the 4 child blocks for every block in the previous iteration:
+            - Search areas in a (3x3) window around position pointed to by parent vector, and the 2 vectors associated with 2 blocks adjacent to the parent block (parent vectors need to be multiplied by 2 to account for change in image size)
+            - Select vector corresponding to the smallest SAD
+- For `b_max` -> `b_min` by halving:
+    - Increase motion vector density
+        - By halving the block size, each previous ("parent") block holds 4 ("child") blocks
+        - For each of the 4 child blocks for every block in the previous iteration:
+            - Search areas in a (3x3) window around position pointed to by parent vector, and the 2 vectors associated with 2 blocks adjacent to the parent block
+            - Select vector corresponding to the smallest SAD
 - Return block-wise motion vector field
 
 ## Unidirectional Interpolation:
@@ -39,9 +58,10 @@ When describing cache, sizes are given as (rows, columns).
 
 The following stage is designed to store the incoming frame in a block wise format, as apposed to raster order.
 
-- Create (2 * `b`, `c`) * 3 bytes cache
+- Create (2^(s+1) * `b_max`, `c`) * 3 bytes cache
+    - TODO: explain
 - As the first frame streams in, place the pixels into the cache
-- When `b` rows have been streamed in, start writing the cache to DRAM in a block wise fashion
+- When `b_max` rows have been streamed in, start writing the cache to DRAM in a block wise fashion
     - Blocks are flattened and then written in contiguously
     - Left to right
     - Stream frame into the other `b` rows while writing
@@ -87,58 +107,3 @@ After first frame, the following stages happen in a loop with each incoming fram
         - Set the first `b` rows to 0 in `w_h_s_cache` (the values corresponding to the `b` rows of `write_cache` that have just been written to DRAM) and then shift the addressing so that the start is `b` rows later
     - Repeat for the next `w` rows in `win_cache`
 - Repeat until entire frame has been processed
-
-## Hardware Estimation:
-
-### DRAM Writing Bandwidth:
-
-- For each incoming frame (1/24 s):
-    - Entire frame is written to DRAM:
-        - 3 * `r` * `c` bytes
-    - 2 interpolated frames are written to DRAM:
-        - 6 * `r` * `c` bytes
-    - Total:
-        - 9 * `r` * `c` bytes
-- Total:
-    - 216 * `r` * `c` bytes / s
-
-### DRAM Reading Bandwidth:
-
-- For each incoming frame (1/24 s):
-    - Entire previous frame is pulled out block by block (wasted data minimised)
-        - 3 * `r` * `c` bytes
-- Every 1/60 s:
-    - Stream out the frame for this time stamp:
-        - 3 * `r` * `c` bytes
-- Total:
-    - 252 * `r` * `c` bytes / s
-
-### Required Cache Size:
-
-- To store frame block wise:
-    - 6 * `b`* `c` bytes
-- `win_cache`:
-    - 2 * `w` * `c` bytes
-- `write_cache` * 2:
-    - 6 * (`w` + `b`) * `c` bytes
-- `w_h_s_cache` * 2:
-    - 4 * `w` * `c`
-- `block_cache`:
-    - `b` * n * 64 bytes
-    - Where n is a large enough positive integer such that: `b`^2 <= n * 512
-- Total:
-    - (12 * `b` * `c`) + (64 * `b` * `n`) + (12 * `c` * `w`) bytes
-
-### Example Estimations:
-
-For:
-- `b` = 8
-- `r` = 1080
-- `c` = 1920
-- `w` = 22
-
-n = 1, as 8^2 < 512
-
-- DRAM write bandwidth = 447.9 MB/s
-- DRAM read bandwidth = 522.5 MB/s
-- Required cache size = 691.7 KB
