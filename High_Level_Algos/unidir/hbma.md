@@ -7,7 +7,7 @@
 - `r` = number of rows of pixels in frame
 - `c` = number of columns of pixels in frame
 - `w` = size of single axis of search window in pixels
-- `s` = steps
+- `s` = number of times the frames are downscaled
 
 ## HBMA:
 
@@ -56,54 +56,120 @@ To save on resources, the Y channel of YCbCr images are used for the motion esti
 
 When describing cache, sizes are given as (rows, columns).
 
+Some required formulas:
+
+- `a(i)` = 2^(`s` - `i`) * (`b_max` + 2 * `w`) + Sum (`n` = 1 -> `s` - `i`) (2^`n`)
+- `pad` =  Sum (`n` = 1 -> log_2 (`b_max`/`b_min`)) (2^`n`)
+
+For simplicity of explanation, `s`=1 has been used in the algorithm:
+
 The following stage is designed to store the incoming frame in a block wise format, as apposed to raster order.
 
-- Create (2^(s+1) * `b_max`, `c`) * 3 bytes cache
-    - TODO: explain
-- As the first frame streams in, place the pixels into the cache
+- Create (2 * `b_min`, `c`) * 3 bytes cache
+    - For original frame so it can be written block wise
+- Create (2 * `b_max`, `c`/2) * 1 byte cache
+    - For downscaled frame so that it can be written block wise
+- As the first frame streams in, place the pixels into the first cache
 - When `b_max` rows have been streamed in, start writing the cache to DRAM in a block wise fashion
     - Blocks are flattened and then written in contiguously
     - Left to right
-    - Stream frame into the other `b` rows while writing
+    - Channels stored separately
+    - Stream frame into the other `b_max` rows while writing
     - Repeat until full image in DRAM and stored block wise
+- Concurrently, when 3 rows have been streamed in, begin applying downscale filter to image and store in second cache
+    - Once `b_max` rows of downscaled image have been created, save to DRAM in block wise format (as above)
 
-After first frame, the following stages happen in a loop with each incoming frame:
+After first frame, the following stages happen in a loop with each incoming frame (`target_frame`):
 
-- Create (2 * `w`, `c`) * 1 byte cache (called `win_cache`)
-    - This cache will be used to search the target frame for the motion vectors
-    - The height is 2*`w` so that the first `w` can be processed while the second is streamed in
-- Create (`w` + `b`, `c`) * 3 bytes cache (called `write_cache`)
+- Stream `target_frame` into DRAM following procedure outlined for first frame
+- Create (`a(0)+pad`, `c`) * 1 byte cache (called `win_cache_0`)
+    - This cache will be used to search the largest scale target frame for the motion vectors
+    - Number of rows is `a(0)+pad`, as `a(0)` is the range of motion a block can take, and the `pad` is so that the cache can be reused for future density increases
+    - 1 byte is needed because it is only the Y channel
+- Create (`a(1)`, `c`/2) * 1 byte (called `win_cache_1`)
+    - This cache will be used to search the downscaled target frame for the motion vectors
+    - 1 byte needed as it is only the Y channel
+- Create (`a(0)+pad+5`, `c`) * 3 bytes cache (called `write_cache`)
     - This cache is to store the interpolated frame as it's being written to save bandwidth
-    - As 2 frames are interpolated between each input frame, 2 of these caches are required
-    - Set top `b` rows to 0
-    - Start addressing after top `b` rows (top `b` rows are only used for hole filling)
-- Create (`w`, `c`) * (1 bit + 15 bits) (called `w_h_s_cache`)
+    - As 2 frames are interpolated between each input frame, 2 of these caches are required.
+    - Set top 5 rows to 0
+    - Start addressing after top 5 rows (top 5 rows are only used for hole filling)
+- Create (`a(0)+pad`, `c`) * (1 bit + 15 bits) (called `w_h_s_cache`)
     - Used to store metadata regarding the interpolated frame
     - As there are 2 interpolated frames, 2 of this cache are needed
     - First bit - low if hole, high if filled
     - Following 15 bits - SAD score
     - Set all values to 0
-- Create (`b`, n * 64) * 1 byte cache (called `block_cache`)
-    - Used to store the source block from the previous frame  
-    - Width = n * 64, because the read from DRAM is 64 contiguous bytes (512 bits), so if `b`^2 < 512, then n=1, but if it is larger, then a larger n is required to store all of the data
-- Stream frame into DRAM following procedure outlined for first frame
-- Also stream greyscale values from frame into `win_cache` in parallel
-- When `w` rows have been read in to `win_cache`:
-    - Continue streaming greyscale pixels into other `w` rows
-    - Begin pulling out the blocks from the previous frame from DRAM (that correspond to the row of windows that have just been stored in cache) and convert to greyscale
-        - Cache block in `block_cache`
-    - Perform full search (detailed above) for given block in `block_cache` and search window from `win_cache`
-        - Output should be single motion vector with corresponding SAD score
-    - Calculate new position of block in `write_cache` (relative to block row) by following motion vector
-        - As there are multiple interpolated frames, this is done for both (also true for all following steps)
-    - For each pixel in the block, if the corresponding location in `w_h_s_cache` says there is a hole, fill pixel in `write_cache` with pixel from block
-    - For each pixel in the block, if the corresponding location in `w_h_s_cache` says there is no hole, compare SAD in `w_h_s_cache` with found SAD and keep the lowest
-    - Fill `w_h_s_cache` with a 1 for the hole and then appropriate SAD score
-    - After each block in the row in the source frame has been processed:
-        - Ignoring the top `b` rows of `write_cache`, search the following `b` rows for pixels that have a hole value of 0 in `w_h_s_cache` in the corresponding location
-        - Apply median filter to any such pixel in `write_cache`
-        - Ignoring the top `b` rows of `write_cache`, write the following `b` rows into DRAM (either in block wise format for consistency when streaming out, or in raster order)
-        - Shift the addressing of the `write_cache` so that the start is `b` rows later
-        - Set the first `b` rows to 0 in `w_h_s_cache` (the values corresponding to the `b` rows of `write_cache` that have just been written to DRAM) and then shift the addressing so that the start is `b` rows later
-    - Repeat for the next `w` rows in `win_cache`
-- Repeat until entire frame has been processed
+- Create (2, `c`/`b_max`) * 2 bytes cache (called `vec_cache_0`)
+    - Used when increasing vector density
+    - Records previous row of motion vectors
+    - 1 byte for x
+    - 1 byte for y
+    - Initialised to 0
+- Create (2, `c`/(2*`b_max`)) * 2 bytes cache (called `vec_cache_1`)
+    - Similar to above but for downscaled image
+- Read into `win_cache_1` from the downscaled target frame in DRAM
+- When `a(0)` rows have been read in:
+    - Read blocks sequentially from downscaled source frame
+    - For each block:
+        - Calculate motion vector by performing a full search in `win_cache_1`
+        - Store motion vector in `vec_cache_1` for reference by its children and adjacent children
+        - Begin reading into `win_cache_1` from level above target frame (in this case, the original image) (Y channel)
+        - When `a(1)+pad` rows have been read in:
+            - Read 4 children blocks from layer above source frame (in this case, the original image)
+            - For each child block:
+                - Perform search in 27 locations (as described in HBMA section)
+                - Store motion vector in `vec_cache_0` for reference by its children and adjacent children
+                - Break block into 4 child blocks
+                    - If not currently using original image, then children come from the layer above
+                    - If on the original image, halve the block size to get child blocks
+                    - For each child:
+                        - Perform 27 searches as stated before
+                        - As its the original image, follow motion vector and write child block into `write_cache` and update `w_h_s_cache` with corresponding metadata
+                        - When `write_cache` is full, apply hole filling filter to top `b_min` rows below the top 5 rows (they are only to provide hole filling info) and then write those rows to DRAM and shift the starting address by `b_min` rows. set corresponding rows in `w_h_s_cache` to 0 and shift the start address by the same amount
+
+## Hardware Estimation:
+
+### DRAM Writing Bandwidth:
+
+- For each incoming frame (1/24 s):
+    - Frame written to DRAM:
+        - 3 * `r` * `c` bytes
+    - Downscaled frames written to DRAM:
+        - Sum (`i` = 1 -> `s`) (`r` * `c` / 2^`i`)
+    - 2 interpolated frames written to DRAM:
+        - 6 * `r` * `c` bytes
+    - Total:
+        - 9 * `r` * `c` + Sum (`i` = 1 -> `s`) (`r` * `c` / 2^`i`) bytes
+- Total:
+    - (9 * `r` * `c` + Sum (`i` = 1 -> `s`) (`r` * `c` / 2^`i`)) * 24 bytes / s
+
+### DRAM Reading Bandwidth:
+
+- For each incoming frame (1/24 s):
+    - Every image saved in DRAM is read out (only Y channel):
+        - 2 * Sum (`i` = 0 -> `s`) (`r` * `c` / 2^`i`) bytes
+    - 2 colour channels from original source frame:
+        - 2 * `r` * `c` bytes
+    - Total:
+        - 2 * `r` * `c` + 2 * Sum (`i` = 0 -> `s`) (`r` * `c` / 2^`i`) bytes
+- Every 1/60 s:
+    - Stream out a frame:
+        - 3 * `r` * `c` bytes
+- Total:
+    228 * `r` * `c` + 48 * Sum (`i` = 0 -> `s`) (`r` * `c` / 2^`i`) bytes / s
+
+### Required Cache Size:
+
+- To store frames:
+    - 6 * `b_min` * `c` bytes
+- To downscale and store:
+    - Sum (`i` = 1 -> `s`) (2 * `b_max` * `c`/2^`i`) bytes
+- `win_cache`:
+    - Sum (`i` = 0 -> `s`) (`a(i)` * `c`/2^`i`) + `pad` * `c` bytes
+- `write_cache` * 2:
+    - 6 * (`a(0)+pad+5`) * `c` bytes
+- `w_h_s_cache` * 2:
+    - 4 * (`a(0)+pad`) * `c` bytes
+- `vec_cache`:
+    - Sum (`i` = 0 -> `s`) (4 * `c`/(2^`i` * `b_max`))
