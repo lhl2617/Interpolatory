@@ -52,11 +52,11 @@ After first frame, the following stages happen in a loop with each incoming fram
 - Create (2 * `w`, `c`) * 1 byte cache (called `win_cache`)     // TODO: change 2 * `w` to `w` + `b`
     - This cache will be used to search the target frame for the motion vectors
     - The height is 2*`w` so that the first `w` can be processed while the second is streamed in
-- Create (`w` + `b`, `c`) * 3 bytes cache (called `write_cache`)
+- Create (`w` + 5, `c`) * 3 bytes cache (called `write_cache`)
     - This cache is to store the interpolated frame as it's being written to save bandwidth
     - As 2 frames are interpolated between each input frame, 2 of these caches are required
-    - Set top `b` rows to 0
-    - Start addressing after top `b` rows (top `b` rows are only used for hole filling)
+    - Set top 5 rows to 0
+    - Start addressing after top 5 rows (top 5  rows are only used for hole filling)
 - Create (`w`, `c`) * (1 bit + 15 bits) (called `w_h_s_cache`)
     - Used to store metadata regarding the interpolated frame
     - As there are 2 interpolated frames, 2 of this cache are needed
@@ -82,7 +82,7 @@ After first frame, the following stages happen in a loop with each incoming fram
     - After each block in the row in the source frame has been processed:
         - Ignoring the top `b` rows of `write_cache`, search the following `b` rows for pixels that have a hole value of 0 in `w_h_s_cache` in the corresponding location
         - Apply median filter to any such pixel in `write_cache`
-        - Ignoring the top `b` rows of `write_cache`, write the following `b` rows into DRAM (either in block wise format for consistency when streaming out, or in raster order)
+        - Ignoring the top 5 rows of `write_cache`, write the following `b` rows into DRAM (either in block wise format for consistency when streaming out, or in raster order)
         - Shift the addressing of the `write_cache` so that the start is `b` rows later
         - Set the first `b` rows to 0 in `w_h_s_cache` (the values corresponding to the `b` rows of `write_cache` that have just been written to DRAM) and then shift the addressing so that the start is `b` rows later
     - Repeat for the next `w` rows in `win_cache`
@@ -120,14 +120,11 @@ After first frame, the following stages happen in a loop with each incoming fram
 - `win_cache`:
     - 2 * `w` * `c` bytes
 - `write_cache` * 2:
-    - 6 * (`w` + `b`) * `c` bytes
+    - 6 * (`w` + 5) * `c` bytes
 - `w_h_s_cache` * 2:
     - 4 * `w` * `c`
-- `block_cache`:
-    - `b` * n * 64 bytes
-    - Where n is a large enough positive integer such that: `b`^2 <= n * 512
 - Total:
-    - (12 * `b` * `c`) + (64 * `b` * `n`) + (12 * `c` * `w`) bytes
+    - 6 * `c` * (`b` + 2 * `w` + 5) bytes
 
 ### Example Estimations:
 
@@ -137,8 +134,7 @@ For:
 - `c` = 1920
 - `w` = 22
 
-n = 1, as 8^2 < 512
-
-- DRAM write bandwidth = 447.9 MB/s
-- DRAM read bandwidth = 522.5 MB/s
-- Required cache size = 691.7 KB
+Results:
+- DRAM write bandwidth = 427.1 MB/s
+- DRAM read bandwidth = 498.3 MB/s
+- Required cache size = 0.626 MB
