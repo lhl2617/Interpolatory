@@ -58,7 +58,7 @@ When describing cache, sizes are given as (rows, columns).
 
 Some required formulas:
 
-- `a(i)` = 2^(`s` - `i`) * (`b_max` + 2 * `w`) + Sum (`n` = 1 -> `s` - `i`) (2^`n`)
+- `a(i)` = 2^(`s` - `i`) * `w` + Sum (`n` = 1 -> `s` - `i`) (2^`n`)
 - `pad` =  Sum (`n` = 1 -> log_2 (`b_max`/`b_min`)) (2^`n`)
 
 For simplicity of explanation, `s`=1 has been used in the algorithm:
@@ -109,13 +109,13 @@ After first frame, the following stages happen in a loop with each incoming fram
 - Create (2, `c`/(2*`b_max`)) * 2 bytes cache (called `vec_cache_1`)
     - Similar to above but for downscaled image
 - Read into `win_cache_1` from the downscaled target frame in DRAM
-- When `a(0)` rows have been read in:
+- When `a(1)` rows have been read in:
     - Read blocks sequentially from downscaled source frame
     - For each block:
         - Calculate motion vector by performing a full search in `win_cache_1`
         - Store motion vector in `vec_cache_1` for reference by its children and adjacent children
-        - Begin reading into `win_cache_1` from level above target frame (in this case, the original image) (Y channel)
-        - When `a(1)+pad` rows have been read in:
+        - Begin reading into `win_cache_0` from level above target frame (in this case, the original image) (Y channel)
+        - When `a(0)+pad` rows have been read in:
             - Read 4 children blocks from layer above source frame (in this case, the original image)
             - For each child block:
                 - Perform search in 27 locations (as described in HBMA section)
@@ -173,3 +173,18 @@ After first frame, the following stages happen in a loop with each incoming fram
     - 4 * (`a(0)+pad`) * `c` bytes
 - `vec_cache`:
     - Sum (`i` = 0 -> `s`) (4 * `c`/(2^`i` * `b_max`))
+
+### Example estimation:
+
+For:
+- `b_max` = 8
+- `b_min` = 4
+- `r` = 1080
+- `c` = 1920
+- `w` = 22
+- `s` = 2
+
+Results:
+- DRAM write bandwidth = 462.7 MB/s
+- DRAM read bandwidth = 617.0 MB/s
+- Required cache size = 2.12 MB
