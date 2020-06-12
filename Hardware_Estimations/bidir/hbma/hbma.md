@@ -35,13 +35,21 @@
             - Select vector corresponding to the smallest SAD
 - Return block-wise motion vector field
 
-## Unidirectional Interpolation:
+## Bidirectional Interpolation:
 
+- Calculate forward and backward motion vectors using previous algorithm
+    - Swap frames to get backward motion vectors
 - Create interpolated frame
-- Create `r`*`c` int32 SAD table
-- Create `r`*`c` bool hole table
+- Create `r` * `c` SAD table
+- Create `r` * `c` hole table
 - For each block in the source frame:
-    - Find new coordinates of block in interpolated frame (by following vector)
+    - Find new coordinates of block in interpolated frame (by following forward vector)
+    - Any pixels that are already written, compare SAD with table value and overwrite if lower
+    - Fill all other pixels
+    - Record them as being filled in the hole table
+    - Record SAD in SAD table
+- For each block in the target frame:
+    - Find new coordinates of block in interpolated frame (by following backward vector)
     - Any pixels that are already written, compare SAD with table value and overwrite if lower
     - Fill all other pixels
     - Record them as being filled in the hole table
@@ -82,11 +90,18 @@ The following stage is designed to store the incoming frame in a block wise form
 After first frame, the following stages happen in a loop with each incoming frame (`target_frame`):
 
 - Stream `target_frame` into DRAM following procedure outlined for first frame
-- Create (`a(0)+pad`, `c`) * 1 byte cache (called `win_cache_0`)
+- Create (`a(0)+pad`, `c`) * 1 byte cache (called `source_win_cache_0`)
+    - This cache will be used to search the largest scale source frame for the motion vectors
+    - Number of rows is `a(0)+pad`, as `a(0)` is the range of motion a block can take, and the `pad` is so that the cache can be reused for future density increases
+    - 1 byte is needed because it is only the Y channel
+- Create (`a(1)`, `c`/2) * 1 byte (called `source_win_cache_1`)
+    - This cache will be used to search the downscaled source frame for the motion vectors
+    - 1 byte needed as it is only the Y channel
+- Create (`a(0)+pad`, `c`) * 1 byte cache (called `target_win_cache_0`)
     - This cache will be used to search the largest scale target frame for the motion vectors
     - Number of rows is `a(0)+pad`, as `a(0)` is the range of motion a block can take, and the `pad` is so that the cache can be reused for future density increases
     - 1 byte is needed because it is only the Y channel
-- Create (`a(1)`, `c`/2) * 1 byte (called `win_cache_1`)
+- Create (`a(1)`, `c`/2) * 1 byte (called `target_win_cache_1`)
     - This cache will be used to search the downscaled target frame for the motion vectors
     - 1 byte needed as it is only the Y channel
 - Create (`a(0)+pad+5`, `c`) * 3 bytes cache (called `write_cache`)
@@ -100,33 +115,42 @@ After first frame, the following stages happen in a loop with each incoming fram
     - First bit - low if hole, high if filled
     - Following 15 bits - SAD score
     - Set all values to 0
-- Create (2, `c`/`b_max`) * 2 bytes cache (called `vec_cache_0`)
-    - Used when increasing vector density
+- Create (2, `c`/`b_max`) * 2 bytes cache (called `forward_vec_cache_0`)
+    - Used when increasing vector density for forward vectors
     - Records previous row of motion vectors
     - 1 byte for x
     - 1 byte for y
     - Initialised to 0
-- Create (2, `c`/(2*`b_max`)) * 2 bytes cache (called `vec_cache_1`)
+- Create (2, `c`/(2*`b_max`)) * 2 bytes cache (called `forward_vec_cache_1`)
     - Similar to above but for downscaled image
-- Read into `win_cache_0` from the downscaled target frame in DRAM
-- When `a(1)` rows have been read in:
-    - Read blocks sequentially from downscaled source frame
+- Create (2, `c`/`b_max`) * 2 bytes cache (called `backward_vec_cache_0`)
+    - Used when increasing vector density backward vectors
+    - Records previous row of motion vectors
+    - 1 byte for x
+    - 1 byte for y
+    - Initialised to 0
+- Create (2, `c`/(2*`b_max`)) * 2 bytes cache (called `backward_vec_cache_1`)
+    - Similar to above but for downscaled image
+- Read into `source_win_cache_1` from the downscaled source frame in DRAM
+- Read into `target_win_cache_1` from the downscaled target frame in DRAM
+- Read into `source_win_cache_0` from the downscaled source frame in DRAM
+- Read into `target_win_cache_0` from the downscaled target frame in DRAM
+- When `a(1)` rows have been read in to both top level caches (the sub steps here are performed once in the forward direction and then in the backward direction. To perform backwards, swap `source_win_cache_n` with `target_win_cache_n` and `forward_vec_cache_n` with `backward_vec_cache_n`):
+    - Read blocks sequentially from `source_win_cache_0`
     - For each block:
-        - Calculate motion vector by performing a full search in `win_cache_0`
-        - Store motion vector in `vec_cache_0` for reference by its children and adjacent children
-        - Begin reading into `win_cache_1` from level above target frame (in this case, the original image) (Y channel)
-        - When `a(0)+pad` rows have been read in:
-            - Read 4 children blocks from layer above source frame (in this case, the original image)
-            - For each child block:
-                - Perform search in 27 locations (as described in HBMA section)
-                - Store motion vector in `vec_cache_1` for reference by its children and adjacent children
-                - Break block into 4 child blocks
-                    - If not currently using original image, then children come from the layer above
-                    - If on the original image, halve the block size to get child blocks
-                    - For each child:
-                        - Perform 27 searches as stated before
-                        - As its the original image, follow motion vector and write child block into `write_cache` and update `w_h_s_cache` with corresponding metadata
-                        - When `write_cache` is full, apply hole filling filter to top `b_min` rows below the top 5 rows (they are only to provide hole filling info) and then write those rows to DRAM and shift the starting address by `b_min` rows. set corresponding rows in `w_h_s_cache` to 0 and shift the start address by the same amount
+        - Calculate motion vector by performing a full search in `target_win_cache_0`
+        - Store motion vector in `forward_vec_cache_0` for reference by its children and adjacent children
+        - Read 4 children blocks from `source_win_cache_1`
+        - For each child block:
+            - Perform search in 27 locations (as described in HBMA section)
+            - Store motion vector in `forward_vec_cache_1` for reference by its children and adjacent children
+            - Break block into 4 child blocks
+                - If not currently using original image, then children come from the layer above
+                - If on the original image, halve the block size to get child blocks
+                - For each child:
+                    - Perform 27 searches as stated before
+                    - As its the original image, follow motion vector and write child block into `write_cache` and update `w_h_s_cache` with corresponding metadata
+                    - When `write_cache` is full, apply hole filling filter to top `b_min` rows below the top 5 rows (they are only to provide hole filling info) and then write those rows to DRAM and shift the starting address by `b_min` rows. set corresponding rows in `w_h_s_cache` to 0 and shift the start address by the same amount
 
 ## Hardware Estimation:
 
@@ -165,14 +189,14 @@ After first frame, the following stages happen in a loop with each incoming fram
     - 6 * `b_min` * `c` bytes
 - To downscale and store:
     - Sum (`i` = 1 -> `s`) (2 * `b_max` * `c`/2^`i`) bytes
-- `win_cache`:
-    - Sum (`i` = 0 -> `s`) (`a(i)` * `c`/2^`i`) + `pad` * `c` bytes
+- `win_cache` * 2:
+    - 2 * (Sum (`i` = 0 -> `s`) (`a(i)` * `c`/2^`i`) + `pad` * `c`) bytes
 - `write_cache` * 2:
     - 6 * (`a(0)+pad+5`) * `c` bytes
 - `w_h_s_cache` * 2:
     - 4 * (`a(0)+pad`) * `c` bytes
-- `vec_cache`:
-    - Sum (`i` = 0 -> `s`) (4 * `c`/(2^`i` * `b_max`))
+- `vec_cache` * 2:
+    - 2 * Sum (`i` = 0 -> `s`) (4 * `c`/(2^`i` * `b_max`))
 
 ### Example estimation:
 
@@ -187,4 +211,4 @@ For:
 Results:
 - DRAM write bandwidth = 462.7 MB/s
 - DRAM read bandwidth = 617.0 MB/s
-- Required cache size = 2.12 MB
+- Required cache size = 2.34 MB
