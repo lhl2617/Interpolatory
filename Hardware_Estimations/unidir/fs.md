@@ -49,7 +49,7 @@ The following stage is designed to store the incoming frame in a block wise form
 
 After first frame, the following stages happen in a loop with each incoming frame:
 
-- Create (2 * `w`, `c`) * 1 byte cache (called `win_cache`)
+- Create (2 * `w`, `c`) * 1 byte cache (called `win_cache`)     // TODO: change 2 * `w` to `w` + `b`
     - This cache will be used to search the target frame for the motion vectors
     - The height is 2*`w` so that the first `w` can be processed while the second is streamed in
 - Create (`w` + `b`, `c`) * 3 bytes cache (called `write_cache`)
