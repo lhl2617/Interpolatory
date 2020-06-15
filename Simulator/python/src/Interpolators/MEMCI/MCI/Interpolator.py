@@ -1,7 +1,7 @@
 
 from .Unidirectional import UniDirInterpolator
 from .Bidirectional import BiDirInterpolator
-from .Unidirectional_2 import UniDir2Interpolator
+from .Bidirectional_2 import BiDir2Interpolator
 import math
 from ....Globals import debug_flags
 
@@ -22,11 +22,11 @@ def MEMCI (target_fps, video_in_path=None, video_out_path=None, max_out_frames=m
         if (print_debug): print(f'mci_mode: bidir')
         return BiDirInterpolator(target_fps, video_in_path, video_out_path, max_out_frames, max_cache_size,**args)
 
-    elif (mci_mode == 'unidir2'):
-        # no smoothing in unidir2
+    elif (mci_mode == 'bidir2'):
+        # no smoothing in bidir2
         args['filter_mode'] = 'none'
-        if (print_debug): print(f'mci_mode: unidir2')
-        return UniDir2Interpolator(target_fps, video_in_path, video_out_path, max_out_frames, max_cache_size,**args)
+        if (print_debug): print(f'mci_mode: bidir2')
+        return BiDir2Interpolator(target_fps, video_in_path, video_out_path, max_out_frames, max_cache_size,**args)
 
     else:
         raise Exception(f'Unknown mci_mode: {mci_mode}')

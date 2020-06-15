@@ -164,9 +164,9 @@ def Error_adaptive_combination(Ff, Ef, Fb, Eb):
 def fill_holes(block):
     block_out = np.copy(block)
     ah = np.array([0.1,0.1,0.1,0.1], dtype=np.float32) #Average Abs differences in each direction.
-    av = np.array([0.1,0.1,0.1,0.1], dtype=np.float32) 
-    ad = np.array([0.1,0.1,0.1,0.1], dtype=np.float32) 
-    ar = np.array([0.1,0.1,0.1,0.1], dtype=np.float32) 
+    av = np.array([0.1,0.1,0.1,0.1], dtype=np.float32)
+    ad = np.array([0.1,0.1,0.1,0.1], dtype=np.float32)
+    ar = np.array([0.1,0.1,0.1,0.1], dtype=np.float32)
     #Calculate absolute differences between adjacent interpolated pixels
     # in each direction.
     for i in range(0,block.shape[0]-1):
@@ -289,7 +289,7 @@ def BDHI(Fc, min_block_size, pad_size):
 def unpad_and_downconvert(frame, pad_size):
     return frame[pad_size:-pad_size,pad_size:-pad_size,:].astype(np.uint8)
 
-class UniDir2Interpolator(MEMCIBaseInterpolator):
+class BiDir2Interpolator(MEMCIBaseInterpolator):
     def __init__(self, target_fps, video_in_path=None, video_out_path=None, max_out_frames=math.inf, max_cache_size=2, **args):
 
         super().__init__(target_fps, video_in_path,
@@ -329,7 +329,7 @@ class UniDir2Interpolator(MEMCIBaseInterpolator):
 # def IEWMC(MV_field, F1, F2, dist, pad_size, min_block_size, upscale_MV):
         Ff, Ef = IEWMC(self.fwr_MV_field, source_frame, target_frame, dist, self.pad_size, self.min_block_size, self.upscale_MV)
         Fb, Eb = IEWMC(self.bwr_MV_field, target_frame, source_frame, 1-dist, self.pad_size, self.min_block_size, self.upscale_MV)
-        
+
         #Get combined frame
         Fc = Error_adaptive_combination(Ff, Ef, Fb, Eb)
 
