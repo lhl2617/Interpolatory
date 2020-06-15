@@ -32,14 +32,16 @@ class BaseInterpolator(object):
         self.max_frames_possible = None
         self.rate_ratio = None
 
+
+        for arg, value in args.items():
+            setattr(self, arg, value)
+
         if not (video_in_path is None):
             self.load_input_video()
 
         if not (video_out_path is None):
             self.get_video_out_writer()
 
-        for arg, value in args.items():
-            setattr(self, arg, value)
 
     def load_input_video(self):
         if self.video_in_path is None:
@@ -165,7 +167,7 @@ class MidFrameBaseInterpolator(BaseInterpolator):
     def __init__(self, target_fps, video_in_path=None, video_out_path=None, max_out_frames=math.inf, max_cache_size=2, **args):
 
         super().__init__(target_fps, video_in_path,
-                         video_out_path, max_out_frames, max_cache_size)
+                         video_out_path, max_out_frames, max_cache_size, **args)
 
         # denominator is 2
         self.den2 = False

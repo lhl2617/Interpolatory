@@ -22,7 +22,7 @@ class SepConv(MidFrameBaseInterpolator):
         from .src import run
         run.arguments_strModel = self.model
         super().__init__(target_fps, video_in_path,
-                         video_out_path, max_out_frames, max_cache_size)
+                         video_out_path, max_out_frames, max_cache_size, **args)
 
     def __str__(self):
         return f'SepConv - {self.model}'

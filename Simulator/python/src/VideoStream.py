@@ -92,7 +92,8 @@ class VideoStream(BaseVideoStream):
         cache_idx = idx - self.cache_start_idx
 
         # print(f'Getting {idx}, cache_idx {cache_idx} ranges: {self.cache_start_idx, self.cache_end_idx}')
-        return self.cache[cache_idx]
+        out_frame = self.cache[cache_idx]
+        return out_frame
 
     # preload into cache
     # warning: might run out of memory
@@ -114,12 +115,16 @@ class BenchmarkVideoStream(BaseVideoStream):
         self.fps = 1
         # self.size # this is not used
         self.duration = 2
+
         
 
     def get_frame(self, idx):
         if idx == 0:
-            return self.frame_1
+            out = self.frame_1
         elif idx == 1:
-            return self.frame_2
-        raise Exception(f'Tried to get invalid frame idx {idx}')
+            out = self.frame_2
+        else:
+            raise Exception(f'Tried to get invalid frame idx {idx}')
+
+        return out
 

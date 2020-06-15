@@ -19,7 +19,7 @@ from .base import BaseInterpolator
 class NearestInterpolator(BaseInterpolator):
     def __init__(self, target_fps, video_in_path=None, video_out_path=None, max_out_frames=math.inf, max_cache_size=2, **args):
         super().__init__(target_fps, video_in_path,
-                         video_out_path, max_out_frames, max_cache_size)
+                         video_out_path, max_out_frames, max_cache_size, **args)
 
     def get_interpolated_frame(self, idx):
         source_frame_idx = math.floor(idx / self.rate_ratio)

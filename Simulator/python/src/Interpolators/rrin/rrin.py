@@ -35,7 +35,7 @@ class RRINMidFrameInterpolator(MidFrameBaseInterpolator):
         model.eval()
 
         super().__init__(target_fps, video_in_path,
-                         video_out_path, max_out_frames, max_cache_size)
+                         video_out_path, max_out_frames, max_cache_size, **args)
 
         self.model = model
 
@@ -96,7 +96,7 @@ class RRINLinearInterpolator(BaseInterpolator):
         model.eval()
 
         super().__init__(target_fps, video_in_path,
-                         video_out_path, max_out_frames, max_cache_size)
+                         video_out_path, max_out_frames, max_cache_size, **args)
 
         self.model = model
 
@@ -160,9 +160,9 @@ def RRIN(target_fps, video_in_path=None, video_out_path=None, max_out_frames=mat
         flow_usage_method = args['flow_usage_method']
 
     if (flow_usage_method == 'linear'):
-        return RRINLinearInterpolator(target_fps, video_in_path, video_out_path, max_out_frames, max_cache_size)
+        return RRINLinearInterpolator(target_fps, video_in_path, video_out_path, max_out_frames, max_cache_size, **args)
     elif (flow_usage_method == 'midframe'):
-        return RRINMidFrameInterpolator(target_fps, video_in_path, video_out_path, max_out_frames, max_cache_size)
+        return RRINMidFrameInterpolator(target_fps, video_in_path, video_out_path, max_out_frames, max_cache_size, **args)
     else:
         eprint(f'Unknown RRIN flow_usage_method argument: {flow_usage_method}')
         exit(1)
