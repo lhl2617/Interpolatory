@@ -329,6 +329,7 @@ export class Test extends React.Component<{}, IState> {
     }
 
     resetTest = async () => {
+        this._setState({ overrideDisable: true, testState: `idle` });
         const updateState = () => {
             this._setState({
                 testState: `idle`,
@@ -336,7 +337,6 @@ export class Test extends React.Component<{}, IState> {
             })
         }
         if (testProc) {
-            this._setState({ overrideDisable: true, testState: `idle` });
             testProc.kill(`SIGKILL`);
             testProc = undefined;
         }
@@ -463,7 +463,7 @@ export class Test extends React.Component<{}, IState> {
 
 
                     <Modal
-                        style={{ left: 150 }}
+                        style={{ left: 100 }}
                         title='Test'
                         visible={testState !== `idle`}
                         footer={null}

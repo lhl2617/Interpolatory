@@ -189,7 +189,6 @@ export class Benchmark extends React.Component<{}, IState> {
             })
         }
         if (benchProc) {
-            this._setState({ overrideDisable: true, benchmarkState: `idle` });
             benchProc.kill(`SIGKILL`);
             benchProc = undefined;
         }
@@ -252,7 +251,7 @@ export class Benchmark extends React.Component<{}, IState> {
 
 
                 <Modal
-                    style={{ left: 150 }}
+                    style={{ left: 100 }}
                     title='Benchmark'
                     visible={benchmarkState !== `idle`}
                     footer={null}

@@ -284,7 +284,7 @@ export class Home extends React.Component<IProps, IState> {
         return (
             <div style={{ textAlign: 'center', margin: 'auto' }}>
                 <div>
-                    <img src={logo} alt='Interpolatory Simulator' style={{ marginTop: 12, maxWidth: 200, marginBottom: 12 }} />
+                    <img src={logo} alt='Interpolatory Simulator' style={{ marginTop: 0, maxWidth: 200, marginBottom: 12 }} />
                     <h2 style={{ fontSize: 36, fontWeight: 800, marginBottom: 0 }}>Interpolatory Simulator v0.0.1</h2>
                     <h4>Video frame-rate interpolation framework for software simulation and benchmarking</h4>
                 </div>
@@ -320,7 +320,7 @@ export class Home extends React.Component<IProps, IState> {
                     </Popconfirm>
                 </div>
                 <Modal
-                    style={{ left: 150 }}
+                    style={{ left: 100 }}
                     title='Change Python 3 / Interpolatory Backend Path'
                     visible={changePathsModalVisible}
                     onOk={() => { this.changePaths(newPyPath, newBinPath); this.hideChangePathsModal(); }}

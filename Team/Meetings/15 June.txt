@@ -1,0 +1,63 @@
+# Progress
+
+## Phase 2 
+- Done
+- Build GUI again with latest 
+- outstanding task of changing name from unidir2 to bidir2
+
+
+## Phase 3
+- FS with uni and bidir
+- HBMA uni and bidir
+- bidir2 infeasible 
+
+- linear, oversample, nearest
+
+## Presentation
+- Video: Done
+- 4/5 slides, fifth slide 
+    - Add lit review in slide 2
+    - slide 4 add psnr and ssim
+
+## Documentation
+- Add design inputs, outputs, verification
+
+### LH
+- build GUI
+- add slides shit
+- documentation GUI 
+
+### Naim
+- Speech for slides + material for slide 5
+- Phase 3 
+
+### Olly
+- Phase 3 + material for slide 5
+- Phase 3
+
+### Navid
+- Documentation 
+- outstanding task of changing name from unidir2 to bidir2
+- HBMA, ask olly/naim
+
+### Charles
+- Documentation sustainability report 
+- Write email to george to ask about it
+
+### Bruce
+- Documentation - bidir & unidir 
+
+
+## Documentation TODOs
+
+Section 2:
+    - Design input === Planning, Design outputs & verification (naim & olly)
+
+Section 3:
+    - HBMA (navid)
+    - MEMCI (bruce)
+    - Clarify more on ML (LH)
+    - GUI (LH)
+
+Section 4:
+    - sustainability (Charles)
