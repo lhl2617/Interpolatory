@@ -68,9 +68,14 @@ def calc(**args):
     b_min = int(args.get('b_min', 4))
 
     res = {}
-    res['Write'] = f'{write_bandwidth(r, c, s)/(1024**2)}MB/s'
-    res['Read'] = f'{read_bandwidth(r, c, s)/(1024**2)}MB/s'
-    res['Cache'] = f'{cache_required(b_max, b_min, c, w, s)/(1024**2)}MB'
+    res['Write (MB/s)'] = write_bandwidth(r, c, s)/(1024**2)
+    res['Read (MB/s)'] = read_bandwidth(r, c, s)/(1024**2)
+    res['Cache (MB)'] = cache_required(b_max, b_min, c, w, s)/(1024**2)
+
+    
+    # round to 2dp
+    for key, val in res.items():
+        res[key] = round(val, 2)
     
     return res
 

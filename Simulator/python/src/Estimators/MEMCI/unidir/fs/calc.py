@@ -16,11 +16,16 @@ def calc(**args):
     c = int(args.get('c', 1920))
     w = int(args.get('w', 22))
 
-
     res = {}
-    res['Write'] = f'{write_bandwidth(r, c)/(1024**2)}MB/s'
-    res['Read'] = f'{read_bandwidth(r, c)/(1024**2)}MB/s'
-    res['Cache'] = f'{cach_required(c, b, w)/(1024**2)}MB'
+    res['Write (MB/s)'] = write_bandwidth(r, c)/(1024**2)
+    res['Read (MB/s)'] = read_bandwidth(r, c)/(1024**2)
+    res['Cache (MB)'] = cach_required(c, b, w)/(1024**2)
+
+    # round to 2dp
+    for key, val in res.items():
+        res[key] = round(val, 2)
+
+    return res
 
 # b = int(argv[1])
 # r = int(argv[2])

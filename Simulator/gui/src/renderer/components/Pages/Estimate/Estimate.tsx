@@ -17,8 +17,6 @@ let estProc: cp.ChildProcessWithoutNullStreams | undefined;
 
 type IState = {
     iMode: InterpolationMode | undefined;
-    frameWidth: number;
-    frameHeight: number;
     estimateState: "done" | "error" | "estimating" | "idle";
     overrideDisable: boolean;
     results?: Record<string, string>;
@@ -30,8 +28,6 @@ class Estimate extends React.Component<{}, IState> {
         super(props)
         this.state = {
             iMode: undefined,
-            frameWidth: 1920,
-            frameHeight: 1080,
             estimateState: `idle`,
             overrideDisable: false,
             results: undefined
@@ -73,7 +69,7 @@ class Estimate extends React.Component<{}, IState> {
 
     startEstimate = async () => {
         this._setState({ estimateState: `estimating` });
-        const { iMode, frameWidth, frameHeight } = this.state;
+        const { iMode } = this.state;
 
         if (!iMode) {
             message.error(`Interpolation Mode not set!`)
@@ -82,8 +78,7 @@ class Estimate extends React.Component<{}, IState> {
 
         const interpolationMode = iModeToString(iMode)
 
-        const args = [binName, `-e`, interpolationMode, frameWidth.toString(), frameHeight.toString(), `-gui`];
-        console.log(`go!`)
+        const args = [binName, `-e`, interpolationMode, `-gui`];
 
         estProc = cp.spawn(python3, args, { cwd: path.dirname(binName) })
 
@@ -110,26 +105,12 @@ class Estimate extends React.Component<{}, IState> {
     }
 
     render = () => {
-        const { frameHeight, frameWidth, estimateState, overrideDisable, iMode, results } = this.state
+        const { estimateState, overrideDisable, iMode, results } = this.state
 
         return (
             <div>
                 <h2>Estimate hardware DDR usage</h2>
                 <Form layout="vertical" >
-                    <Form.Item
-                        label="Frame Width"
-                    >
-                        <InputNumber min={1} step={1}
-                            onChange={(optionValue) => optionValue && this._setState({ frameWidth: typeof optionValue === 'number' ? optionValue : parseInt(optionValue) })} value={frameWidth} />
-                    </Form.Item>
-                </Form>
-                <Form layout="vertical" >
-                    <Form.Item
-                        label="Frame Height"
-                    >
-                        <InputNumber min={1} step={1}
-                            onChange={(optionValue) => optionValue && this._setState({ frameHeight: typeof optionValue === 'number' ? optionValue : parseInt(optionValue) })} value={frameHeight} />
-                    </Form.Item>
                     <IMode setIMode={this.setIMode} iMode={iMode} disabled={false} modeFlag="-e" />
 
                 </Form>
@@ -147,13 +128,8 @@ class Estimate extends React.Component<{}, IState> {
                     maskClosable={false}
                 >
 
-                    <h4>Frame Width</h4>
-                    <p>{frameWidth}</p>
-                    <h4>Frame Height</h4>
-                    <p>{frameHeight}</p>
                     <h4>Interpolation Mode</h4>
                     <p>{iMode && iModeToPrettyString(iMode)}</p>
-                    <h4>Output Frames Directory</h4>
                     {
                         (estimateState === `estimating`) && <div>
                             <h4 style={{ textAlign: `center`, margin: `auto`, marginTop: 12 }}>Estimating...</h4>
