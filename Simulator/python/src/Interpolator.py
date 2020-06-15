@@ -111,17 +111,17 @@ InterpolatorDocs = {
                 "enum": [
                     "unidir",
                     "bidir",
-                    "unidir2"
+                    "bidir2"
                 ],
                 "enumDescriptions": [
                     "Unidirectional Method",
                     "Bidirectional Method",
-                    "Improved Unidirectional Method"
+                    "Improved Bidirectional Method"
                 ]
             },
             "filter_mode": {
                 "type": "enum",
-                "description": "Which filtering method to use. (Not applicable for unidir2)",
+                "description": "Which filtering method to use. (Not applicable for bidir2)",
                 "value": "none",
                 "enum": [
                     "none",
@@ -234,12 +234,10 @@ def getIDocs():
         print(f'- Description: {desc}')
         print(f'### Supported modes')
         for mode, enabled in iDocObj['modes'].items():
-            print (f'{modeOptionMap[mode]}: {enabled}')   
+            print (f'{modeOptionMap[mode]}: {enabled}')
         if 'options' in iDocObj:
             print(f'### Options')
             getOptions(iDocObj['options'])
 
-        
-        print('')
-    
 
+        print('')
