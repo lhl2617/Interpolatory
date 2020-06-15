@@ -10,9 +10,11 @@ from numba import njit, uint32, float32, int8, int32, uint8, int64, types
 @njit(uint32(uint8[:,:,:], uint8[:,:,:]), cache=True)
 def get_sad(source_block, target_block):
     # we need to change it to int8 so that it's correct
-    source_block = source_block.astype(np.int32)
-    target_block = target_block.astype(np.int32)
-    return np.sum(np.abs(np.subtract(source_block, target_block)))
+    source_block = source_block.astype(np.float32)
+    target_block = target_block.astype(np.float32)
+    source_block = 0.299 * source_block[:,:,0] + 0.587 * source_block[:,:,1] + 0.114 * source_block[:,:,2]
+    target_block = 0.299 * target_block[:,:,0] + 0.587 * target_block[:,:,1] + 0.114 * target_block[:,:,2]
+    return (np.sum(np.abs(np.subtract(source_block, target_block))))
 
 @njit(float32[:,:,:](int32, int32, types.UniTuple(uint32, 3), uint8[:,:,:], uint8[:,:,:]), cache=True)
 def helper(block_size, target_region, frame_shape, source_frame_pad, target_frame_pad):
