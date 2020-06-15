@@ -59,13 +59,28 @@ def read_bandwidth(r, c, s):
     total += 228 * r * c
     return total
 
-b_max = int(sys.argv[1])
-b_min = int(sys.argv[2])
-r = int(sys.argv[3])
-c = int(sys.argv[4])
-w = int(sys.argv[5])
-s = int(sys.argv[6])
+def calc(**args):
+    r = int(args.get('r', 1080))
+    c = int(args.get('c', 1920))
+    w = int(args.get('w', 22)) 
+    s = int(args.get('s', 2))
+    b_max = int(args.get('b_max', 8)) 
+    b_min = int(args.get('b_min', 4))
 
-print('write:',write_bandwidth(r, c, s)/(1024**2), 'MB')
-print('read:', read_bandwidth(r, c, s)/(1024**2), 'MB')
-print('cache:', cache_required(b_max, b_min, c, w, s)/(1024**2), 'MB')
+    res = {}
+    res['Write'] = f'{write_bandwidth(r, c, s)/(1024**2)}MB/s'
+    res['Read'] = f'{read_bandwidth(r, c, s)/(1024**2)}MB/s'
+    res['Cache'] = f'{cache_required(b_max, b_min, c, w, s)/(1024**2)}MB'
+    
+    return res
+
+# b_max = int(sys.argv[1])
+# b_min = int(sys.argv[2])
+# r = int(sys.argv[3])
+# c = int(sys.argv[4])
+# w = int(sys.argv[5])
+# s = int(sys.argv[6])
+
+# print('write:',write_bandwidth(r, c, s)/(1024**2), 'MB')
+# print('read:', read_bandwidth(r, c, s)/(1024**2), 'MB')
+# print('cache:', cache_required(b_max, b_min, c, w, s)/(1024**2), 'MB')

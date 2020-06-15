@@ -13,8 +13,6 @@ InterpolatorDictionary = {
     'SepConv-CUDA': sepconv.SepConv,
     'RRIN-CUDA': rrin.RRIN,
     'MEMCI': Interpolator.MEMCI
-    # 'Unidirectional':Interpolator.MEMCIInterpolator,
-    # 'Bidirectional':Interpolator.Bi,
 }
 
 
@@ -26,7 +24,7 @@ InterpolatorDocs = {
             "-i": True, # interpolate
             "-b": True, # benchmark
             "-t": True, # middle frame
-            "-e": False # estimate hardware
+            # "-e": False # estimate hardware
         }
     },
     "Oversample": {
@@ -36,7 +34,7 @@ InterpolatorDocs = {
             "-i": True, # interpolate
             "-b": True, # benchmark
             "-t": True, # middle frame
-            "-e": False # estimate hardware
+            # "-e": False # estimate hardware
         }
     },
     "Linear": {
@@ -46,7 +44,7 @@ InterpolatorDocs = {
             "-i": True, # interpolate
             "-b": True, # benchmark
             "-t": True, # middle frame
-            "-e": True # estimate hardware
+            # "-e": True # estimate hardware
         }
     },
     "Blur": {
@@ -56,7 +54,7 @@ InterpolatorDocs = {
             "-i": True, # interpolate
             "-b": False, # benchmark
             "-t": False, # middle frame
-            "-e": False # estimate hardware
+            # "-e": False # estimate hardware
         }
     },
     "Speed": {
@@ -66,7 +64,7 @@ InterpolatorDocs = {
             "-i": True, # interpolate
             "-b": False, # benchmark
             "-t": False, # middle frame
-            "-e": False # estimate hardware
+            # "-e": False # estimate hardware
         }
     },
     "MEMCI": {
@@ -76,7 +74,7 @@ InterpolatorDocs = {
             "-i": True, # interpolate
             "-b": True, # benchmark
             "-t": True, # middle frame
-            "-e": True # estimate hardware
+            # "-e": True # estimate hardware
         },
         "options": {
             "me_mode": {
@@ -150,7 +148,7 @@ InterpolatorDocs = {
             "-i": True, # interpolate
             "-b": True, # benchmark
             "-t": True, # middle frame
-            "-e": False # estimate hardware
+            # "-e": False # estimate hardware
         },
         "options": {
             "model": {
@@ -175,7 +173,7 @@ InterpolatorDocs = {
             "-i": True, # interpolate
             "-b": True, # benchmark
             "-t": True, # middle frame
-            "-e": False # estimate hardware
+            # "-e": False # estimate hardware
         },
         "options": {
             "flow_usage_method": {
@@ -209,7 +207,7 @@ def getIDocs():
         '-i': '-i (Video Interpolation)',
         '-b': '-b (Benchmarking)',
         '-t': '-t (Getting middle frame)',
-        '-e': '-e (Get hardware estimates)'
+        # '-e': '-e (Get hardware estimates)'
     }
 
     def getOptions(iDocOptions):
