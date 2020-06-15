@@ -9,7 +9,6 @@ from numba import njit, uint32, float32, int8, int32, uint8, int64, types, confi
 
 @njit(uint32(uint8[:,:,:], uint8[:,:,:]), cache=True)
 def get_sad(source_block, target_block):
-    # we need to chagne it to int8 so that it's correct
     source_block = source_block.astype(np.float32)
     target_block = target_block.astype(np.float32)
     source_block = 0.299 * source_block[:,:,0] + 0.587 * source_block[:,:,1] + 0.114 * source_block[:,:,2]
