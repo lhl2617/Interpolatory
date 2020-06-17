@@ -1,7 +1,7 @@
 # Interpolatory Software Simulator GUI
 
 ## Usage
-A pre-built 64-bit Windows Installer and executable is available [here](https://github.com/lhl2617/InterpolatoryGUI).
+A pre-built 64-bit Windows Installer and executable is available in the Releases section.
 
 ## Development
 
