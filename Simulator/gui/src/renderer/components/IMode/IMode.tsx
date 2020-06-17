@@ -1,5 +1,5 @@
 import React from 'react'
-import { InterpolationMode, getInterpolationModeSchema, InterpolationModeSchema, snakeCaseToFirstWordCapitalised } from '../../util'
+import { InterpolationMode, getInterpolationModeSchema, InterpolationModeSchema, snakeCaseToFirstWordCapitalised, getInterpolationEstimationModeSchema } from '../../util'
 import { message, Form, Select, Popover, InputNumber } from 'antd'
 
 import {
@@ -45,20 +45,32 @@ const IMode = (props: Props) => {
     const getIModeSchema = async () => {
         const { modeFlag } = props
         try {
-            const schemaAll = await getInterpolationModeSchema()
-            
-            let schema: Record<string, InterpolationMode> = {}
+            /// estimator modes are different, but the underlying types are similar
+            if (modeFlag === '-e') {
+                const schema = await getInterpolationEstimationModeSchema()
 
-            Object.entries(schemaAll).forEach(([iModeKey, iMode]) => {
-                if (iMode.modes[modeFlag]) {
-                    schema[iModeKey] = iMode
-                }
-            })
+                updateState({ iModeSchema: schema })
 
-            updateState({ iModeSchema: schema })
+                const iMode = Object.values(schema)[0]
+                props.setIMode(iMode)
 
-            const iMode = Object.values(schema)[0]
-            props.setIMode(iMode)
+            }
+            else {
+                const schemaAll = await getInterpolationModeSchema()
+
+                let schema: Record<string, InterpolationMode> = {}
+
+                Object.entries(schemaAll).forEach(([iModeKey, iMode]) => {
+                    if (iMode.modes[modeFlag]) {
+                        schema[iModeKey] = iMode
+                    }
+                })
+
+                updateState({ iModeSchema: schema })
+
+                const iMode = Object.values(schema)[0]
+                props.setIMode(iMode)
+            }
         }
         catch (err) {
             message.error(err.message);

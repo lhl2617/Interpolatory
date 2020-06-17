@@ -27,7 +27,7 @@ def win_cache(s, w, c, b_max, b_min):
     for i in range(0, s+1):
         total += a(s, w, i) * c/(2 ** i)
     total += pad(b_max, b_min) * c
-    return total * 2
+    return total
 
 def write_cache(s, w, b_max, b_min, c):
     return 6 * (a(s, w, 0) + pad(b_max, b_min) + 5) * c
@@ -39,7 +39,7 @@ def vec_cache(s, c, b_max):
     total = 0
     for i in range(0, s+1):
         total += 4 * c/(2 ** i + b_max)
-    return total * 2
+    return total
 
 def cache_required(b_max, b_min, c, w, s):
     return num1(b_min, c) + num2(s, b_max, c) + win_cache(s, w, c, b_max, b_min) + write_cache(s, w, b_max, b_min, c) + w_h_s_cache(s, w, b_max, b_min, c) + vec_cache(s, c, b_max)
@@ -59,13 +59,33 @@ def read_bandwidth(r, c, s):
     total += 228 * r * c
     return total
 
-b_max = int(sys.argv[1])
-b_min = int(sys.argv[2])
-r = int(sys.argv[3])
-c = int(sys.argv[4])
-w = int(sys.argv[5])
-s = int(sys.argv[6])
+def calc(**args):
+    r = int(args.get('r', 1080))
+    c = int(args.get('c', 1920))
+    w = int(args.get('w', 22)) 
+    s = int(args.get('s', 2))
+    b_max = int(args.get('b_max', 8)) 
+    b_min = int(args.get('b_min', 4))
 
-print('write:',write_bandwidth(r, c, s)/(1024**2), 'MB')
-print('read:', read_bandwidth(r, c, s)/(1024**2), 'MB')
-print('cache:', cache_required(b_max, b_min, c, w, s)/(1024**2), 'MB')
+    res = {}
+    res['Write (MB/s)'] = write_bandwidth(r, c, s)/(1024**2)
+    res['Read (MB/s)'] = read_bandwidth(r, c, s)/(1024**2)
+    res['Cache (MB)'] = cache_required(b_max, b_min, c, w, s)/(1024**2)
+
+    
+    # round to 2dp
+    for key, val in res.items():
+        res[key] = round(val, 2)
+    
+    return res
+
+# b_max = int(sys.argv[1])
+# b_min = int(sys.argv[2])
+# r = int(sys.argv[3])
+# c = int(sys.argv[4])
+# w = int(sys.argv[5])
+# s = int(sys.argv[6])
+
+# print('write:',write_bandwidth(r, c, s)/(1024**2), 'MB')
+# print('read:', read_bandwidth(r, c, s)/(1024**2), 'MB')
+# print('cache:', cache_required(b_max, b_min, c, w, s)/(1024**2), 'MB')

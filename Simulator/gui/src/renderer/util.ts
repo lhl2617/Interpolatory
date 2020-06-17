@@ -157,6 +157,37 @@ export const getInterpolationModeSchema = () => {
     })
 }
 
+/// from the py get the JSON binary
+export const getInterpolationEstimationModeSchema = () => {
+    return new Promise<InterpolationModeSchema>((resolve, reject) => {
+
+        const python3 = getPython3();
+        const binName = getInterpolatory();
+
+        const args = [binName, `-schema-estimator`];
+        const proc = cp.spawn(python3, args)
+
+
+        let stdoutData = ``;
+
+        proc.stdout.on('data', (data) => {
+            // console.log(`Gotten stdout: ${data}`);
+            stdoutData = data;
+        })
+
+        proc.stdout.on(`end`, () => {
+            const ret: InterpolationModeSchema = JSON.parse(stdoutData);
+            resolve(ret);
+        });
+
+        proc.on('close', (code) => {
+            if (code !== 0) {
+                reject(new Error('Unable to get available interpolation modes'));
+                console.error(`Can't get interpolation modes... exited with ${code}`)
+            }
+        })
+    })
+}
 
 export const snakeCaseToFirstWordCapitalised = (s: string) => {
     return s.split(`_`).map(
