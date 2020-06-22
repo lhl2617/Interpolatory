@@ -49,9 +49,9 @@ The following stage is designed to store the incoming frame in a block wise form
 
 After first frame, the following stages happen in a loop with each incoming frame:
 
-- Create (2 * `w`, `c`) * 1 byte cache (called `win_cache`)     // TODO: change 2 * `w` to `w` + `b`
+- Create (`w` + `b`, `c`) * 1 byte cache (called `win_cache`)
     - This cache will be used to search the target frame for the motion vectors
-    - The height is 2*`w` so that the first `w` can be processed while the second is streamed in
+    - The height is `w`+`b` so that the first `w` rows can be processed while the next `b` rows is streamed in
 - Create (`w` + 5, `c`) * 3 bytes cache (called `write_cache`)
     - This cache is to store the interpolated frame as it's being written to save bandwidth
     - As 2 frames are interpolated between each input frame, 2 of these caches are required
@@ -69,7 +69,7 @@ After first frame, the following stages happen in a loop with each incoming fram
 - Stream frame into DRAM following procedure outlined for first frame
 - Also stream greyscale values from frame into `win_cache` in parallel
 - When `w` rows have been read in to `win_cache`:
-    - Continue streaming greyscale pixels into other `w` rows
+    - Continue streaming greyscale pixels into other `b` rows
     - Begin pulling out the blocks from the previous frame from DRAM (that correspond to the row of windows that have just been stored in cache) and convert to greyscale
         - Cache block in `block_cache`
     - Perform full search (detailed above) for given block in `block_cache` and search window from `win_cache`
@@ -118,13 +118,13 @@ After first frame, the following stages happen in a loop with each incoming fram
 - To store frame block wise:
     - 6 * `b`* `c` bytes
 - `win_cache`:
-    - 2 * `w` * `c` bytes
+    - (`w`+`b`) * `c` bytes
 - `write_cache` * 2:
     - 6 * (`w` + 5) * `c` bytes
 - `w_h_s_cache` * 2:
     - 4 * `w` * `c`
 - Total:
-    - 6 * `c` * (`b` + 2 * `w` + 5) bytes
+    - `c` * (7 * `b` + 11 * `w` + 30) bytes
 
 ### Example Estimations:
 
@@ -137,4 +137,4 @@ For:
 Results:
 - DRAM write bandwidth = 427.1 MB/s
 - DRAM read bandwidth = 498.3 MB/s
-- Required cache size = 0.626 MB
+- Required cache size = 0.601 MB

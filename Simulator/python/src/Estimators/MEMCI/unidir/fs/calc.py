@@ -8,7 +8,7 @@ def read_bandwidth(r, c):
     return 252 * r * c
 
 def cach_required(c, b, w):
-    return 6 * c * (b + 2 * w + 5)
+    return c * (7 * b + 11 * w + 30)
 
 def calc(**args):
     b = int(args.get('b', 8))
