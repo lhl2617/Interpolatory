@@ -2,6 +2,7 @@ from .Estimators.MEMCI.unidir.fs.calc import calc as MEMCI_unidir_fs
 from .Estimators.MEMCI.unidir.tss.calc import calc as MEMCI_unidir_tss
 from .Estimators.MEMCI.unidir.hbma.calc import calc as MEMCI_unidir_hbma
 from .Estimators.MEMCI.bidir.fs.calc import calc as MEMCI_bidir_fs
+from .Estimators.MEMCI.bidir.tss.calc import calc as MEMCI_bidir_tss
 from .Estimators.MEMCI.bidir.hbma.calc import calc as MEMCI_bidir_hbma
 
 
@@ -10,6 +11,7 @@ EstimatorDictionary = {
     "MEMCI_unidir_tss": MEMCI_unidir_tss,
     "MEMCI_unidir_hbma": MEMCI_unidir_hbma,
     "MEMCI_bidir_fs": MEMCI_bidir_fs,
+    "MEMCI_bidir_tss": MEMCI_bidir_tss,
     "MEMCI_bidir_hbma": MEMCI_bidir_hbma
 }
 
@@ -112,6 +114,11 @@ EstimatorDocs = {
         'name': 'MEMCI_bidir_fs',
         'description': 'MEMCI, Bidirectional, Full Search',
         'options': default_fs_options
+    },
+    "MEMCI_bidir_tss": {
+        'name': 'MEMCI_bidir_tss',
+        'description': 'MEMCI, Bidirectional, Three Step Search',
+        'options': default_tss_options
     },
     "MEMCI_bidir_hbma": {
         'name': 'MEMCI_bidir_hbma',

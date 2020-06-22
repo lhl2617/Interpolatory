@@ -13,10 +13,10 @@ def write_bandwidth(r, c):
     return 216 * r * c
 
 def read_bandwidth(r, c):
-    return 252 * r * c
+    return 300 * r * c
 
 def cach_required(c, b, w):
-    return c * (7 * b + 11 * w + 30)
+    return 2 * c * (4 * b + 3 * (2 * w + 5))
 
 def calc(**args):
     b = int(args.get('b', 8))
@@ -39,8 +39,7 @@ def calc(**args):
 # b = int(argv[1])
 # r = int(argv[2])
 # c = int(argv[3])
-# s = int(argv[4])
-# w = window_size(b, s)
+# w = int(argv[4])
 
 # print('Write:', write_bandwidth(r, c)/(1024**2), 'MB/s')
 # print('Read:', read_bandwidth(r, c)/(1024**2), 'MB/s')
