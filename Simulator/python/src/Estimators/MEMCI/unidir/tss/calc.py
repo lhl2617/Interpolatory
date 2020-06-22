@@ -35,12 +35,12 @@ def calc(**args):
 
     return res
 
-b = int(argv[1])
-r = int(argv[2])
-c = int(argv[3])
-s = int(argv[4])
-w = window_size(b, s)
+# b = int(argv[1])
+# r = int(argv[2])
+# c = int(argv[3])
+# s = int(argv[4])
+# w = window_size(b, s)
 
-print('Write:', write_bandwidth(r, c)/(1024**2), 'MB/s')
-print('Read:', read_bandwidth(r, c)/(1024**2), 'MB/s')
-print('Cache:', cach_required(c, b, w)/(1024**2), 'MB')
+# print('Write:', write_bandwidth(r, c)/(1024**2), 'MB/s')
+# print('Read:', read_bandwidth(r, c)/(1024**2), 'MB/s')
+# print('Cache:', cach_required(c, b, w)/(1024**2), 'MB')
