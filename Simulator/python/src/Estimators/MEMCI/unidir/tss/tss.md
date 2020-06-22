@@ -25,8 +25,8 @@
 ## Unidirectional Interpolation:
 
 - Create interpolated frame
-- Create `r`*`c` int32 SAD table
-- Create `r`*`c` bool hole table
+- Create `r`*`c` SAD table
+- Create `r`*`c` hole table
 - For each block in the source frame:
     - Find new coordinates of block in interpolated frame (by following vector)
     - Any pixels that are already written, compare SAD with table value and overwrite if lower
