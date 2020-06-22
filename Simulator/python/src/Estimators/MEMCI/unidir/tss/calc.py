@@ -22,7 +22,8 @@ def calc(**args):
     b = int(args.get('b', 8))
     r = int(args.get('r', 1080))
     c = int(args.get('c', 1920))
-    w = int(args.get('w', 22))
+    steps = int(args.get('steps', 22))
+    w = window_size(b, steps)
 
     res = {}
     res['Write (MB/s)'] = write_bandwidth(r, c)/(1024**2)

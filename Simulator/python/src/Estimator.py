@@ -1,4 +1,5 @@
 from .Estimators.MEMCI.unidir.fs.calc import calc as MEMCI_unidir_fs
+from .Estimators.MEMCI.unidir.tss.calc import calc as MEMCI_unidir_tss
 from .Estimators.MEMCI.unidir.hbma.calc import calc as MEMCI_unidir_hbma
 from .Estimators.MEMCI.bidir.fs.calc import calc as MEMCI_bidir_fs
 from .Estimators.MEMCI.bidir.hbma.calc import calc as MEMCI_bidir_hbma
@@ -6,6 +7,7 @@ from .Estimators.MEMCI.bidir.hbma.calc import calc as MEMCI_bidir_hbma
 
 EstimatorDictionary = {
     "MEMCI_unidir_fs": MEMCI_unidir_fs,
+    "MEMCI_unidir_tss": MEMCI_unidir_tss,
     "MEMCI_unidir_hbma": MEMCI_unidir_hbma,
     "MEMCI_bidir_fs": MEMCI_bidir_fs,
     "MEMCI_bidir_hbma": MEMCI_bidir_hbma
@@ -31,6 +33,29 @@ default_fs_options = {
         'description': 'size of single axis of search window in pixels',
         'type': 'number',
         'value': 22
+    }
+}
+
+default_tss_options = {
+    'b': {
+        'description': 'size of single axis of block in pixels',
+        'type': 'number',
+        'value': 8
+    },
+    'r': {
+        'description': 'number of rows of pixels in frame',
+        'type': 'number',
+        'value': 1080
+    },
+    'c': {
+        'description': 'number of columns of pixels in frame',
+        'type': 'number',
+        'value': 1920
+    },
+    'steps': {
+        'description': 'number of steps taken when searching',
+        'type': 'number',
+        'value': 3
     }
 }
 
@@ -72,6 +97,11 @@ EstimatorDocs = {
         'name': 'MEMCI_unidir_fs',
         'description': 'MEMCI, Unidirectional, Full Search',
         'options': default_fs_options
+    },
+    "MEMCI_unidir_tss": {
+        'name': 'MEMCI_unidir_tss',
+        'description': 'MEMCI, Unidirectional, Three Step Search',
+        'options': default_tss_options
     },
     "MEMCI_unidir_hbma": {
         'name': 'MEMCI_unidir_hbma',
