@@ -5,13 +5,13 @@
 - `b` = size of single axis of block in pixels
 - `r` = number of rows of pixels in frame
 - `c` = number of columns of pixels in frame
-- `s` = number of steps taken when searching
+- `steps` = number of steps taken when searching
 
 ## Three Step Search:
 
 - For each block in first image (`source block`):
     - `center` = `source block`
-    - For `step` in (`s`-1 -> 1) (default value of `s` is 3):
+    - For `step` in (`steps`-1 -> 1) (default value of `steps` is 3):
         - `space` = 2^`step`
         - For each block in 3x3 around `center`, `space` pixels apart (`target block`):
             - Calculate SAD between `source block` and `target block` and note corresponding vector (no need for `center` block as it has been previously calculated)
@@ -39,7 +39,7 @@
 
 ## Some required values:
 
-- `w` = `b` + (2 * Sum (`i` = 0 -> `s`-1) (2^`i`))
+- `w` = `b` + (2 * Sum (`i` = 0 -> `steps`-1) (2^`i`))
     - This is the size of a single axis of the search window
 
 ## Full Integrated System:
@@ -143,8 +143,8 @@ For:
 - `b` = 8
 - `r` = 1080
 - `c` = 1920
-- `s` = 3
-- `w` = `b` + (2 * Sum (`i` = 0 -> `s`-1) (2^`i`)) = 22
+- `steps` = 3
+- `w` = `b` + (2 * Sum (`i` = 0 -> `steps`-1) (2^`i`)) = 22
 
 Results:
 - DRAM write bandwidth = 427.1 MB/s
