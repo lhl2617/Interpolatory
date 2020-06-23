@@ -229,4 +229,4 @@ For:
 Results:
 - DRAM write bandwidth = 462.7 MB/s
 - DRAM read bandwidth = 617.0 MB/s
-- Required cache size = 2.34 MB
+- Required cache size = 5.49 MB
