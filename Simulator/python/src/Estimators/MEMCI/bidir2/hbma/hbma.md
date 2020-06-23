@@ -1,4 +1,4 @@
-# HBMA ME and Bidirectional MCI:
+# HBMA ME and Advanced Bidirectional MCI:
 
 ## Parameters:
 
@@ -35,28 +35,30 @@
             - Select vector corresponding to the smallest SAD
 - Return block-wise motion vector field
 
-## Bidirectional Interpolation:
+## Advanced Bidirectional Interpolation:
+
+Some of the details of this algorithm are quite complex so for a detailed explanation please refer to the paper:  
+"Motion-Compensated Frame Rate Up-Conversion—Part II: New Algorithms for Frame Interpolation", 2010  
+by: Demin Wang, Senior Member, IEEE, André Vincent, Philip Blanchﬁeld, and Robert Klepko
+https://ieeexplore.ieee.org/document/5440975   
+**Note:** As the motion vectors are generated with a non-fixed technique, occlusions are not noted at the ME stage. Disregard any steps that rely on this data in the above paper.
 
 - Calculate forward and backward motion vectors using previous algorithm
     - Swap frames to get backward motion vectors
-- Create interpolated frame
-- Create `r` * `c` SAD table
-- Create `r` * `c` hole table
-- For each block in the source frame:
-    - Find new coordinates of block in interpolated frame (by following forward vector)
-    - Any pixels that are already written, compare SAD with table value and overwrite if lower
-    - Fill all other pixels
-    - Record them as being filled in the hole table
-    - Record SAD in SAD table
-- For each block in the target frame:
-    - Find new coordinates of block in interpolated frame (by following backward vector)
-    - Any pixels that are already written, compare SAD with table value and overwrite if lower
-    - Fill all other pixels
-    - Record them as being filled in the hole table
-    - Record SAD in SAD table
-- For each pixel in interpolated frame:
-    - If hole table says pixel is a hole:
-        - Apply median filter over hole
+- Create `r` * `c` interpolated frame (to store pixel values)
+- Create `r` * `c` SAD table (to store SADs (errors))
+- Create `r` * `c` hole table (to tell if pixel is a hole)
+- Create `r` * `c` weightings table (to record number of contributions to each pixel)
+- Create a second version of the above tables for the image created using the reverse motion vectors
+- For the forward motion vectors:
+    - Perform IEWMC to generate interpolated frame
+        - Expand the source block in question and apply weightings
+        - Follow the vector to the location of the block in the interpolated frame
+        - Accumulate values into the appropriate entries in the 4 tables listed above
+- Repeat for the backward motion vectors
+- Combine forward and backward images using error-adaptive combination
+- Apply BDHI to fill holes
+    - As this step can operate on cached data, we will not go into further details here, as it does not contribute to the bandwidth estimation or cache scheme used
 
 ## Full Integrated System:
 
@@ -104,16 +106,23 @@ After first frame, the following stages happen in a loop with each incoming fram
 - Create (`a(1)`, `c`/2) * 1 byte (called `target_win_cache_1`)
     - This cache will be used to search the downscaled target frame for the motion vectors
     - 1 byte needed as it is only the Y channel
-- Create (`a(0)+pad+5`, `c`) * 3 bytes cache (called `write_cache`)
+- Create (`a(0)+pad+2`, `c`) * 3 bytes cache (called `write_cache`)
     - This cache is to store the interpolated frame as it's being written to save bandwidth
-    - As 2 frames are interpolated between each input frame, 2 of these caches are required.
+    - For each interpolated frame, create 2 caches
+        - 1 for forward motion image
+        - 1 for backward motion image
+    - As 2 frames are interpolated between each input frame, 4 of these caches are required.
     - Set top 5 rows to 0
     - Start addressing after top 5 rows (top 5 rows are only used for hole filling)
-- Create (`a(0)+pad`, `c`) * (1 bit + 15 bits) (called `w_h_s_cache`)
+- Create (`a(0)+pad`, `c`) * (1 bit + 15 bits + 16 bits) (called `w_h_s_cache`)
     - Used to store metadata regarding the interpolated frame
-    - As there are 2 interpolated frames, 2 of this cache are needed
+    - For each interpolated frame, create 2 caches
+        - 1 for forward motion image
+        - 1 for backward motion image
+    - As there are 2 interpolated frames, 4 of this cache are needed
     - First bit - low if hole, high if filled
-    - Following 15 bits - SAD score
+    - Following 15 bits - Accumulated weightings
+    - Following 16 bits - Accumulated SAD (error)
     - Set all values to 0
 - Create (2, `c`/`b_max`) * 2 bytes cache (called `forward_vec_cache_0`)
     - Used when increasing vector density for forward vectors
@@ -149,8 +158,17 @@ After first frame, the following stages happen in a loop with each incoming fram
                 - If on the original image, halve the block size to get child blocks
                 - For each child:
                     - Perform 27 searches as stated before
-                    - As its the original image, follow motion vector and write child block into `write_cache` and update `w_h_s_cache` with corresponding metadata
-                    - When `write_cache` is full, apply hole filling filter to top `b_min` rows below the top 5 rows (they are only to provide hole filling info) and then write those rows to DRAM and shift the starting address by `b_min` rows. set corresponding rows in `w_h_s_cache` to 0 and shift the start address by the same amount
+                    - If working on the original image with the min block size, follow motion vector and write child block into `write_cache` and update `w_h_s_cache` with corresponding metadata
+                    - When A full row of blocks have been processed, move to the next step
+- Repeat for backwards motion (writing into appropriate caches) (this can be done in parallel with previous step)
+- Ignoring the top 2 rows in `write_cache`, for the following `b_min` rows:
+    - Normalise each pixel according to its accumulated weighting
+    - For each corresponding pixel in the forward and backwards cache, apply error-adaptive combination algorithm
+    - Apply BDHI to fill holes (can use the 2 top rows in calculations)
+    - Write the same `b_min` rows to DRAM (for the interpolated frame) and set all values to 0
+    - Set the corresponding values in `w_h_s_cache` to 0
+- Shift the the start address of both the `write_cache` and `w_h_s_cache` by `b_min` rows
+- Repeat the last 4 steps until all of the image has been processed
 
 ## Hardware Estimation:
 
@@ -191,10 +209,10 @@ After first frame, the following stages happen in a loop with each incoming fram
     - Sum (`i` = 1 -> `s`) (2 * `b_max` * `c`/2^`i`) bytes
 - `win_cache` * 2:
     - 2 * (Sum (`i` = 0 -> `s`) (`a(i)` * `c`/2^`i`) + `pad` * `c`) bytes
-- `write_cache` * 2:
-    - 6 * (`a(0)+pad+5`) * `c` bytes
-- `w_h_s_cache` * 2:
-    - 4 * (`a(0)+pad`) * `c` bytes
+- `write_cache` * 4:
+    - 12 * (`a(0)+pad+2`) * `c` bytes
+- `w_h_s_cache` * 4:
+    - 16 * (`a(0)+pad`) * `c` bytes
 - `vec_cache` * 2:
     - 2 * Sum (`i` = 0 -> `s`) (4 * `c`/(2^`i` * `b_max`))
 

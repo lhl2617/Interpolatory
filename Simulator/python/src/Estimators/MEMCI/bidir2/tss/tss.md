@@ -1,4 +1,4 @@
-# Full Search ME and Advanced Bidirectional MCI:
+# Three Step Search ME and Advanced Bidirectional MCI:
 
 ## Parameters:
 
@@ -7,13 +7,19 @@
 - `c` = number of columns of pixels in frame
 - `w` = size of single axis of search window in pixels
 
-## Full Search:
+## Three Step Search:
 
 - For each block in first image (`source block`):
-    - Calculate SAD of `source block` with blocks of matching size in a window in the second image
-        - For each block in the window in the second image (`target block`):
-            - Calculate SAD of `source block` and `target block` and note corresponding vector
-    - Take the vector corresponding to the lowest SAD and record in output with SAD (for occlusion in MCI) (in cases where there are multiple lowest SADs, precedence should be given to the smallest vector)
+    - `center` = `source block`
+    - For `step` in (`steps`-1 -> 1) (default value of `steps` is 3):
+        - `space` = 2^`step`
+        - For each block in 3x3 around `center`, `space` pixels apart (`target block`):
+            - Calculate SAD between `source block` and `target block` and note corresponding vector (no need for `center` block as it has been previously calculated)
+        - `center` = `target block` with lowest SAD
+    - `space` = 1
+    - For each block in 3x3 around `center`, `space` pixels apart (`target block`):
+        - Calculate SAD between `source block` and `target block` and note corresponding vector (no need for `center` block as it has been previously calculated)
+    - Assign vector with lowest corresponding SAD to `source block`
 - Return block-wise motion vector field
 
 ## Advanced Bidirectional Interpolation:
@@ -92,7 +98,7 @@ After first frame, the following stages happen in a loop with each incoming fram
     - For the forward motion image:
         - Continue streaming greyscale pixels into other `b` rows of `target_win_cache` from target frame
         - Taking a block from the `source_win_cache`:
-            - Search the corresponding search window in `target_win_cache`
+            - Search the corresponding search window in `target_win_cache` following three step search algorithm outlined above
                 - Returns the best motion vector and SAD score
             - Pull the other 2 channels for the block out of DRAM
             - Expand the block by doubling its size and apply the weighting filter
