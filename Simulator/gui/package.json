@@ -1,6 +1,6 @@
 {
   "name": "interpolatory-simulator",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "Video frame-rate interpolation framework for software simulation and benchmarking",
   "main": "./dist/main.js",
   "scripts": {
