@@ -8,7 +8,7 @@ const Info = () => {
         <div style={{ textAlign: 'center', margin: 'auto' }}>
             <div style={{ marginTop: 125 }}>
                 <img src={logo} alt='Interpolatory Simulator' style={{ marginTop: 12, maxWidth: 200, marginBottom: 12 }} />
-                <h2 style={{ fontSize: 36, fontWeight: 800, marginBottom: 0 }}>Interpolatory Simulator v0.0.1</h2>
+                <h2 style={{ fontSize: 36, fontWeight: 800, marginBottom: 0 }}>Interpolatory Simulator v1.0.0</h2>
                 <h4>Video frame-rate interpolation framework for software simulation and benchmarking</h4>
             </div>
 
