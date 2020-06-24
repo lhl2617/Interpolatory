@@ -5,10 +5,10 @@ def write_bandwidth(r, c):
     return 216 * r * c
 
 def read_bandwidth(r, c):
-    return 252 * r * c
+    return 300 * r * c
 
 def cach_required(c, b, w):
-    return c * (7 * b + 11 * w + 30)
+    return 2 * c * (4 * b + 13 * w + 12)
 
 def calc(**args):
     b = int(args.get('b', 8))

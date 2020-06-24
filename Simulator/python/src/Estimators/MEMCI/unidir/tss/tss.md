@@ -1,19 +1,30 @@
-# Full Search ME and Unidirectional MCI:
+# Three Step Search ME and Unidirectional MCI:
 
 ## Parameters:
 
 - `b` = size of single axis of block in pixels
 - `r` = number of rows of pixels in frame
 - `c` = number of columns of pixels in frame
-- `w` = size of single axis of search window in pixels
+- `steps` = number of steps taken when searching
 
-## Full Search:
+## Some required values:
+
+- `w` = `b` + (2 * Sum (`i` = 0 -> `steps`-1) (2^`i`))
+    - This is the size of a single axis of the search window
+
+## Three Step Search:
 
 - For each block in first image (`source block`):
-    - Calculate SAD of `source block` with blocks of matching size in a window in the second image
-        - For each block in the window in the second image (`target block`):
-            - Calculate SAD of `source block` and `target block` and note corresponding vector
-    - Take the vector corresponding to the lowest SAD and record in output with SAD (for occlusion in MCI) (in cases where there are multiple lowest SADs, precedence should be given to the smallest vector)
+    - `center` = `source block`
+    - For `step` in (`steps`-1 -> 1) (default value of `steps` is 3):
+        - `space` = 2^`step`
+        - For each block in 3x3 around `center`, `space` pixels apart (`target block`):
+            - Calculate SAD between `source block` and `target block` and note corresponding vector (no need for `center` block as it has been previously calculated)
+        - `center` = `target block` with lowest SAD
+    - `space` = 1
+    - For each block in 3x3 around `center`, `space` pixels apart (`target block`):
+        - Calculate SAD between `source block` and `target block` and note corresponding vector (no need for `center` block as it has been previously calculated)
+    - Assign vector with lowest corresponding SAD to `source block`
 - Return block-wise motion vector field
 
 ## Unidirectional Interpolation:
@@ -72,7 +83,7 @@ After first frame, the following stages happen in a loop with each incoming fram
     - Continue streaming greyscale pixels into other `b` rows
     - Begin pulling out the blocks from the previous frame from DRAM (that correspond to the row of windows that have just been stored in cache) and convert to greyscale
         - Cache block in `block_cache`
-    - Perform full search (detailed above) for given block in `block_cache` and search window from `win_cache`
+    - Perform three step search (detailed above) for given block in `block_cache` and search window from `win_cache`
         - Output should be single motion vector with corresponding SAD score
     - Calculate new position of block in `write_cache` (relative to block row) by following motion vector
         - As there are multiple interpolated frames, this is done for both (also true for all following steps)
@@ -132,7 +143,8 @@ For:
 - `b` = 8
 - `r` = 1080
 - `c` = 1920
-- `w` = 22
+- `steps` = 3
+- `w` = `b` + (2 * Sum (`i` = 0 -> `steps`-1) (2^`i`)) = 22
 
 Results:
 - DRAM write bandwidth = 427.1 MB/s
