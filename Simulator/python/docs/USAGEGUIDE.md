@@ -10,7 +10,7 @@
 - Check whether normal requirements are met
 
 ### `python3 main.py -depcuda`
-- Check whether CUDA dependencies are metGet this help. 
+- Check whether CUDA dependencies are met 
 
 ### `python3 main.py -doc`
 - List all supported interpolation modes and their CLI usage guide
