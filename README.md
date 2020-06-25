@@ -1,5 +1,13 @@
 # Interpolatory
 
+## Watch our introductory presentation
+
+[https://www.youtube.com/watch?v=dD_cj5h4wAE](https://www.youtube.com/watch?v=dD_cj5h4wAE)
+
+## Read our literature review
+
+[https://github.com/lhl2617/Interpolatory/files/4832591/LitReview.pdf](https://github.com/lhl2617/Interpolatory/files/4832591/LitReview.pdf)
+
 ## Repository Structure
 - Simulator
     - Contains code for simulator framework, both CLI and GUI
@@ -15,9 +23,6 @@
 - Navid Zandpour `Navidzand`
 - Jialong Yu `charlesyuJY`
 - Zhiyuan Zhang `BBBBBbruce`
-
-### Branch rules
-- `master`: Direct push only when absolutely needed. Use PRs whenever possible.
 
 ### Notes
 - Please download `Datasets` (https://drive.google.com/drive/folders/1W3nm4iKYyboOihJev5x-U6jcjFFEqg9a) folder and paste into the root directory
