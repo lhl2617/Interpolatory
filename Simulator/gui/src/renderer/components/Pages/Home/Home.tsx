@@ -308,7 +308,7 @@ export class Home extends React.Component<IProps, IState> {
                     >
                         <Button danger disabled={binVer.status !== "done" || dependencyInstalling }>Reinstall Basic Dependencies</Button>
                     </Popconfirm>
-                    <div>CUDA dependencies status: {cudaDependencyStatus}</div>
+                    <div>CUDA dependencies status (Not required for normal methods): {cudaDependencyStatus}</div>
                     <Popconfirm
                         title="This will reinstall basic dependencies. Are you sure you want to continue?"
                         onConfirm={() => this.reinstallDependencies(true)}
