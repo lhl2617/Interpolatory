@@ -31,7 +31,7 @@ if (len(sys.argv) > 1):
         args = args[:-1]
 
 # limited_interpolators = list(LimitedInterpolatorDictionary.keys())
-version = 'Interpolatory Simulator 1.0.0'
+version = 'Interpolatory Simulator 1.0.1'
 
 if mode_flag == '-h':
     import markdown
