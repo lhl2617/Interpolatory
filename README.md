@@ -8,6 +8,10 @@
 
 [https://github.com/lhl2617/Interpolatory/files/4832591/LitReview.pdf](https://github.com/lhl2617/Interpolatory/files/4832591/LitReview.pdf)
 
+## Read our report and documentation
+
+[https://github.com/lhl2617/Interpolatory/files/4835902/Interpolatory_Documentation.pdf](https://github.com/lhl2617/Interpolatory/files/4835902/Interpolatory_Documentation.pdf)
+
 ## Repository Structure
 - Simulator
     - Contains code for simulator framework, both CLI and GUI
