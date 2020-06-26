@@ -40,7 +40,7 @@
 - Extra configuration settings can be set in `<settings>` using dot separated key-value pairs, e.g. for MEMCI, `"MEMCI:block_size=32.filter_size=8"`
 - See interpolation mode usage guides in `python3 main.py -doc`
 
-### `python3 main.py -e <interpolation-estimator-mode>[:<settings>] 
+### `python3 main.py -e <interpolation-estimator-mode>[:<settings>]`
 - Estimate hardware requirements using `<interpolation-estimator-mode>`
 - Extra configuration settings can be set in `<settings>` using dot separated key-value pairs, e.g. for MEMCI, `"MEMCI_unidir_fs:b=16.r=720"`
 - See interpolation estimator mode usage guides in `python3 main.py -doc-estimator`
